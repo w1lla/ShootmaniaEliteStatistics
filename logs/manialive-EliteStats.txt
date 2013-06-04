@@ -1,0 +1,80 @@
+LibXmlRpc_BeginMatch
+1
+BeginMatch
+{
+	"Timestamp": 6805830,
+	"MatchNumber": 1 }
+LibXmlRpc_BeginMap
+1
+BeginMap
+{
+	"Timestamp": 6805870,
+	"MapNumber": 1 }
+LibXmlRpc_BeginRound
+1
+LibXmlRpc_BeginTurn
+1
+BeginWarmup
+{
+	"Timestamp": 6806910,
+	"AllReady": false }
+EndWarmup
+{
+	"Timestamp": 6811930,
+	"AllReady": true }
+LibXmlRpc_BeginTurn
+1
+LibXmlRpc_Rankings
+w1lla:0;*fakeplayer1*:0;*fakeplayer2*:0;*fakeplayer3*:0;*fakeplayer5*:0;*fakeplayer6*:0;*fakeplayer4*:0
+LibXmlRpc_EndTurn
+1
+EndTurn
+{
+	"Timestamp": 6913120,
+	"TurnNumber": 1,"StartTime": 6853120,"EndTime": 6913120,"PoleTime": 6898120,"AttackingClan": 2,"DefendingClan": 1,
+"AttackingPlayer":
+{
+	"Login": "*fakeplayer4*",
+	"Name": "Player #4",
+	"CurrentClan": 2,
+	"Armor": 300,
+	"ArmorMax": 300,
+	"IsTouchingGround": true,
+	"IsCapturing": false,
+	"IsInOffZone": false
+	,
+"Score": 
+{
+	"AtkPoints": 0,"DefPoints": 0
+}
+},"TurnWinnerClan": 1,"WinType": "TimeLimit" ,"Clan1RoundScore": 1,"Clan2RoundScore": 0,"Clan1MapScore": 0,"Clan2MapScore": 0,
+"ScoresTable":
+[
+	{"Login": "*fakeplayer1*" ,"CurrentClan": 1,"AtkPoints": 0,"DefPoints": 0},{"Login": "*fakeplayer2*" ,"CurrentClan": 1,"AtkPoints": 0,"DefPoints": 0},{"Login": "*fakeplayer3*" ,"CurrentClan": 1,"AtkPoints": 0,"DefPoints": 0},{"Login": "*fakeplayer5*" ,"CurrentClan": 2,"AtkPoints": 0,"DefPoints": 0},{"Login": "*fakeplayer6*" ,"CurrentClan": 2,"AtkPoints": 0,"DefPoints": 0},{"Login": "*fakeplayer4*" ,"CurrentClan": 2,"AtkPoints": 0,"DefPoints": 0}
+] }
+LibXmlRpc_BeginTurn
+2
+BeginTurn
+{
+	"Timestamp": 6920660,
+	"TurnNumber": 2,"StartTime": 6923660,"EndTime": 6983660,"PoleTime": 6968660,"AttackingClan": 1,"DefendingClan": 2,
+"AttackingPlayer":
+{
+	"Login": "*fakeplayer1*",
+	"Name": "Player #1",
+	"CurrentClan": 1,
+	"Armor": 300,
+	"ArmorMax": 300,
+	"IsTouchingGround": false,
+	"IsCapturing": false,
+	"IsInOffZone": false
+	,
+"Score": 
+{
+	"AtkPoints": 0,"DefPoints": 0
+}
+},
+"DefendingPlayers":
+[
+	{"Login": "*fakeplayer5*" ,"CurrentClan": 2,"AtkPoints": 0,"DefPoints": 0},{"Login": "*fakeplayer6*" ,"CurrentClan": 2,"AtkPoints": 0,"DefPoints": 0},{"Login": "*fakeplayer4*" ,"CurrentClan": 2,"AtkPoints": 0,"DefPoints": 0}
+] }
