@@ -11,7 +11,8 @@ Works with the latest manialive [http://www.manialive.com]
 ==========================================================================
 
 Installation:
-install.md
+
+https://github.com/w1lla/ShootmaniaEliteStatistics/blob/master/install.md
 ==========================================================================
 What is Done:
 
