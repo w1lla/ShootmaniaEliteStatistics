@@ -1,4 +1,22 @@
 
+CREATE TABLE IF NOT EXISTS `Matches` (
+  `id` varchar(13) NOT NULL,
+  `name` varchar(45) NOT NULL,
+  `team1` varchar(60) NOT NULL,
+  `team2` varchar(60) NOT NULL,
+  `startTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `isFinished` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `Weapons` (
+  `id` int(11) NOT NULL,
+  `name` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+INSERT INTO `Weapons` (`id`, `name`) VALUES (1, 'Rail'),(2, 'Rocket');
+
 CREATE TABLE IF NOT EXISTS `Captures` (
   `player` varchar(60) NOT NULL,
   `team` varchar(60) NOT NULL,
@@ -22,16 +40,6 @@ CREATE TABLE IF NOT EXISTS `Eliminations` (
   PRIMARY KEY (`player`,`matchId`,`roundId`,`mapNum`),
   KEY `fk_Deaths_Match1` (`matchId`),
   CONSTRAINT `fk_Deaths_Match1` FOREIGN KEY (`matchId`) REFERENCES `Matches` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-CREATE TABLE IF NOT EXISTS `Matches` (
-  `id` varchar(13) NOT NULL,
-  `name` varchar(45) NOT NULL,
-  `team1` varchar(60) NOT NULL,
-  `team2` varchar(60) NOT NULL,
-  `startTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `isFinished` tinyint(1) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `Shots` (
@@ -69,11 +77,17 @@ CREATE TABLE IF NOT EXISTS `Teams` (
   CONSTRAINT `FK_Teams_Match` FOREIGN KEY (`matchId`) REFERENCES `Matches` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-
-CREATE TABLE IF NOT EXISTS `Weapons` (
+CREATE TABLE IF NOT EXISTS `NearMiss` (
   `id` int(11) NOT NULL,
-  `name` varchar(45) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  `player` varchar(60) DEFAULT NULL,
+  `MissDist` varchar(60) DEFAULT NULL,
+  `weaponId` int(11) NOT NULL,
+  `matchId` varchar(13) NOT NULL,
+  `mapNum` int(11) NOT NULL,
+  `mapName` varchar(75) NOT NULL,
+  PRIMARY KEY (`id`,`weaponId`,`mapNum`),
+  KEY `fk_Shots_Weapon2` (`weaponId`),
+  KEY `FK_Teams_Match1` (`matchId`),
+  CONSTRAINT `FK_Teams_Match1` FOREIGN KEY (`matchId`) REFERENCES `Matches` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_Shots_Weapon2` FOREIGN KEY (`weaponId`) REFERENCES `Weapons` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-INSERT INTO `Weapons` (`id`, `name`) VALUES (1, 'Rail'),(2, 'Rocket');
