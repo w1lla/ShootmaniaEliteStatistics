@@ -61,7 +61,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 
 		
 		Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Core v' . $this->getVersion());
-		$this->connection->chatSendServerMessage('$fff» $fa0Welcome, this server uses $fff e$a00X$fffpansion Shootmania Stats$fa0!');
+		$this->connection->chatSendServerMessage('$fff» $fa0Welcome, this server uses $fff [Shootmania] Elite Stats$fa0!');
 		
 		
 		if(!$this->db->tableExists('Matches')) {
@@ -208,8 +208,6 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 			case 'LibXmlRpc_BeginRound':
 				return;
 			case 'LibXmlRpc_BeginTurn':
-			$TurnNumber = $param2[0];
-			$this->TurnNumber = $TurnNumber;
 				return;
 			case 'LibXmlRpc_EndTurn':
 				return;	
@@ -259,6 +257,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 				$BlueName = $this->connection->getTeamInfo(1)->name;
 				$RedName = $this->connection->getTeamInfo(2)->name;
 				$MatchName = ''.$RedName.' vs '.$BlueName.'';
+				$this->MatchNumber = $MatchNumber;
 				$BeginMatchQuery = "INSERT INTO  `matches` (
 				`id` ,
 				`name` ,
@@ -275,8 +274,10 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 			case 'BeginMap':
 				$decode_param2 = json_decode($param2);
 				$MapNum = $decode_param2->MapNumber;
+				$this->MapNum = $MapNum;
 				$map = $this->connection->getCurrentMapInfo();
 				$MapName = $map->name;
+				$this->MapName = $MapName;
 				return;
 			case 'BeginWarmup':
 				$decode_param2 = json_decode($param2);
@@ -294,13 +295,13 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 				$DefClan = $decode_param2->DefendingClan;
 				$AtkPlayerLogin = $decode_param2->AttackingPlayer->Login;
 				$AtkPlayerNickName = $decode_param2->AttackingPlayer->Name;
+				$this->TurnNumber = $TurnNumber;
 				return;
 			case 'OnCapture':// This callback is sent when the attacker captured the pole
 				$decode_param2 = json_decode($param2);
 				$PlayerCapturedLogin = $decode_param2->Event->Player->Login;
 				$PlayerCapturedNickname = $decode_param2->Event->Player->Name;
 				$PlayerCapturedClan = $decode_param2->Event->Player->CurrentClan;
-				var_dump($this->TurnNumber);
 				$CaptureQuery = "INSERT INTO  `captures` (
 				`player` ,
 				`team` ,
@@ -310,16 +311,9 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 				`matchId`
 				)
 				VALUES (
-				'".$PlayerCapturedLogin."', '".$PlayerCapturedClan."', '".$TurnNumber."', '".$MapNum."', '".$MapName."', '".$MatchNumber."');";
+				'".$PlayerCapturedLogin."', '".$PlayerCapturedClan."', '".$this->TurnNumber."', '".$this->MapNum."', '".$this->MapName."', '".$this->MatchNumber."');";
 				// Perform Query
-				$result = mysql_query($CaptureQuery, $link);
-				// Check result
-				// This shows the actual query sent to MySQL, and the error. Useful for debugging.
-				if (!$result) {
-				$message  = 'Invalid query: ' . mysql_error() . "\n";
-				$message .= 'Whole query: ' . $CaptureQuery;
-				//Logger::getLog('EliteStats')->write($TurnNumber); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
-				}
+				$this->db->execute($CaptureQuery);
 				return;
 			case 'OnHit':// This callback is sent when a player hit another player
 				$decode_param2 = json_decode($param2);
