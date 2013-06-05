@@ -1,0 +1,11 @@
+Invalid query: Duplicate entry '1' for key 'PRIMARY'
+Whole query: INSERT INTO  `matches` (
+				`id` ,
+				`name` ,
+				`team1` ,
+				`team2` ,
+				`startTime` ,
+				`endTime`
+				)
+				VALUES (
+				1,  'Red vs Blue',  'Red',  'Blue', 13990980 ,  '0');
