@@ -167,35 +167,35 @@ function onModeScriptCallback($param1, $param2) { //ModeScriptCallback is here C
 			case 'BeginMatch':
 				$decode_param2 = json_decode($param2);
 				Logger::getLog('EliteStats')->write($param1); //Logger manialive-debug is used for the moment to give the LibXmlRpc_Callback first
-				Logger::getLog('EliteStats')->write($param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
+				Logger::getLog('EliteStats')->write($decode_param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
 				//var_dump($decode_param2);
 				//('mode_Elite_BeginMatch', $decode_param2);//This callback is sent at the beginning of each match
 				return;
 			case 'BeginMap':
 				$decode_param2 = json_decode($param2);
 				Logger::getLog('EliteStats')->write($param1); //Logger manialive-debug is used for the moment to give the LibXmlRpc_Callback first
-				Logger::getLog('EliteStats')->write($param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
+				Logger::getLog('EliteStats')->write($decode_param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
 				//var_dump($decode_param2->MapNumber);
 				//('mode_Elite_BeginMap', $decode_param2);//This callback is sent at the beginning of each map
 				return;
 			case 'BeginWarmup':
 				$decode_param2 = json_decode($param2);
 				Logger::getLog('EliteStats')->write($param1); //Logger manialive-debug is used for the moment to give the LibXmlRpc_Callback first
-				Logger::getLog('EliteStats')->write($param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
+				Logger::getLog('EliteStats')->write($decode_param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
 				//var_dump($decode_param2);
 				//('mode_Elite_BeginWarmUp', $decode_param2);//This callback is sent at the beginning of the warm up.
 				return;
 			case 'EndWarmup':
 				$decode_param2 = json_decode($param2);
 				Logger::getLog('EliteStats')->write($param1); //Logger manialive-debug is used for the moment to give the LibXmlRpc_Callback first
-				Logger::getLog('EliteStats')->write($param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
+				Logger::getLog('EliteStats')->write($decode_param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
 				//var_dump($decode_param2);
 				//('mode_Elite_EndWarmUp', $decode_param2);//This callback is sent at the end of the warm up.
 				return;
 			case 'BeginSubmatch':// This callback is sent at the beginning of each submatch
 				$decode_param2 = json_decode($param2);
 				Logger::getLog('EliteStats')->write($param1); //Logger manialive-debug is used for the moment to give the LibXmlRpc_Callback first
-				Logger::getLog('EliteStats')->write($param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
+				Logger::getLog('EliteStats')->write($decode_param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
 				//var_dump($decode_param2);
 				//('mode_Elite_BeginSubmatch', $decode_param2);
 				return;
@@ -203,7 +203,7 @@ function onModeScriptCallback($param1, $param2) { //ModeScriptCallback is here C
 				case 'BeginTurn':// This callback is sent at the beginning of each turn
 				$decode_param2 = json_decode($param2);
 				Logger::getLog('EliteStats')->write($param1); //Logger manialive-debug is used for the moment to give the LibXmlRpc_Callback first
-				Logger::getLog('EliteStats')->write($param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
+				Logger::getLog('EliteStats')->write($decode_param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
 				//var_dump($decode_param2->DefendingClan);
 				//('mode_Elite_BeginTurn', $decode_param2);
 				return;
@@ -211,7 +211,7 @@ function onModeScriptCallback($param1, $param2) { //ModeScriptCallback is here C
 				case 'OnCapture':// This callback is sent when the attacker captured the pole
 				$decode_param2 = json_decode($param2);
 				Logger::getLog('EliteStats')->write($param1); //Logger manialive-debug is used for the moment to give the LibXmlRpc_Callback first
-				Logger::getLog('EliteStats')->write($param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
+				Logger::getLog('EliteStats')->write($decode_param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
 				//var_dump($decode_param2->DefendingClan);
 				//('mode_Elite_OnCapture', $decode_param2);
 				return;
@@ -219,73 +219,64 @@ function onModeScriptCallback($param1, $param2) { //ModeScriptCallback is here C
 				case 'OnHit':// This callback is sent when a player hit another player
 				$decode_param2 = json_decode($param2);
 				Logger::getLog('EliteStats')->write($param1); //Logger manialive-debug is used for the moment to give the LibXmlRpc_Callback first
-				Logger::getLog('EliteStats')->write($param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
+				Logger::getLog('EliteStats')->write($decode_param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
 				//var_dump($decode_param2->DefendingClan);
-				//('mode_Elite_OnHit', $decode_param2);
 				return;
 				
 				case 'OnArmorEmpty':// This callback is sent when a player reaches 0 armor (eliminated by another player, falling in an offzone)
 				$decode_param2 = json_decode($param2);
 				Logger::getLog('EliteStats')->write($param1); //Logger manialive-debug is used for the moment to give the LibXmlRpc_Callback first
-				Logger::getLog('EliteStats')->write($param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
+				Logger::getLog('EliteStats')->write($decode_param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
 				//var_dump($decode_param2->DefendingClan);
-				//('mode_Elite_OnArmorEmpty', $decode_param2);
 				return;
 
 				case 'OnPlayerRequestRespawn':// This callback is sent when a player requests a respawn.
 				$decode_param2 = json_decode($param2);
 				Logger::getLog('EliteStats')->write($param1); //Logger manialive-debug is used for the moment to give the LibXmlRpc_Callback first
-				Logger::getLog('EliteStats')->write($param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
+				Logger::getLog('EliteStats')->write($decode_param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
 				//var_dump($decode_param2->DefendingClan);
-				//('mode_Elite_OnPlayerRequestRespawn', $decode_param2);
 				return;
 				
 				case 'OnShoot':// This callback is sent when a player shoots.
 				$decode_param2 = json_decode($param2);
 				Logger::getLog('EliteStats')->write($param1); //Logger manialive-debug is used for the moment to give the LibXmlRpc_Callback first
-				Logger::getLog('EliteStats')->write($param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
+				Logger::getLog('EliteStats')->write($decode_param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
 				//var_dump($decode_param2->DefendingClan);
-				//('mode_Elite_OnShoot', $decode_param2);
 				return;
 				
 				case 'OnNearMiss':// This callback is sent when the attacker shot a Laser near a defender without hitting him.
 				$decode_param2 = json_decode($param2);
 				Logger::getLog('EliteStats')->write($param1); //Logger manialive-debug is used for the moment to give the LibXmlRpc_Callback first
-				Logger::getLog('EliteStats')->write($param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
+				Logger::getLog('EliteStats')->write($decode_param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
 				//var_dump($decode_param2->DefendingClan);
-				//('mode_Elite_OnNearMiss', $decode_param2);
 				return;
 				
 				case 'EndTurn':// This callback is sent at the end of each turn.
 				$decode_param2 = json_decode($param2);
 				Logger::getLog('EliteStats')->write($param1); //Logger manialive-debug is used for the moment to give the LibXmlRpc_Callback first
-				Logger::getLog('EliteStats')->write($param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
+				Logger::getLog('EliteStats')->write($decode_param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
 				//var_dump($decode_param2->DefendingClan);
-				//('mode_Elite_EndTurn', $decode_param2);
 				return;
 				
 				case 'EndMap'://This callback is sent at the end of each map.
 				$decode_param2 = json_decode($param2);
 				Logger::getLog('EliteStats')->write($param1); //Logger manialive-debug is used for the moment to give the LibXmlRpc_Callback first
-				Logger::getLog('EliteStats')->write($param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
+				Logger::getLog('EliteStats')->write($decode_param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
 				//var_dump($decode_param2->DefendingClan);
-				//('mode_Elite_EndMap', $decode_param2);
 				return;
 				
 				case 'EndSubmatch'://This callback is sent at the end of each submatch.
 				$decode_param2 = json_decode($param2);
 				Logger::getLog('EliteStats')->write($param1); //Logger manialive-debug is used for the moment to give the LibXmlRpc_Callback first
-				Logger::getLog('EliteStats')->write($param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
+				Logger::getLog('EliteStats')->write($decode_param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
 				//var_dump($decode_param2->DefendingClan);
-				//('mode_Elite_EndSubmatch', $decode_param2);
 				return;
 				
 				case 'EndMatch'://This callback is sent at the end of each match.
 				$decode_param2 = json_decode($param2);
 				Logger::getLog('EliteStats')->write($param1); //Logger manialive-debug is used for the moment to give the LibXmlRpc_Callback first
-				Logger::getLog('EliteStats')->write($param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
+				Logger::getLog('EliteStats')->write($decode_param2); // Logger manialive-debug is used for the moment to give the Data or Array of the Callback
 				//var_dump($decode_param2->DefendingClan);
-				//('mode_Elite_EndMatch', $decode_param2);
 				return;
 				
 		}
