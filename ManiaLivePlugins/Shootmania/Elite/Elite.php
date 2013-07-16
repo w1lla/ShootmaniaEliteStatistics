@@ -9,7 +9,7 @@ SQL DB's for the most callbacks of Elite;
 Test everything first with mA lobby servers, elite/match servers.
 Better explanation of code ???
 Better calculation of players/distance nearmiss
-
+// INSERT INTO `Weapons` (`id`, `name`) VALUES (1, 'Rail'),(2, 'Rocket'),(3, 'Nucleus'), (4, 'Arrow');
 **/
 /**
  * ---------------------------------------------------------------------
@@ -66,14 +66,14 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 		
 		if(!$this->db->tableExists('Matches')) {
 			$q = "CREATE TABLE IF NOT EXISTS `Matches` (
-  `id` varchar(13) NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
   `name` varchar(45) NOT NULL,
   `team1` varchar(60) NOT NULL,
   `team2` varchar(60) NOT NULL,
   `startTime` int(11) NOT NULL,
   `endTime` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE = InnoDB DEFAULT CHARSET=utf8;";
+) ENGINE = InnoDB DEFAULT CHARSET=utf8";
 			$this->db->execute($q);
 		Console::println('[' . date('H:i:s') . '] [Shootmania] Database Elite Matches Created');
 		}
@@ -95,7 +95,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `roundId` int(11) NOT NULL,
   `mapNum` int(11) NOT NULL,
   `mapName` varchar(75) NOT NULL,
-  `matchId` varchar(13) NOT NULL,
+  `matchId` INT (13) NOT NULL,
   PRIMARY KEY (`matchId`,`player`,`roundId`,`mapNum`),
   KEY `fk_Capture_Match1` (`matchId`),
   CONSTRAINT `fk_Capture_Match1` FOREIGN KEY (`matchId`) REFERENCES `Matches` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
@@ -111,7 +111,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `roundId` int(11) NOT NULL,
   `mapNum` int(11) NOT NULL,
   `mapName` varchar(75) NOT NULL,
-  `matchId` varchar(13) NOT NULL,
+  `matchId` INT(13) NOT NULL,
   `eliminations` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`player`,`matchId`,`roundId`,`mapNum`),
   KEY `fk_Deaths_Match1` (`matchId`),
@@ -129,7 +129,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `roundId` int(11) NOT NULL,
   `mapNum` int(11) NOT NULL,
   `mapName` varchar(75) NOT NULL,
-  `matchId` varchar(13) NOT NULL,
+  `matchId` INT (13) NOT NULL,
   `shots` int(11) NOT NULL DEFAULT '0',
   `hits` int(11) NOT NULL DEFAULT '0',
   `eliminations` int(11) NOT NULL DEFAULT '0',
@@ -146,7 +146,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 		if(!$this->db->tableExists('Teams')) {
 			$q = "CREATE TABLE IF NOT EXISTS `Teams` (
   `team` varchar(50) NOT NULL DEFAULT '',
-  `matchId` varchar(13) NOT NULL,
+  `matchId` INT (13) NOT NULL,
   `mapNum` int(11) NOT NULL,
   `mapName` varchar(75) NOT NULL,
   `attack` int(10) NOT NULL DEFAULT '0',
@@ -170,7 +170,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `player` varchar(60) DEFAULT NULL,
   `MissDist` varchar(60) DEFAULT NULL,
   `weaponId` int(11) NOT NULL,
-  `matchId` varchar(13) NOT NULL,
+  `matchId` INT (13) NOT NULL,
   `mapNum` int(11) NOT NULL,
   `mapName` varchar(75) NOT NULL,
   PRIMARY KEY (`id`,`weaponId`,`mapNum`),
@@ -256,7 +256,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 				$StartTime = $decode_param2->Timestamp;
 				$BlueName = $this->connection->getTeamInfo(1)->name;
 				$RedName = $this->connection->getTeamInfo(2)->name;
-				$MatchName = ''.$RedName.' vs '.$BlueName.'';
+				$MatchName = ''.$BlueName.' vs '.$RedName.'';
 				$this->MatchNumber = $MatchNumber;
 				$BeginMatchQuery = "INSERT INTO  `matches` (
 				`id` ,
@@ -267,7 +267,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 				`endTime`
 				)
 				VALUES (
-				".$MatchNumber.", '".$MatchName."', '".$RedName."', '".$BlueName."', ".$StartTime.", '0');";
+				'', " . $this->db->quote($MatchName) . ", " . $this->db->quote($BlueName) . ", " . $this->db->quote($RedName) . ", " . $StartTime . ", '0');";
 				// Perform Query
 				$this->db->execute($BeginMatchQuery);
 				return;
@@ -311,7 +311,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 				`matchId`
 				)
 				VALUES (
-				'".$PlayerCapturedLogin."', '".$PlayerCapturedClan."', '".$this->TurnNumber."', '".$this->MapNum."', '".$this->MapName."', '".$this->MatchNumber."');";
+				" . $this->db->quote($PlayerCapturedLogin) . ", " . $this->db->quote($PlayerCapturedClan) . ", " . $this->db->quote($this->TurnNumber) . ", " .$this->db->quote($this->MapNum) . ", " . $this->db->quote($this->MapName) . ", " . $this->db->quote($this->MatchNumber) . ");";
 				// Perform Query
 				$this->db->execute($CaptureQuery);
 				return;
