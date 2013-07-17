@@ -72,7 +72,6 @@ CREATE TABLE IF NOT EXISTS `Teams` (
   `endTime` int(11) NOT NULL,
   `ClublinkUrl` varchar(100) NOT NULL,
   `TeamColour` varchar(100) NOT NULL,
-  `mapName` varchar(75) NOT NULL,
   PRIMARY KEY (`team`,`matchId`,`mapNum`),
   KEY `FK_Teams_Match` (`matchId`),
   CONSTRAINT `FK_Teams_Match` FOREIGN KEY (`matchId`) REFERENCES `Matches` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION

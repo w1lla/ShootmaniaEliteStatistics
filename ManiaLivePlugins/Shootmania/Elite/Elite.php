@@ -9,7 +9,6 @@ SQL DB's for the most callbacks of Elite;
 Test everything first with mA lobby servers, elite/match servers.
 Better explanation of code ???
 Better calculation of players/distance nearmiss
-// INSERT INTO `Weapons` (`id`, `name`) VALUES (1, 'Rail'),(2, 'Rocket'),(3, 'Nucleus'), (4, 'Arrow');
 **/
 /**
  * ---------------------------------------------------------------------
@@ -54,6 +53,9 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 		
 		$cmd = $this->registerChatCommand('endWu', 'endWarmup', 0, true, $admins);
 		$cmd->help = 'ends WarmUp in Elite.';
+		
+		$cmd = $this->registerChatCommand('weaponAdd', 'weaponAdd', 0, true, $admins);
+		$cmd->help = 'Add Weapons to DB.';
 		
 		$this->enableDatabase();
 		$this->enableDedicatedEvents();
@@ -156,6 +158,8 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `attackWinEliminate` int(10) NOT NULL DEFAULT '0',
   `defenceWinEliminate` int(10) NOT NULL DEFAULT '0',
   `endTime` int(11) NOT NULL,
+  `ClublinkUrl` varchar(100) NOT NULL,
+  `TeamColour` varchar(100) NOT NULL,
   PRIMARY KEY (`team`,`matchId`,`mapNum`),
   KEY `FK_Teams_Match` (`matchId`),
   CONSTRAINT `FK_Teams_Match` FOREIGN KEY (`matchId`) REFERENCES `Matches` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
@@ -183,7 +187,6 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 		Console::println('[' . date('H:i:s') . '] [Shootmania] Database Elite NearMiss Created');
 		}			
 		
-		
 	}
 
 	function extendWarmup($login)
@@ -194,6 +197,26 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 	function endWarmup($login)
 	{
 		$this->connection->triggerModeScriptEvent('endWarmup','');
+	}
+	
+	function weaponAdd($login)
+	{
+		/**
+		Adding WeaponsNum to Database
+		**/
+		$WeaponQuery = "INSERT INTO `Weapons` (`id`, `name`) VALUES (1, 'Rail'),(2, 'Rocket'),(3, 'Nucleus'),(5, 'Arrow');";
+		$this->db->execute('BEGIN');
+				try
+				{				
+				$this->db->execute($WeaponQuery);
+				$this->db->execute('COMMIT');
+				}
+				catch(\Exception $e)
+				{
+				$this->db->execute('ROLLBACK');
+				throw $e;
+				}
+				return;
 	}
 	
 	function onModeScriptCallback($param1, $param2) {
@@ -269,7 +292,18 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 				VALUES (
 				'', " . $this->db->quote($MatchName) . ", " . $this->db->quote($BlueName) . ", " . $this->db->quote($RedName) . ", " . $StartTime . ", '0');";
 				// Perform Query
+				$this->db->execute('BEGIN');
+				try
+				{
 				$this->db->execute($BeginMatchQuery);
+				$this->db->execute('COMMIT');
+				}
+				catch(\Exception $e)
+				{
+				$this->db->execute('ROLLBACK');
+				throw $e;
+				}
+				
 				return;
 			case 'BeginMap':
 				$decode_param2 = json_decode($param2);
@@ -289,6 +323,9 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 				$decode_param2 = json_decode($param2);
 				return;
 			case 'BeginTurn':// This callback is sent at the beginning of each turn
+				$map = $this->connection->getCurrentMapInfo();
+				$MapName = $map->name;
+				$this->MapName = $MapName;
 				$decode_param2 = json_decode($param2);
 				$TurnNumber = $decode_param2->TurnNumber;
 				$AtkClan = $decode_param2->AttackingClan;
@@ -296,12 +333,87 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 				$AtkPlayerLogin = $decode_param2->AttackingPlayer->Login;
 				$AtkPlayerNickName = $decode_param2->AttackingPlayer->Name;
 				$this->TurnNumber = $TurnNumber;
+				$BlueRGB = $this->connection->getTeamInfo(1)->rGB;
+				$RedRGB = $this->connection->getTeamInfo(1)->rGB;
+				$BlueemblemUrl = $this->connection->getTeamInfo(1)->emblemUrl;
+				$RedemblemUrl = $this->connection->getTeamInfo(2)->emblemUrl;
+				$BlueClubLink = $this->connection->getTeamInfo(1)->clubLinkUrl;
+				$RedClubLink = $this->connection->getTeamInfo(2)->clubLinkUrl;
+				$BlueName = $this->connection->getTeamInfo(1)->name;
+				$RedName = $this->connection->getTeamInfo(2)->name;
+				$Bluetest = $this->db->query("SELECT * FROM teams WHERE `team`= " . $this->db->quote($BlueName) . "  AND `mapName` = " . $this->db->quote($this->MapName) . " LIMIT 1;")->fetchObject();
+				//echo $Bluetest;
+				$Redtest = $this->db->query("SELECT * FROM teams WHERE `team`= " . $this->db->quote($RedName) . "  AND `mapName` = " . $this->db->quote($this->MapName) . " LIMIT 1;")->fetchObject();
+				//echo $Redtest;
+				//echo $TurnWinnerClan;
+            if ($Bluetest === false) {
+                $BlueENDTurnQuery = "INSERT INTO  `teams` (
+				`team` ,
+				`matchId` ,
+				`mapNum` ,
+				`mapName` ,
+				`attack` ,
+				`defence`,
+				`capture`,
+				`timeOver`,
+				`attackWinEliminate`,
+				`defenceWinEliminate`,
+				`endTime`,
+				`ClublinkUrl`,
+				`TeamColour`
+				)
+				VALUES (" . $this->db->quote($BlueName) . ", " . $this->db->quote($this->MatchNumber) . ", " . $this->db->quote($this->MapNum) . ", " . $this->db->quote($this->MapName) . ", '0', '0', '0', '0', '0', '0', '0', " . $this->db->quote($BlueClubLink) . ", " . $this->db->quote($BlueRGB) . ");";
+				// Perform Query
+				$this->db->execute('BEGIN');
+				try
+				{				
+				$this->db->execute($BlueENDTurnQuery);
+				$this->db->execute('COMMIT');
+				}
+				catch(\Exception $e)
+				{
+				$this->db->execute('ROLLBACK');
+				throw $e;
+				}
+				}
+				if ($Redtest === false) {
+				$RedENDTurnQuery = "INSERT INTO  `teams` (
+				`team` ,
+				`matchId` ,
+				`mapNum` ,
+				`mapName` ,
+				`attack` ,
+				`defence`,
+				`capture`,
+				`timeOver`,
+				`attackWinEliminate`,
+				`defenceWinEliminate`,
+				`endTime`,
+				`ClublinkUrl`,
+				`TeamColour`
+				)
+				VALUES (" . $this->db->quote($RedName) . ", " . $this->db->quote($this->MatchNumber) . ", " . $this->db->quote($this->MapNum) . ", " . $this->db->quote($this->MapName) . ", '0', '0', '0', '0', '0', '0', '0', " . $this->db->quote($RedClubLink) . ", " . $this->db->quote($RedRGB) . ");";
+				// Perform Query
+				$this->db->execute('BEGIN');
+				try
+				{				
+				$this->db->execute($RedENDTurnQuery);
+				$this->db->execute('COMMIT');
+				}
+				catch(\Exception $e)
+				{
+				$this->db->execute('ROLLBACK');
+				throw $e;
+				}
+				}
 				return;
 			case 'OnCapture':// This callback is sent when the attacker captured the pole
 				$decode_param2 = json_decode($param2);
 				$PlayerCapturedLogin = $decode_param2->Event->Player->Login;
 				$PlayerCapturedNickname = $decode_param2->Event->Player->Name;
 				$PlayerCapturedClan = $decode_param2->Event->Player->CurrentClan;
+				$Captest = $this->db->query("SELECT * FROM captures WHERE `roundId`= " . $this->db->quote($this->TurnNumber) . "  AND `mapName` = " . $this->db->quote($this->MapName) . " LIMIT 1;")->fetchObject();
+				 if ($Captest === false) {
 				$CaptureQuery = "INSERT INTO  `captures` (
 				`player` ,
 				`team` ,
@@ -313,7 +425,32 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 				VALUES (
 				" . $this->db->quote($PlayerCapturedLogin) . ", " . $this->db->quote($PlayerCapturedClan) . ", " . $this->db->quote($this->TurnNumber) . ", " .$this->db->quote($this->MapNum) . ", " . $this->db->quote($this->MapName) . ", " . $this->db->quote($this->MatchNumber) . ");";
 				// Perform Query
+				$this->db->execute('BEGIN');
+				try
+				{				
 				$this->db->execute($CaptureQuery);
+				$this->db->execute('COMMIT');
+				}
+				catch(\Exception $e)
+				{
+				$this->db->execute('ROLLBACK');
+				throw $e;
+				}
+				} else {
+				// Perform Query
+				$CapUpdate = "Update captures set roundId = ".$this->db->quote($this->TurnNumber).", mapNum = ". $this->db->quote($this->MapNum)." WHERE `mapName` = " . $this->db->quote($this->MapName) . " AND `player` = ".$this->db->quote($PlayerCapturedLogin)."";			
+				$this->db->execute('BEGIN');
+				try
+				{				
+				$this->db->execute($CapUpdate);
+				$this->db->execute('COMMIT');
+				}
+				catch(\Exception $e)
+				{
+				$this->db->execute('ROLLBACK');
+				throw $e;
+				}
+            }
 				return;
 			case 'OnHit':// This callback is sent when a player hit another player
 				$decode_param2 = json_decode($param2);
@@ -354,31 +491,86 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 				$NearMissShooterLogin = $decode_param2->Event->Shooter->Login; // Shooter Login
 				$NearMissShooterNickName = $decode_param2->Event->Shooter->Name; // Shooter Name
 				$NearMissShooterCurrentClan = $decode_param2->Event->Shooter->CurrentClan; // Shooter CurrentClan
-				Logger::getLog('EliteError')->write($NearMissCM); // Used for EliteErrors... (Bad code)
 				return;
 			case 'EndTurn':// This callback is sent at the end of each turn.
 				$decode_param2 = json_decode($param2);
 				$TurnNumber = $decode_param2->TurnNumber; // TurnNumber
+				$EndTime = $decode_param2->Timestamp;
 				$TurnAttackingClan = $decode_param2->AttackingClan; // AttackClan see sidenotes;
 				$TurnDefendingClan = $decode_param2->DefendingClan; // DefendClan see sidenotes;
-				$TurnAttackPlayerLogin = $decode_param2->AttackingPlayer->Login; // AtkPlayer Login
-				$TurnAttackPlayerNickName = $decode_param2->AttackingPlayer->Name; // AtkPlayer NickName
-				$TurnAttackPlayerCurrentClan = $decode_param2->AttackingPlayer->CurrentClan; // AtkPlayer CurrentClan see sidenotes;
 				$TurnWinnerClan = $decode_param2->TurnWinnerClan; // Winner of the Turn see sidenotes;
 				$TurnWinType = $decode_param2->WinType; // WinType; See the script
 				$Clan1RoundScore = $decode_param2->Clan1RoundScore; // Clan1RoundScore which is Blue Score
 				$Clan2RoundScore = $decode_param2->Clan2RoundScore; // Clan2RoundScore which is Red Score
 				$Clan1MapScore = $decode_param2->Clan1MapScore; // MapScore for Blue
 				$Clan2MapScore = $decode_param2->Clan2MapScore; // MapScore for Red
-				$PlayerBlue1Login = $decode_param2->ScoresTable[0]->Login; // Blue Player Login
-				$PlayerBlue2Login = $decode_param2->ScoresTable[1]->Login; // Blue Player Login
-				$PlayerBlue3Login = $decode_param2->ScoresTable[2]->Login; // Blue Player Login
-				$PlayerRed1Login = $decode_param2->ScoresTable[3]->Login; // Red Player Login
-				$PlayerRed2Login = $decode_param2->ScoresTable[4]->Login; // Red Player Login
-				$PlayerRed3Login = $decode_param2->ScoresTable[5]->Login; // Red Player Login
-				$PlayerBlue1CurrentClan = $decode_param2->ScoresTable[0]->CurrentClan; // Player Blue CurrentClan
-				$PlayerBlue2CurrentClan = $decode_param2->ScoresTable[1]->CurrentClan; // Player Blue CurrentClan
-				$PlayerBlue3CurrentClan = $decode_param2->ScoresTable[2]->CurrentClan; // Player Blue CurrentClan
+				$BlueRGB = $this->connection->getTeamInfo(1)->rGB;
+				$RedRGB = $this->connection->getTeamInfo(1)->rGB;
+				$BlueemblemUrl = $this->connection->getTeamInfo(1)->emblemUrl;
+				$RedemblemUrl = $this->connection->getTeamInfo(2)->emblemUrl;
+				$BlueClubLink = $this->connection->getTeamInfo(1)->clubLinkUrl;
+				$RedClubLink = $this->connection->getTeamInfo(2)->clubLinkUrl;
+				$BlueName = $this->connection->getTeamInfo(1)->name;
+				$RedName = $this->connection->getTeamInfo(2)->name;
+				echo $TurnWinType;
+				$WinAtkEl = '+1';
+				if($TurnWinType == "DefenseEliminated"){
+				$WinDefEl = '+1';
+				}
+				$WinAtkEl = '0';
+				if($TurnWinType == "AttackEliminated"){
+				$WinAtkEl = '+1';
+				}
+				$WinCap = '0';
+				if($TurnWinType == "Capture"){
+				$WinCap = '+1';
+				}
+				$WinTime = '0';
+				if($TurnWinType == "TimeLimit"){
+				$WinTime = '+1';
+				}
+				$AtkClan = '0';
+				if ($TurnAttackingClan == "1"){
+				$AtkClan = '+1';
+				}
+				$AtkClan = '0';
+				if ($TurnAttackingClan == "2"){
+				$AtkClan = '+1';
+				}
+				$DefClan = '0';
+				if ($TurnDefendingClan == "1"){
+				$DefClan = '+1';
+				}
+				$DefClan = '0';
+				if ($TurnDefendingClan == "2"){
+				$DefClan = '+1';
+				}
+				// Perform Query
+				$BlueUpdate = "Update teams set attack = ".$this->db->quote($AtkClan).", defence = ".$this->db->quote($DefClan).", capture = ".$this->db->quote($WinCap).", timeOver = ". $this->db->quote($WinTime).",  attackWinEliminate = " . $this->db->quote($WinDefEl) . ", defenceWinEliminate = ".$this->db->quote($WinAtkEl).", endTime = " . $this->db->quote($EndTime) . " WHERE `team` = " . $this->db->quote($BlueName) . " AND `mapName` = ".$this->db->quote($this->MapName)."";
+				echo $BlueUpdate;
+				$this->db->execute('BEGIN');
+				try
+				{				
+				$this->db->execute($BlueUpdate);
+				$this->db->execute('COMMIT');
+				}
+				catch(\Exception $e)
+				{
+				$this->db->execute('ROLLBACK');
+				throw $e;
+				}
+			$RedUpdate = "Update teams set attack = ".$this->db->quote($AtkClan).", defence = ".$this->db->quote($DefClan).", capture = ".$this->db->quote($WinCap).", timeOver = ". $this->db->quote($WinTime).",  attackWinEliminate = " . $this->db->quote($WinDefEl) . ", defenceWinEliminate = ".$this->db->quote($WinAtkEl).", endTime = " . $this->db->quote($EndTime) . " WHERE `team` = " . $this->db->quote($RedName) . " AND `mapName` = ".$this->db->quote($this->MapName."");
+			$this->db->execute('BEGIN');
+				try
+				{				
+				$this->db->execute($RedUpdate);
+				$this->db->execute('COMMIT');
+				}
+				catch(\Exception $e)
+				{
+				$this->db->execute('ROLLBACK');
+				throw $e;
+				}
 				return;
 			case 'EndMap'://This callback is sent at the end of each map.
 				$decode_param2 = json_decode($param2);
