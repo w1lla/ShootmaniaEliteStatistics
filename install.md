@@ -1,3 +1,0 @@
- - Install the latest manialive: http://www.manialive.com
- - Copy Paste the Shootmania PLugin into libraries of your manialive plugins
- - add in config.ini: manialive.plugins[] = 'Shootmania\Elite'
