@@ -119,7 +119,17 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 			$this->db->execute($q);
 		}
 		
+				if(!$this->db->tableExists('elite_maps')) {
+			$q = "CREATE TABLE IF NOT EXISTS `elite_maps` (
+  `map_id` MEDIUMINT( 5 ) NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+                                    `map_uid` VARCHAR( 27 ) NOT NULL ,
+                                    `map_name` VARCHAR( 100 ) NOT NULL ,
+									`map_author` VARCHAR( 30 ) NOT NULL
+) CHARACTER SET utf8 COLLATE utf8_general_ci ENGINE = MYISAM ;";
+			$this->db->execute($q);
+		}
 		
+		$this->updateServerChallenges();
 				
 		\ManiaLive\Event\Dispatcher::register(\ManiaLivePlugins\NadeoLive\XmlRpcScript\Event::getClass(), $this);
 		
@@ -136,6 +146,44 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 			$this->onPlayerConnect($player->login, false);
 		}
 	}
+	
+	function updateServerChallenges() {
+        //get server challenges
+        $serverChallenges = $this->storage->maps;
+        //get database challenges
+
+        $g = "SELECT * FROM `elite_maps`;";
+        $query = $this->db->query($g);
+
+        $databaseUid = array();
+        //get database uid's of tracks.
+        while ($data = $query->fetchStdObject()) {
+            $databaseUid[$data->map_uid] = $data->map_uid;
+        }
+
+        unset($data);
+        $addCounter = 0;
+        foreach ($serverChallenges as $data) {
+            // check if database doesn't have the challenge already.
+            if (!array_key_exists($data->uId, $databaseUid)) {
+                $this->insertMap($data);
+                $addCounter++;
+            }
+        }
+    }
+	
+	public function insertMap($data) {
+
+        $q = "INSERT INTO `elite_maps` (`map_uid`,
+                                    `map_name`,
+									`map_author`
+                                    )
+                                VALUES (" . $this->db->quote($data->uId) . ",
+                                " . $this->db->quote($data->name) . ",
+                                " . $this->db->quote($data->author) . "
+                                )";
+        $this->db->query($q);
+    }
 
 	function extendWarmup($login)
 	{
@@ -301,7 +349,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 	$attacks = $this->db->execute("SELECT * FROM `match_main` WHERE `team` = ".$this->db->quote($AttackClan)." and `mapUid` = ".$this->db->quote($this->storage->currentMap->uId)."")->fetchObject();
 	$qatk = "UPDATE `match_main`
 				  SET `turnNumber` = ".$TurnNumber.",
-				      `attack` = '".($attack->attack+1)."'
+				      `attack` = '".($attacks->attack+1)."'
 				  WHERE `team` = ".$this->db->quote($AttackClan)." and `mapUid` = ".$this->db->quote($this->storage->currentMap->uId)."";
 	$this->db->execute($qatk);
 	
