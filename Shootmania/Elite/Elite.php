@@ -349,7 +349,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 	$attacks = $this->db->execute("SELECT * FROM `match_main` WHERE `team` = ".$this->db->quote($AttackClan)." and `mapUid` = ".$this->db->quote($this->storage->currentMap->uId)."")->fetchObject();
 	$qatk = "UPDATE `match_main`
 				  SET `turnNumber` = ".$TurnNumber.",
-				      `attack` = '".($attacks->attack+1)."'
+				      `attack` = '".($attack->attack+1)."'
 				  WHERE `team` = ".$this->db->quote($AttackClan)." and `mapUid` = ".$this->db->quote($this->storage->currentMap->uId)."";
 	$this->db->execute($qatk);
 	
