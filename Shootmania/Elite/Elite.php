@@ -95,6 +95,9 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `Roundscore` mediumint(9) DEFAULT NULL,
   `Mapscore` mediumint(9) DEFAULT NULL,
   `Matchscore` mediumint(9) DEFAULT NULL,
+  `Team_EmblemUrl` varchar(255) NOT NULL,
+  `Team_ZonePath` varchar(50) NOT NULL,
+  `Team_RGB` varchar(50) NOT NULL,
   PRIMARY KEY (`ID`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
@@ -107,6 +110,8 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `player_nickname` varchar(100) DEFAULT NULL,
   `player_nation` varchar(50) NOT NULL,
   `player_updatedat` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `player_teamName` varchar(100) DEFAULT NULL,
+  `player_teamID` mediumint(9) NOT NULL DEFAULT '0',
   `player_kills` mediumint(9) NOT NULL DEFAULT '0',
   `player_shots` mediumint(9) NOT NULL DEFAULT '0',
   `player_nearmiss` mediumint(9) NOT NULL DEFAULT '0',
@@ -203,18 +208,23 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 	function insertPlayer($player) {
 		$g =  "SELECT * FROM `players` WHERE `player_login` = ".$this->db->quote($player->login).";";
 		$execute = $this->db->execute($g);
-
+		$teamId = $player->teamId;
+		$teamName = $this->connection->getTeamInfo($teamId+1)->name;
 		if($execute->recordCount() == 0) {
 			$q = "INSERT INTO `players` (
 					`player_login`,
 					`player_nickname`,
 					`player_nation`,
-					`player_updatedat`
+					`player_updatedat`,
+					`player_teamID`,
+					`player_teamName`
 				  ) VALUES (
 					'".$player->login."',
 					".$this->db->quote($player->nickName).",
 					".$this->db->quote(str_replace('World|', '', $player->path)).",
-					'".date('Y-m-d H:i:s')."'
+					'".date('Y-m-d H:i:s')."',
+					".$this->db->quote($teamId+1).",
+					".$this->db->quote($teamName)."
 				  )";
 		} else {
 			$q = "UPDATE `players`
@@ -228,12 +238,6 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 	}
 	
 	//Xml RPC events
-	
-	function onXmlRpcBeginMatchStart($content) // Not Working??
-	{
-	}
-	
-	
 	function onXmlRpcEliteBeginTurn($content)
 	{
 	$AttackingClan = $content->AttackingClan;
@@ -241,6 +245,12 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 	$TurnNumber = $content->TurnNumber;
 	$AttackClan = $this->connection->getTeamInfo($AttackingClan)->name;
 	$DefClan = $this->connection->getTeamInfo($DefendingClan)->name;
+	$AttackClanRGB = $this->connection->getTeamInfo($AttackingClan)->rGB;
+	$DefClanRGB = $this->connection->getTeamInfo($DefendingClan)->rGB;
+	$AttackClanEmblemUrl = $this->connection->getTeamInfo($AttackingClan)->emblemUrl;
+	$DefClanEmblemUrl = $this->connection->getTeamInfo($DefendingClan)->emblemUrl;
+	$AttackClanZonePath = $this->connection->getTeamInfo($AttackingClan)->zonePath;
+	$DefClanZonePath = $this->connection->getTeamInfo($DefendingClan)->zonePath;
 	//AtkQuery
 	$g = "SELECT * FROM `match_main` WHERE `MapUid` = ".$this->db->quote($this->storage->currentMap->uId)." and `team` =".$this->db->quote($AttackClan).";";
 	$execute = $this->db->execute($g);
@@ -258,7 +268,10 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 					`turnNumber`,
 					`Roundscore`,
 					`Mapscore`,
-					`Matchscore`
+					`Matchscore`,
+					`Team_EmblemUrl`,
+					`Team_ZonePath`,
+					`Team_RGB`
 				  ) VALUES (
 					'NULL',
 					".$this->db->quote($AttackClan).",
@@ -272,7 +285,10 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 					".$TurnNumber.",
 					'0',
 					'0',
-					'0'
+					'0',
+					".$this->db->quote($AttackClanEmblemUrl).",
+					".$this->db->quote($AttackClanZonePath).",
+					".$this->db->quote($AttackClanRGB)."
 				  )";
 	} else {
 		$attack = $this->db->execute("SELECT attack FROM `match_main` WHERE `team` = ".$this->db->quote($DefClan)." and `mapUid` = ".$this->db->quote($this->storage->currentMap->uId)."")->fetchObject();
@@ -298,7 +314,10 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 					`turnNumber`,
 					`Roundscore`,
 					`Mapscore`,
-					`Matchscore`
+					`Matchscore`,
+					`Team_EmblemUrl`,
+					`Team_ZonePath`,
+					`Team_RGB`
 				  ) VALUES (
 					'NULL',
 					".$this->db->quote($DefClan).",
@@ -312,7 +331,10 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 					".$TurnNumber.",
 					'0',
 					'0',
-					'0'
+					'0',
+					".$this->db->quote($DefClanEmblemUrl).",
+					".$this->db->quote($DefClanZonePath).",
+					".$this->db->quote($DefClanRGB)."
 				  )";
 	} else {
 	$defense = $this->db->execute("SELECT defence FROM `match_main` WHERE `team` = ".$this->db->quote($DefClan)." and `mapUid` = ".$this->db->quote($this->storage->currentMap->uId)."")->fetchObject();
@@ -349,7 +371,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 	$attacks = $this->db->execute("SELECT * FROM `match_main` WHERE `team` = ".$this->db->quote($AttackClan)." and `mapUid` = ".$this->db->quote($this->storage->currentMap->uId)."")->fetchObject();
 	$qatk = "UPDATE `match_main`
 				  SET `turnNumber` = ".$TurnNumber.",
-				      `attack` = '".($attack->attack+1)."'
+				      `attack` = '".($attacks->attack+1)."'
 				  WHERE `team` = ".$this->db->quote($AttackClan)." and `mapUid` = ".$this->db->quote($this->storage->currentMap->uId)."";
 	$this->db->execute($qatk);
 	
@@ -375,7 +397,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 	
 	$qdef = "UPDATE `match_main`
 				  SET `turnNumber` = ".$TurnNumber.",
-				      `defence` = '".($defense->defence+1)."'
+				      `defence` = '".($defenses->defence+1)."'
 				  WHERE `team` = ".$this->db->quote($DefClan)." and `mapUid` = ".$this->db->quote($this->storage->currentMap->uId)."";
 		$this->db->execute($qdef);
 		
@@ -469,6 +491,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 	
 	function onXmlRpcEliteMatchStart($content) //Not Working??
 	{
+	var_dump($content);
 	}
 	
 	function onXmlRpcEliteCapture($content)
