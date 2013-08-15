@@ -40,6 +40,8 @@ use ManiaLive\Features\Admin\AdminGroup;
 
 class Elite extends \ManiaLive\PluginHandler\Plugin {
 
+protected $MatchNumber;
+
 	function onInit() {
 		$this->setVersion('0.0.1');
 	}
@@ -60,6 +62,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 		if(!$this->db->tableExists('captures')) {
 			$q = "CREATE TABLE IF NOT EXISTS `captures` (
   `capture_id` mediumint(9) NOT NULL AUTO_INCREMENT,
+  `matchId` mediumint(9) NOT NULL,
   `capture_playerLogin` varchar(60) NOT NULL,
   `capture_mapUid` varchar(60) NOT NULL,
   `capture_time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
@@ -71,6 +74,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 		if(!$this->db->tableExists('kills')) {
 			$q = "CREATE TABLE IF NOT EXISTS `kills` (
   `kill_id` mediumint(9) NOT NULL AUTO_INCREMENT,
+  `kill_matchId` mediumint(9) NOT NULL,
   `kill_victim` varchar(60) NOT NULL,
   `kill_shooter` varchar(60) NOT NULL,
   `kill_time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
@@ -83,6 +87,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 				if(!$this->db->tableExists('match_main')) {
 			$q = "CREATE TABLE IF NOT EXISTS `match_main` (
   `ID` mediumint(9) NOT NULL AUTO_INCREMENT,
+  `matchId` mediumint(9) NOT NULL,
   `team` varchar(50) NOT NULL DEFAULT '',
   `mapUid` varchar(60) NOT NULL,
   `attack` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
@@ -106,6 +111,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 				if(!$this->db->tableExists('players')) {
 			$q = "CREATE TABLE IF NOT EXISTS `players` (
   `player_id` mediumint(9) NOT NULL AUTO_INCREMENT,
+  `player_matchId` mediumint(9) NOT NULL,
   `player_login` varchar(50) NOT NULL,
   `player_nickname` varchar(100) DEFAULT NULL,
   `player_nation` varchar(50) NOT NULL,
@@ -230,7 +236,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 			$q = "UPDATE `players`
 				  SET `player_nickname` = ".$this->db->quote($player->nickName).",
 				      `player_nation` = ".$this->db->quote(str_replace('World|', '', $player->path)).",
-				      `player_updatedat` = '".date('Y-m-d H:i:s')."'
+				      `player_updatedat` = '".date('Y-m-d H:i:s')."',
 				  WHERE `player_login` = '".$player->login."'";
 		}
 
@@ -240,6 +246,15 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 	//Xml RPC events
 	function onXmlRpcEliteBeginTurn($content)
 	{
+	foreach ($this->storage->players as $login => $player){
+	$q = "UPDATE `players`
+				  SET `player_nickname` = ".$this->db->quote($player->nickName).",
+				      `player_nation` = ".$this->db->quote(str_replace('World|', '', $player->path)).",
+				      `player_updatedat` = '".date('Y-m-d H:i:s')."',
+					  `player_matchId` = '".$this->MatchNumber."'
+				  WHERE `player_login` = '".$player->login."'";
+	$this->db->execute($q);
+	}
 	$AttackingClan = $content->AttackingClan;
 	$DefendingClan = $content->DefendingClan;
 	$TurnNumber = $content->TurnNumber;
@@ -257,6 +272,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 	if($execute->recordCount() == 0) {
 	$q = "INSERT INTO `match_main` (
 					`ID`,
+					`matchId`,
 					`team`,
 					`mapUid`,
 					`attack`,
@@ -274,6 +290,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 					`Team_RGB`
 				  ) VALUES (
 					'NULL',
+					".$this->MatchNumber.",
 					".$this->db->quote($AttackClan).",
 					".$this->db->quote($this->storage->currentMap->uId).",
 					'0',
@@ -303,6 +320,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 	if($execute->recordCount() == 0) {
 	$q = "INSERT INTO `match_main` (
 					`ID`,
+					`matchId`,
 					`team`,
 					`mapUid`,
 					`attack`,
@@ -320,6 +338,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 					`Team_RGB`
 				  ) VALUES (
 					'NULL',
+					".$this->MatchNumber.",
 					".$this->db->quote($DefClan).",
 					".$this->db->quote($this->storage->currentMap->uId).",
 					'0',
@@ -450,11 +469,13 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 
 		// Insert kill into the database
 		$q = "INSERT INTO `kills` (
+				`kill_matchId`,
 				`kill_victim`,
 				`kill_shooter`,
 				`kill_time`,
 				`kill_mapUid`
 			  ) VALUES (
+			  ".$this->MatchNumber.",
 			    '".$content->Event->Victim->Login."',
 			    '".$content->Event->Shooter->Login."',
 			    '".date('Y-m-d H:i:s')."',
@@ -492,6 +513,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 	function onXmlRpcEliteMatchStart($content) //Not Working??
 	{
 	var_dump($content);
+	$this->MatchNumber = $content->MatchNumber;
 	}
 	
 	function onXmlRpcEliteCapture($content)
@@ -499,10 +521,12 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 	$map = $this->connection->getCurrentMapInfo();
 	
 		$q = "INSERT INTO `captures` (
+				`matchId`,
 				`capture_playerLogin`,
 				`capture_mapUid`,
 				`capture_time`
 			  ) VALUES (
+			  ".$this->MatchNumber.",
 			    '".$content->Event->Player->Login."',
 			    '".$map->uId."',
 			    '".date('Y-m-d H:i:s')."'
