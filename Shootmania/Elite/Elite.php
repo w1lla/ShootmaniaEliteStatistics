@@ -292,7 +292,7 @@ protected $MatchNumber;
 					`Team_ZonePath`,
 					`Team_RGB`
 				  ) VALUES (
-					'NULL',
+					'',
 					".$this->MatchNumber.",
 					".$this->db->quote($AttackClan).",
 					".$this->db->quote($this->storage->currentMap->uId).",
@@ -340,7 +340,7 @@ protected $MatchNumber;
 					`Team_ZonePath`,
 					`Team_RGB`
 				  ) VALUES (
-					'NULL',
+					'',
 					".$this->MatchNumber.",
 					".$this->db->quote($DefClan).",
 					".$this->db->quote($this->storage->currentMap->uId).",
