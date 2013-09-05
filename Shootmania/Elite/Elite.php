@@ -226,7 +226,8 @@ protected $RoundScore_red;
   `match_map_id` mediumint(9) NOT NULL DEFAULT '0',
   `map_uid` varchar(60) NOT NULL,
   `HitDist` float default '0',
-  `player_login` varchar(50) NOT NULL,
+  `shooter_player_login` varchar(50) NOT NULL,
+  `victim_player_login` varchar(50) NOT NULL,
   `weaponid` int(11) NOT NULL,
   `weaponname` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`id`)
@@ -1021,7 +1022,8 @@ PRIMARY KEY (`id`)
 					`match_map_id`,
 					`map_uid`,
 					`HitDist`,
-					`player_login`,
+					`shooter_player_login`,
+					`victim_player_login`,
 					`weaponid`,
 					`weaponname`
 				  ) VALUES (
@@ -1029,6 +1031,7 @@ PRIMARY KEY (`id`)
 					'".$map->uId."',
 					'".$HitDist."',
 					'".$content->Event->Shooter->Login."',
+					'".$content->Event->Victim->Login."',
 					'".$weaponNum."',
 					'".$WeaponName."'
 				  )";
