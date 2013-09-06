@@ -73,6 +73,7 @@ protected $RoundScore_red;
   `player_login` varchar(60) NOT NULL,
   `map_uid` varchar(60) NOT NULL,
   `time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
@@ -103,6 +104,7 @@ protected $RoundScore_red;
   `player_shooter` varchar(60) NOT NULL,
   `time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `map_uid` varchar(60) NOT NULL,
+  `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
@@ -215,6 +217,7 @@ protected $RoundScore_red;
   `player_login` varchar(50) NOT NULL,
   `weaponid` int(11) NOT NULL,
   `weaponname` varchar(45) DEFAULT NULL,
+  `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
@@ -230,6 +233,7 @@ protected $RoundScore_red;
   `victim_player_login` varchar(50) NOT NULL,
   `weaponid` int(11) NOT NULL,
   `weaponname` varchar(45) DEFAULT NULL,
+  `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
@@ -290,7 +294,7 @@ PRIMARY KEY (`id`)
 	SET `NextMap` = '1'
 	 where `match_id` = ".$this->db->quote($this->MatchNumber)." and `map_uid` = ".$this->db->quote($map->uId)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
 	$this->db->execute($querymssac);
-	Console::println($querymapEnd);
+	Console::println($querymssac);
 	}
 	}
 	
@@ -538,7 +542,29 @@ PRIMARY KEY (`id`)
 	$BlueZonePath = $this->connection->getTeamInfo(1)->zonePath;
 	$RedZonePath = $this->connection->getTeamInfo(2)->zonePath;
 	$MatchName = ''.$Blue.' vs '.$Red.'';
+	/*$ClublinkBlue = $this->connection->getTeamInfo(1)->clubLinkUrl;
+	$ClublinkRed = $this->connection->getTeamInfo(2)->clubLinkUrl;
+	var_dump($ClublinkBlue);
+	var_dump($ClublinkRed);
+	if($ClublinkBlue == ""){
+	Console::println('No Clublink found for Team Blue');
+	}
+	else
+	{
+	$context  = stream_context_create(array('http' => array('header' => 'Accept: application/xml')));
+	$url = $ClublinkBlue;
+	$xml = file_get_contents($url, true, $context);
+	$xml = simplexml_load_string($xml);
+	$BlueSponsor1 = $xml->sponsors->sponsor[0]['name'];
+	}
 	
+	if($ClublinkRed == ""){
+	Console::println('No Clublink found for Team Red');
+	}
+	else
+	{
+	
+	}*/
 	$map = $this->connection->getCurrentMapInfo();
 	
 	$Blueteaminfo = "SELECT * FROM `teams` WHERE `teamName` = ".$this->db->quote($Blue).";";
@@ -877,6 +903,11 @@ PRIMARY KEY (`id`)
 	$this->db->execute($qde);
 	}
 	
+	
+	/*
+	Store CurrentReplays for a Turn.
+	*/
+	
 	}
 	
 	function onXmlRpcEliteArmorEmpty($content)
@@ -898,13 +929,15 @@ PRIMARY KEY (`id`)
 				`player_victim`,
 				`player_shooter`,
 				`time`,
-				`map_uid`
+				`map_uid`,
+				`matchServerLogin`
 			  ) VALUES (
 			  ".$this->MatchNumber.",
 			    '".$content->Event->Victim->Login."',
 			    '".$content->Event->Shooter->Login."',
 			    '".date('Y-m-d H:i:s')."',
-			    '".$map->uId."'
+			    '".$map->uId."',
+				".$this->db->quote($this->storage->serverLogin)."
 			  )";
 			   Console::println($q);
 		$this->db->execute($q);
@@ -1025,7 +1058,8 @@ PRIMARY KEY (`id`)
 					`shooter_player_login`,
 					`victim_player_login`,
 					`weaponid`,
-					`weaponname`
+					`weaponname`,
+					`matchServerLogin`
 				  ) VALUES (
 					".$this->MapNumber.",
 					'".$map->uId."',
@@ -1033,7 +1067,8 @@ PRIMARY KEY (`id`)
 					'".$content->Event->Shooter->Login."',
 					'".$content->Event->Victim->Login."',
 					'".$weaponNum."',
-					'".$WeaponName."'
+					'".$WeaponName."',
+					".$this->db->quote($this->storage->serverLogin)."
 				  )";
 				   Console::println($qhitdist);
 				$this->db->execute($qhitdist);
@@ -1047,12 +1082,14 @@ PRIMARY KEY (`id`)
 				`match_id`,
 				`player_login`,
 				`map_uid`,
-				`time`
+				`time`,
+				`matchServerLogin`
 			  ) VALUES (
 			  ".$this->MatchNumber.",
 			    '".$content->Event->Player->Login."',
 			    '".$map->uId."',
-			    '".date('Y-m-d H:i:s')."'
+			    '".date('Y-m-d H:i:s')."',
+				".$this->db->quote($this->storage->serverLogin)."
 			  )";
 			   Console::println($qCap);
 		$this->db->execute($qCap);
@@ -1098,14 +1135,16 @@ PRIMARY KEY (`id`)
 					`nearMissDist`,
 					`player_login`,
 					`weaponid`,
-					`weaponname`
+					`weaponname`,
+					`matchServerLogin`
 				  ) VALUES (
 					".$this->MapNumber.",
 					'".$map->uId."',
 					'".$MissDist."',
 					'".$content->Event->Shooter->Login."',
 					'".$weaponNum."',
-					'".$WeaponName."'
+					'".$WeaponName."',
+					".$this->db->quote($this->storage->serverLogin)."
 				  )";
 				   Console::println($qnearmiss);
 				$this->db->execute($qnearmiss);		  
