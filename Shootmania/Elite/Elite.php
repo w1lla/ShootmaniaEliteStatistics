@@ -48,6 +48,10 @@ protected $PlayerID;
 protected $MapNumber;
 protected $RoundScore_blue;
 protected $RoundScore_red;
+protected $BlueScoreMatch;
+protected $RedScoreMatch;
+protected $BlueMapScore;
+protected $RedMapScore;
 
 	function onInit() {
 		$this->setVersion('0.0.1');
@@ -57,13 +61,13 @@ protected $RoundScore_red;
 	
 		$admins = AdminGroup::get();
 		
-		$cmd = $this->registerChatCommand('extendWu', 'WarmUp_Extend', 0, true, $admins);
+		$cmd = $this->registerChatCommand('extendWu', 'WarmUp_Extend', 0, true);
 		$cmd->help = 'Extends WarmUp In Elite by Callvote.';
 		
-		$cmd = $this->registerChatCommand('endWu', 'WarmUp_Stop', 0, true, $admins);
+		$cmd = $this->registerChatCommand('endWu', 'WarmUp_Stop', 0, true);
 		$cmd->help = 'ends WarmUp in Elite by Callvote.';
 		
-		$cmd = $this->registerChatCommand('pause', 'pause', 0, true, $admins);
+		$cmd = $this->registerChatCommand('pause', 'pause', 0, true);
 		$cmd->help = 'Pauses match in Elite by Callvote.';
 		
 		$this->enableDatabase();
@@ -245,15 +249,15 @@ protected $RoundScore_red;
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
-
-
-				if(!$this->db->tableExists('teams')) {
-			$q = "CREATE TABLE IF NOT EXISTS `teams` (
+		
+				if(!$this->db->tableExists('clublinks')) {
+			$q = "CREATE TABLE IF NOT EXISTS `clublinks` (
   `id` mediumint(9) NOT NULL AUTO_INCREMENT,
-  `teamName` varchar(50) NOT NULL DEFAULT '',
-  `team_EmblemUrl` varchar(255) NOT NULL,
-  `team_ZonePath` varchar(50) NOT NULL,
-  `team_RGB` varchar(50) NOT NULL,
+  `Clublink_Name` varchar(255) NOT NULL DEFAULT '',
+  `Clublink_EmblemUrl` varchar(255) DEFAULT NULL,
+  `Clublink_ZonePath` varchar(50) NOT NULL,
+  `Clublink_Primary_RGB` varchar(6) NOT NULL,
+  `Clublink_Secondary_RGB` varchar(6) NOT NULL,
 PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 		$this->db->execute($q);
@@ -268,7 +272,7 @@ PRIMARY KEY (`id`)
 			new \DedicatedApi\Structures\VoteRatio('SetModeScriptSettingsAndCommands', -1.)
 			));
 		
-		//Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Core v' . $this->getVersion());
+		Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Core v' . $this->getVersion());
 		$this->connection->chatSendServerMessage('$fff» $fa0Welcome, this server uses $fff [Shootmania] Elite Stats$fa0!');
 
 		$match = $this->getServerCurrentMatch($this->storage->serverLogin);
@@ -298,7 +302,7 @@ PRIMARY KEY (`id`)
 		 $vote = new \DedicatedApi\Structures\Vote();
          $vote->cmdName = 'Echo';
          $vote->cmdParam = array('Set WarmUp Extend', 'map_warmup_extend');
-         $this->connection->callVote($vote, 0.5, 30000, 1);
+         $this->connection->callVote($vote, 0.5, 0, 1);
 	}
 	
 	function WarmUp_Stop($login)
@@ -306,7 +310,7 @@ PRIMARY KEY (`id`)
 		 $vote = new \DedicatedApi\Structures\Vote();
          $vote->cmdName = 'Echo';
          $vote->cmdParam = array('Set Warmup Stop', 'map_warmup_end');
-         $this->connection->callVote($vote, 0.5, 30000, 1);
+         $this->connection->callVote($vote, 0.5, 0, 1);
 	}
 	
 	function pause($login)
@@ -314,7 +318,7 @@ PRIMARY KEY (`id`)
 		 $vote = new \DedicatedApi\Structures\Vote();
          $vote->cmdName = 'Echo';
          $vote->cmdParam = array('Set Map to Pause', 'map_pause');
-         $this->connection->callVote($vote, 0.5, 30000, 1);
+         $this->connection->callVote($vote, 0.5, 0, 1);
 	}
 	
 	/*Callbacks and Methods  */
@@ -328,7 +332,7 @@ PRIMARY KEY (`id`)
 	SET `NextMap` = '1'
 	 where `match_id` = ".$this->db->quote($this->MatchNumber)." and `map_uid` = ".$this->db->quote($map->uId)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
 	$this->db->execute($queryNextMap);
-	//Console::println($queryNextMap);
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($queryNextMap);
 	}
 	if ($cmdName == "SetModeScriptSettingsAndCommands"){
 	$map = $this->connection->getCurrentMapInfo();
@@ -336,7 +340,7 @@ PRIMARY KEY (`id`)
 	SET `NextMap` = '1'
 	 where `match_id` = ".$this->db->quote($this->MatchNumber)." and `map_uid` = ".$this->db->quote($map->uId)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
 	$this->db->execute($querySMSSAC);
-	//Console::println($querySMSSAC);
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($querySMSSAC);
 	}
 	if ($cmdName == "JumpToMapIndex"){
 	$map = $this->connection->getCurrentMapInfo();
@@ -344,7 +348,7 @@ PRIMARY KEY (`id`)
 	SET `NextMap` = '1'
 	 where `match_id` = ".$this->db->quote($this->MatchNumber)." and `map_uid` = ".$this->db->quote($map->uId)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
 	$this->db->execute($queryJTMI);
-	//Console::println($queryJTMI);
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($queryJTMI);
 	}
 	}
 	}
@@ -444,6 +448,12 @@ PRIMARY KEY (`id`)
 			$parameter = json_decode($param2);
 			$this->onXmlRpcEliteEndMap($parameter);
 			break;
+			case 'LibXmlRpc_Scores':
+					$this->BlueScoreMatch = $param2[0];
+					$this->RedScoreMatch = $param2[1];
+					$this->BlueMapScore = $param2[2];
+					$this->RedMapScore = $param2[3];
+			break;
 		}
 	}
 	
@@ -453,7 +463,7 @@ PRIMARY KEY (`id`)
         //get database challenges
 
         $q = "SELECT * FROM `maps`;";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
         $query = $this->db->query($q);
 
         $databaseUid = array();
@@ -482,7 +492,7 @@ PRIMARY KEY (`id`)
                                 " . $this->db->quote($data->name) . ",
                                 " . $this->db->quote($data->author) . "
                                 )";
-        //Console::println($q);
+        \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$this->db->query($q);
     }
 	
@@ -497,7 +507,7 @@ PRIMARY KEY (`id`)
 	$zone[2] = "World";
 	}
 		$q =  "SELECT * FROM `players` WHERE `login` = ".$this->db->quote($player->login).";";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$execute = $this->db->execute($q);
 		if($execute->recordCount() == 0) {
 			$q = "INSERT INTO `players` (
@@ -512,7 +522,7 @@ PRIMARY KEY (`id`)
 					'".date('Y-m-d H:i:s')."'
 				  )";
 			$this->db->execute($q);
-			//Console::println($q);
+			\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		} else {
 			$q = "UPDATE `players`
 				  SET `nickname` = ".$this->db->quote($player->nickName).",
@@ -520,7 +530,7 @@ PRIMARY KEY (`id`)
 				      `updatedate` = '".date('Y-m-d H:i:s')."'
 				  WHERE `login` = ".$this->db->quote($player->login)."";
 			$this->db->execute($q);
-			//Console::println($q);
+			\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		}
 	
 	}
@@ -532,7 +542,7 @@ PRIMARY KEY (`id`)
 	$q = "UPDATE `match_maps`
 				  SET `AllReady` = '0'
 				  WHERE `match_id` =".$this->db->quote($this->MatchNumber)." and `map_uid` = ".$this->db->quote($map->uId)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-	//Console::println($q);			  
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);			  
 	$this->db->execute($q);
 	}
 	else{
@@ -546,7 +556,7 @@ PRIMARY KEY (`id`)
 	$q = "UPDATE `match_maps`
 				  SET `AllReady` = '1'
 				  WHERE `match_id` = ".$this->db->quote($this->MatchNumber)." and `map_uid` = ".$this->db->quote($map->uId)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-	//Console::println($q);		
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);		
 	$this->db->execute($q);
 	}
 	else{
@@ -558,7 +568,7 @@ PRIMARY KEY (`id`)
 
 	$map = $this->connection->getCurrentMapInfo();
 	$mapmatch = "SELECT * FROM `match_maps` WHERE `match_id` = ".$this->db->quote($this->MatchNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `map_uid` = ".$this->db->quote($map->uId)."";
-	//Console::println($mapmatch);		
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($mapmatch);		
 	$mapmatchexecute = $this->db->execute($mapmatch);
 	if($mapmatchexecute->recordCount() == 0) {
 		$qmapmatch = "INSERT INTO `match_maps` (
@@ -576,7 +586,7 @@ PRIMARY KEY (`id`)
 						'".date('Y-m-d H:i:s')."',
 						".$this->db->quote($this->storage->serverLogin)."
 					  )";
-		//Console::println($qmapmatch);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qmapmatch);
 		$this->db->execute($qmapmatch);
 		$this->MapNumber = $this->db->insertID();
 	} else {	
@@ -600,61 +610,6 @@ PRIMARY KEY (`id`)
 	
 	$map = $this->connection->getCurrentMapInfo();
 	
-	$Blueteaminfo = "SELECT * FROM `teams` WHERE `teamName` = ".$this->db->quote($Blue).";";
-	//Console::println($Blueteaminfo);
-	$execute = $this->db->execute($Blueteaminfo);
-
-	if($execute->recordCount() == 0) {
-	$qbluematch = "INSERT INTO `teams` (
-					`teamName`,
-					`team_EmblemUrl`,
-					`team_ZonePath`,
-					`team_RGB`
-				  ) VALUES (
-					".$this->db->quote($Blue).",
-					".$this->db->quote($BlueEmblemUrl).",
-					".$this->db->quote($BlueZonePath).",
-					".$this->db->quote($BlueRGB)."
-				  )";
-		//Console::println($qbluematch);
-		$this->db->execute($qbluematch);
-		// $this->BlueId = $this->db->insertID();
-		$this->BlueId = $Blue;
-	}else{
-		$Blueteaminfo = "SELECT id FROM `teams` WHERE `teamName` = ".$this->db->quote($Blue).";";
-		//Console::println($Blueteaminfo);
-		$BlueTeam = $this->db->execute($Blueteaminfo)->fetchObject();
-		// $this->BlueId = $BlueTeam->id;
-		$this->BlueId = $Blue;
-	}
-	
-	$Redteaminfo = "SELECT * FROM `teams` WHERE `teamName` = ".$this->db->quote($Red).";";
-	//Console::println($Redteaminfo);
-	$executes = $this->db->execute($Redteaminfo);
-	if($executes->recordCount() == 0) {
-	$qb = "INSERT INTO `teams` (
-					`teamName`,
-					`team_EmblemUrl`,
-					`team_ZonePath`,
-					`team_RGB`
-				  ) VALUES (
-					".$this->db->quote($Red).",
-					".$this->db->quote($RedEmblemUrl).",
-					".$this->db->quote($RedZonePath).",
-					".$this->db->quote($RedRGB)."
-					)";
-		//Console::println($qb);			
-		$this->db->execute($qb);
-		// $this->RedId = $this->db->insertID();
-		$this->RedId = $Red;
-	}else{
-		$Redteaminfo = "SELECT id FROM `teams` WHERE `teamName` = ".$this->db->quote($Red).";";
-		//Console::println($Redteaminfo);
-		$RedTeam = $this->db->execute($Redteaminfo)->fetchObject();
-		// $this->RedId = $RedTeam->id;
-		$this->RedId = $Red;
-	}
-	
 		$qmatch = "INSERT INTO `matches` (
 						`MatchName`,
 						`teamBlue`,
@@ -669,10 +624,10 @@ PRIMARY KEY (`id`)
 						`matchServerLogin`
 					  ) VALUES (
 						".$this->db->quote($MatchName).",
-						".$this->db->quote($this->BlueId).",
+						".$this->db->quote($Blue).",
 						".$this->db->quote($BlueEmblemUrl).",
 						".$this->db->quote($BlueRGB).",
-						".$this->db->quote($this->RedId).",
+						".$this->db->quote($Red).",
 						".$this->db->quote($RedEmblemUrl).",
 						".$this->db->quote($RedRGB).",
 						'0',
@@ -680,7 +635,7 @@ PRIMARY KEY (`id`)
 						'".date('Y-m-d H:i:s')."',
 						".$this->db->quote($this->storage->serverLogin)."
 					  )";
-		//Console::println($qmatch);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qmatch);
 		$this->db->execute($qmatch);
 		$this->MatchNumber = $this->db->insertID();
 	}
@@ -693,16 +648,7 @@ PRIMARY KEY (`id`)
 	$TurnNumber = $content->TurnNumber;
 	$this->TurnNumber = $TurnNumber;
 	$AttackClan = $this->connection->getTeamInfo($AttackingClan)->name;
-	// var_dump($AttackClan);
-	$q = "Select id from teams where `teamName` = ".$this->db->quote($AttackClan)."";
-	//Console::println($q);
-	$AtkId = $this->db->execute($q)->fetchObject();
-	// $AttackClan = $AtkId->id;
 	$DefClan = $this->connection->getTeamInfo($DefendingClan)->name;
-	$q = "Select id from teams where `teamName` = ".$this->db->quote($DefClan)."";
-	//Console::println($q);
-	$DefId = $this->db->execute($q)->fetchObject();
-	// $DefClan = $DefId->id;	
 	
 	$Blue = $this->connection->getTeamInfo(1)->name;
 	$Red = $this->connection->getTeamInfo(2)->name;	
@@ -713,32 +659,32 @@ PRIMARY KEY (`id`)
 
 	$qmmsr = "UPDATE `matches`
 	set teamBlue = ".$this->db->quote($Blue)." where `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `id` = ".$this->db->quote($this->MatchNumber)."";
-	 //Console::println($qmmsr);
+	 \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qmmsr);
 	$this->db->execute($qmmsr);
 	
 	$qmmsr = "UPDATE `matches`
 	set teamRed = ".$this->db->quote($Red)." where `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `id` = ".$this->db->quote($this->MatchNumber)."";
-	 //Console::println($qmmsr);
+	 \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qmmsr);
 	$this->db->execute($qmmsr);
 	
 	$qmmsr = "UPDATE `matches`
 	set teamBlue_emblem = ".$this->db->quote($BlueEmblemUrl)." where `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `id` = ".$this->db->quote($this->MatchNumber)."";
-	 //Console::println($qmmsr);
+	 \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qmmsr);
 	$this->db->execute($qmmsr);
 	
 	$qmmsr = "UPDATE `matches`
 	set teamRed_emblem = ".$this->db->quote($RedEmblemUrl)." where `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `id` = ".$this->db->quote($this->MatchNumber)."";
-	 //Console::println($qmmsr);
+	 \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qmmsr);
 	$this->db->execute($qmmsr);
 
 	$qmmsr = "UPDATE `matches`
 	set teamBlue_RGB = ".$this->db->quote($BlueRGB)." where `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `id` = ".$this->db->quote($this->MatchNumber)."";
-	 //Console::println($qmmsr);
+	 \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qmmsr);
 	$this->db->execute($qmmsr);
 	
 	$qmmsr = "UPDATE `matches`
 	set teamRed_RGB = ".$this->db->quote($RedRGB)." where `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `id` = ".$this->db->quote($this->MatchNumber)."";
-	 //Console::println($qmmsr);
+	 \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qmmsr);
 	$this->db->execute($qmmsr);
 	
 	//AtkQuery
@@ -746,10 +692,10 @@ PRIMARY KEY (`id`)
 	////var_dump($mapbt);
 	foreach ($this->storage->players as $login => $player){
 	$player_id_query = "Select id from players where `login` = ".$this->db->quote($player->login)."";
-	//Console::println($player_id_query);
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($player_id_query);
 	$PlayerID = $this->db->execute($player_id_query)->fetchObject();
 	$shots_table = "SELECT * FROM `shots` WHERE `match_map_id` = ".$this->db->quote($this->MapNumber)." and `round_id` = ".$this->db->quote($TurnNumber)." and `player_id` = ".$this->db->quote($PlayerID->id)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin).";";
-	//Console::println($shots_table);
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($shots_table);
 	$execute = $this->db->execute($shots_table);
 	if($execute->recordCount() == 0) {
 	$shots_insert = "INSERT INTO `shots` (
@@ -771,7 +717,7 @@ PRIMARY KEY (`id`)
 					'0',
 					".$this->db->quote($this->storage->serverLogin)."
 				  )";
-				  //Console::println($shots_insert);
+				  \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($shots_insert);
 		$this->db->execute($shots_insert);
 	} else {
 	}
@@ -781,11 +727,11 @@ PRIMARY KEY (`id`)
 		$teamId = $player->teamId+1;
 		$q = "Select id from players where `login` = ".$this->db->quote($player->login)."";
 		//var_dump($player);
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$PlayerID = $this->db->execute($q)->fetchObject();
 		$this->PlayerID = $PlayerID->id;
 		$playermapinfo = "SELECT * FROM `player_maps` WHERE `player_id` = ".$this->db->quote($this->PlayerID)." and `match_id` = ".$this->db->quote($this->MatchNumber)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin).";";
-		//Console::println($playermapinfo);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($playermapinfo);
 		//var_dump($playermapinfo);
 		$pmiexecute = $this->db->execute($playermapinfo);
 
@@ -813,13 +759,13 @@ PRIMARY KEY (`id`)
 						".$this->db->quote($this->storage->serverLogin)."
 					  )";
 			//var_dump($pmi);
-			//Console::println($pmi);
+			\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($pmi);
 			$this->db->execute($pmi);
 		}
 		}
 	
 	$q = "SELECT * FROM `match_details` WHERE `map_uid` = ".$this->db->quote($mapbt->uId)." and `team_id` = ".$this->db->quote($AttackClan)." and `match_id` = ".$this->db->quote($this->MatchNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin).";";
-	//Console::println($q);
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 	$execute = $this->db->execute($q);
 	if($execute->recordCount() == 0) {
 	$q = "INSERT INTO `match_details` (
@@ -845,13 +791,13 @@ PRIMARY KEY (`id`)
 					'0',
 					".$this->db->quote($this->storage->serverLogin)."
 				  )";
-				  //Console::println($q);
+				  \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$this->db->execute($q);
 	} else {
 	}
 		//DefQuery
 	$q = "SELECT * FROM `match_details` WHERE `map_uid` = ".$this->db->quote($mapbt->uId)."  and `match_id` = ".$this->db->quote($this->MatchNumber)." and `team_id` = ".$this->db->quote($DefClan)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin).";";
-	//Console::println($q);
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 	//var_dump($q);
 	$execute = $this->db->execute($q);
 	if($execute->recordCount() == 0) {
@@ -878,27 +824,121 @@ PRIMARY KEY (`id`)
 					'0',
 					".$this->db->quote($this->storage->serverLogin)."
 				  )";
-				  //Console::println($q);
+				  \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$this->db->execute($q);
 	} else {
 		}
 	$q = "Select id from players where `login` = ".$this->db->quote($content->AttackingPlayer->Login)."";
-	//Console::println($q);
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 	$qmapid = $this->db->execute($q)->fetchObject();
 	$mapmatchAtk = "UPDATE `match_maps`
 				  SET `AtkId` = ".$this->db->quote($qmapid->id)."
 				  WHERE `match_id` = ".$this->db->quote($this->MatchNumber)." and `map_uid` = ".$this->db->quote($mapbt->uId)."  and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-		//Console::println($mapmatchAtk);	  
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($mapmatchAtk);	  
 	$this->db->execute($mapmatchAtk);
 	$qatk = "Select id from players where `login` = ".$this->db->quote($content->AttackingPlayer->Login)."";
-	//Console::println($q);
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 	$qmplayer_mapsAtkRoundId = $this->db->execute($qatk)->fetchObject();
 	$q = "SELECT * FROM `player_maps` WHERE `player_id` = ".$this->db->quote($qmplayer_mapsAtkRoundId->id)." and `match_id` = ".$this->db->quote($this->MatchNumber)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-	//Console::println($q);
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 	$Atker = $this->db->execute($q)->fetchObject();
 	$q = "UPDATE `player_maps` SET `atkrounds` = ".$this->db->quote($Atker->atkrounds+1)." WHERE `player_id` = ".$this->db->quote($qmplayer_mapsAtkRoundId->id)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `match_id` = ".$this->MatchNumber."";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 	$this->db->execute($q);
+	
+	/* Clublinks*/
+	$ClublinkBlue = $this->connection->getTeamInfo(1)->clubLinkUrl;
+	$ClublinkRed = $this->connection->getTeamInfo(2)->clubLinkUrl;
+	//var_dump($ClublinkBlue);
+	//var_dump($ClublinkRed);
+	if($ClublinkBlue == NULL){
+	//Console::println('No Clublink found for Team Blue');
+	}
+	else
+	{
+	$context  = stream_context_create(array('http' => array('header' => 'Accept: application/xml')));
+	$url = $ClublinkBlue;
+	$xml = file_get_contents($url, true, $context);
+	$xml = simplexml_load_string($xml);
+	$name = $xml->name;
+	$emblem_web = $xml->emblem_web;
+	$zone = explode("|",$xml->zone);
+	if ($zone[0] == ""){
+	$zone[2] = "World";
+	}
+	$colorprimary = $xml->color['primary'];
+	$colorsecondary = $xml->color['secondary'];
+	$qcblnk =  "SELECT * FROM `clublinks` WHERE `Clublink_Name` = ".$this->db->quote($name).";";
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qcblnk);
+		$execute = $this->db->execute($qcblnk);
+		if($execute->recordCount() == 0) {
+			$qBlueClublink = "INSERT INTO `clublinks` (
+					`Clublink_Name`,
+					`Clublink_EmblemUrl`,
+					`Clublink_ZonePath`,
+					`Clublink_Primary_RGB`,
+					`Clublink_Secondary_RGB`
+				  ) VALUES (
+					".$this->db->quote($name).",
+					".$this->db->quote($emblem_web).",
+					".$this->db->quote($zone[2]).",
+					".$this->db->quote($colorprimary).",
+					".$this->db->quote($colorsecondary)."
+				  )";
+			$this->db->execute($qBlueClublink);
+			\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qBlueClublink);
+		} else {
+			$qBlueClublink = "UPDATE `clublinks`
+				  SET `Clublink_Name` = ".$this->db->quote($name)."
+				  WHERE `Clublink_Name` = ".$this->db->quote($player->login)."";
+			$this->db->execute($qBlueClublink);
+			\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qBlueClublink);
+		}
+	}
+	if($ClublinkRed == NULL){
+	//Console::println('No Clublink found for Team Red');
+	}
+	else
+	{
+	$context  = stream_context_create(array('http' => array('header' => 'Accept: application/xml')));
+	$url = $ClublinkRed;
+	$xml = file_get_contents($url, true, $context);
+	$xml = simplexml_load_string($xml);
+	$name = $xml->name;
+	$emblem_web = $xml->emblem_web;
+	$zone = explode("|",$xml->zone);
+	if ($zone[0] == ""){
+	$zone[2] = "World";
+	}
+	$colorprimary = $xml->color['primary'];
+	$colorsecondary = $xml->color['secondary'];
+	$qcblnk =  "SELECT * FROM `clublinks` WHERE `Clublink_Name` = ".$this->db->quote($name).";";
+		Console::println($qcblnk);
+		$execute = $this->db->execute($qcblnk);
+		if($execute->recordCount() == 0) {
+			$qRedClublink = "INSERT INTO `clublinks` (
+					`Clublink_Name`,
+					`Clublink_EmblemUrl`,
+					`Clublink_ZonePath`,
+					`Clublink_Primary_RGB`,
+					`Clublink_Secondary_RGB`
+				  ) VALUES (
+					".$this->db->quote($name).",
+					".$this->db->quote($emblem_web).",
+					".$this->db->quote($zone[2]).",
+					".$this->db->quote($colorprimary).",
+					".$this->db->quote($colorsecondary)."
+				  )";
+			$this->db->execute($qRedClublink);
+			\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qRedClublink);
+		} else {
+			$qRedClublink = "UPDATE `clublinks`
+				  SET `Clublink_Name` = ".$this->db->quote($name)."
+				  WHERE `Clublink_Name` = ".$this->db->quote($player->login)."";
+			$this->db->execute($qRedClublink);
+			\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qRedClublink);
+		}
+	}
 	}
 	
 	function onXmlRpcEliteEndTurn($content)
@@ -922,34 +962,26 @@ PRIMARY KEY (`id`)
 				  `Roundscore_blue` = ".$Clan1RoundScore.",
 				  `Roundscore_red` = ".$Clan2RoundScore."
 				  WHERE `match_id` = ".$this->db->quote($this->MatchNumber)." and `map_uid` = ".$this->db->quote($map->uId)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-			//Console::println($mapmatchAtk);
+			\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($mapmatchAtk);
 	$this->db->execute($mapmatchAtk);
 	$mapbt = $this->connection->getCurrentMapInfo();
 	$AttackClan = $this->connection->getTeamInfo($AttackingClan)->name;
-	$q = "Select id from teams where `teamName` = ".$this->db->quote($AttackClan)."";
-	//Console::println($q);
-	$AtkId = $this->db->execute($q)->fetchObject();
-	// $AttackClan = $AtkId->id;
 	$DefClan = $this->connection->getTeamInfo($DefendingClan)->name;
-	$q = "Select id from teams where `teamName` = ".$this->db->quote($DefClan)."";
-	//Console::println($q);
-	$DefId = $this->db->execute($q)->fetchObject();
-	// $DefClan = $DefId->id;	
 	
 	$q = "SELECT * FROM `match_details` WHERE `team_id` = ".$this->db->quote($AttackClan)." and `match_id` = ".$this->db->quote($this->MatchNumber)." and `map_uid` = ".$this->db->quote($map->uId)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-	//Console::println($q);
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 	$attacks = $this->db->execute($q)->fetchObject();
 	$qatk = "UPDATE `match_details`
 				  SET `attack` = ".$this->db->quote($attacks->attack+1)."
 				  WHERE `team_id` = ".$this->db->quote($AttackClan)." and `map_uid` = ".$this->db->quote($map->uId)." and `match_id` = ".$this->db->quote($this->MatchNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-	//Console::println($qatk);
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qatk);
 	$this->db->execute($qatk);
 	
 	if ($WinType == 'Capture'){
 	$qcapture = "UPDATE `match_details`
 				  SET `capture` = ".$this->db->quote($attacks->capture+1)."
 				  WHERE `team_id` = ".$this->db->quote($AttackClan)." and `map_uid` = ".$this->db->quote($map->uId)." and `match_id` = ".$this->db->quote($this->MatchNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-				  //Console::println($qcapture);
+				  \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qcapture);
 	$this->db->execute($qcapture);
 	}
 	
@@ -957,35 +989,35 @@ PRIMARY KEY (`id`)
 	$qawe = "UPDATE `match_details`
 				  SET `attackWinEliminate` = ".$this->db->quote($attacks->attackWinEliminate+1)."
 				  WHERE `team_id` = ".$this->db->quote($AttackClan)." and `map_uid` = ".$this->db->quote($map->uId)." and `match_id` = ".$this->db->quote($this->MatchNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-			//Console::println($qawe);	  
+			\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qawe);	  
 	$this->db->execute($qawe);
 	$q = "Select id from players where `login` = ".($this->db->quote($content->AttackingPlayer->Login));
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 	$Attackerinfo = $this->db->execute($q)->fetchObject();
 	
 	$q = "SELECT * FROM `player_maps` WHERE `player_id` = ".$this->db->quote($Attackerinfo->id)." and `match_id` = ".$this->db->quote($this->MatchNumber)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-	//Console::println($q);
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 	$AtkSucces = $this->db->execute($q)->fetchObject();
 
 	$q = "UPDATE `player_maps` SET `atkSucces` = ".$this->db->quote($AtkSucces->atkSucces+1)." WHERE `player_id` = ".$this->db->quote($Attackerinfo->id)."  and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `match_id` = ".$this->db->quote($this->MatchNumber)."";
 	$this->db->execute($q);
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 	}
 	
 	$q = "SELECT * FROM `match_details` WHERE `team_id` = ".$this->db->quote($DefClan)." and `map_uid` = ".$this->db->quote($map->uId)." and `match_id` = ".$this->db->quote($this->MatchNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-	//Console::println($q);
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 	$defenses = $this->db->execute($q)->fetchObject();
 	$qdef = "UPDATE `match_details`
 				  SET `defence` = ".$this->db->quote($defenses->defence+1)."
 				  WHERE `team_id` = ".$this->db->quote($DefClan)." and `map_uid` = ".$this->db->quote($map->uId)." and `match_id` = ".$this->db->quote($this->MatchNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-				  //Console::println($qdef);
+				  \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qdef);
 		$this->db->execute($qdef);
 		
 	if ($WinType == 'TimeLimit'){
 	$qtl = "UPDATE `match_details`
 				  SET `timeOver` = ".$this->db->quote($defenses->timeOver+1)."
 				  WHERE `team_id` = ".$this->db->quote($DefClan)." and `map_uid` = ".$this->db->quote($map->uId)." and `match_id` = ".$this->db->quote($this->MatchNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-				  //Console::println($qtl);
+				  \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qtl);
 	$this->db->execute($qtl);
 	}
 	
@@ -993,7 +1025,7 @@ PRIMARY KEY (`id`)
 	$qde = "UPDATE `match_details`
 				  SET `defenceWinEliminate` = ".$this->db->quote($defenses->defenceWinEliminate+1)."
 				  WHERE `team_id` = ".$this->db->quote($DefClan)." and `map_uid` = ".$this->db->quote($map->uId)." and `match_id` = ".$this->db->quote($this->MatchNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-				  //Console::println($qde);
+				  \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qde);
 	$this->db->execute($qde);
 	}
 	
@@ -1012,7 +1044,7 @@ PRIMARY KEY (`id`)
 	$shooter = $content->Event->Shooter;
 	$victim = $content->Event->Victim;
 	if ($shooter == NULL){
-	//Console::println('Player '.$victim->Login.' was killed in offzone.');
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write('Player '.$victim->Login.' was killed in offzone.');
 	}
 	else
 	{
@@ -1033,39 +1065,39 @@ PRIMARY KEY (`id`)
 			    '".$map->uId."',
 				".$this->db->quote($this->storage->serverLogin)."
 			  )";
-			   //Console::println($q);
+			   \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$this->db->execute($q);
 		// update kill/death statistics
 		$q = "SELECT * FROM `players` WHERE `login` = ".$this->db->quote($content->Event->Shooter->Login)."";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$shooterinfo = $this->db->execute($q)->fetchObject();
 		$q = "SELECT * FROM `player_maps` WHERE `player_id` = ".$this->db->quote($shooterinfo->id)." and `match_id` = ".$this->db->quote($this->MatchNumber)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$kills = $this->db->execute($q)->fetchObject();
 		$q = "UPDATE `player_maps` SET `kills` = ".$this->db->quote($kills->kills+1)." WHERE `player_id` = ".$this->db->quote($shooterinfo->id)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `match_id` = ".$this->db->quote($this->MatchNumber)."";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$this->db->execute($q);
 		
 		$q = "SELECT * FROM `shots` WHERE `player_id` = ".$this->db->quote($shooterinfo->id)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `round_id` = ".$this->db->quote($this->TurnNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$eliminations_query = $this->db->execute($q)->fetchObject();
 		
 		$eliminations_table = "UPDATE `shots` SET `eliminations` = ".$this->db->quote($eliminations_query->eliminations+1).", `weapon_id` = ".$this->db->quote($weaponNum)." WHERE `player_id` = ".$this->db->quote($shooterinfo->id)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `round_id` = ".$this->db->quote($this->TurnNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-		//Console::println($eliminations_table);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($eliminations_table);
 		$this->db->execute($eliminations_table);
 		
 		$q = "SELECT * FROM `players` WHERE `login` = ".$this->db->quote($content->Event->Victim->Login)."";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$victiminfo = $this->db->execute($q)->fetchObject();
 		$q = "SELECT * FROM `player_maps` WHERE `player_id` = ".$this->db->quote($victiminfo->id)." and `match_id` = ".$this->db->quote($this->MatchNumber)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$deaths = $this->db->execute($q)->fetchObject();
 
 		$q = "UPDATE `player_maps` SET `deaths` = ".$this->db->quote($deaths->deaths+1)." WHERE `player_id` = ".$this->db->quote($victiminfo->id)."  and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `match_id` = ".$this->db->quote($this->MatchNumber)."";
 		$this->db->execute($q);
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 
-		//Console::println('['.date('H:i:s').'] [ShootMania] [Elite] '.$content->Event->Victim->Login.' was killed by '.$content->Event->Shooter->Login);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write('['.date('H:i:s').'] [ShootMania] [Elite] '.$content->Event->Victim->Login.' was killed by '.$content->Event->Shooter->Login);
 	}
 	}
 	
@@ -1076,23 +1108,23 @@ PRIMARY KEY (`id`)
 		$weaponNum = $content->Event->WeaponNum;
 		
 		$q = "SELECT * FROM `players` WHERE `login` = ".$this->db->quote($content->Event->Shooter->Login)."";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$shooterinfo = $this->db->execute($q)->fetchObject();
 		
 		$q = "SELECT * FROM `player_maps` WHERE `player_id` = ".$this->db->quote($shooterinfo->id)." and `match_id` = ".$this->db->quote($this->MatchNumber)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$shots = $this->db->execute($q)->fetchObject();
 		 
 		$q = "UPDATE `player_maps` SET `shots` = ".$this->db->quote($shots->shots+1)." WHERE `player_id` = ".$this->db->quote($shooterinfo->id)."  and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `match_id` = ".$this->MatchNumber."";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$this->db->execute($q);
 		
 		$q = "SELECT * FROM `shots` WHERE `player_id` = ".$this->db->quote($shooterinfo->id)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `round_id` = ".$this->db->quote($this->TurnNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." ";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$shots_query = $this->db->execute($q)->fetchObject();
 		
 		$shots_table = "UPDATE `shots` SET `shots` = ".$this->db->quote($shots_query->shots+1).", `weapon_id` = ".$this->db->quote($weaponNum)." WHERE `player_id` = ".$this->db->quote($shooterinfo->id)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `round_id` = ".$this->db->quote($this->TurnNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-		//Console::println($shots_table);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($shots_table);
 		$this->db->execute($shots_table);
 	}
 	
@@ -1106,43 +1138,43 @@ PRIMARY KEY (`id`)
 	$map = $this->connection->getCurrentMapInfo();
 		
 		$q = "SELECT * FROM `players` WHERE `login` = ".$this->db->quote($content->Event->Shooter->Login)."";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$shooterinfo = $this->db->execute($q)->fetchObject();
 		
 		$q = "SELECT * FROM `player_maps` WHERE `player_id` = ".$this->db->quote($shooterinfo->id)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `match_id` = ".$this->db->quote($this->MatchNumber)."";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$hits = $this->db->execute($q)->fetchObject();
 		 
 		$q = "UPDATE `player_maps` SET `hits` = ".$this->db->quote($hits->hits+1)." WHERE `player_id` = ".$this->db->quote($shooterinfo->id)."  and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `match_id` = ".$this->db->quote($this->MatchNumber)."";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$this->db->execute($q);
 		
 		$q = "SELECT * FROM `shots` WHERE `player_id` = ".$this->db->quote($shooterinfo->id)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `round_id` = ".$this->db->quote($this->TurnNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$hits_query = $this->db->execute($q)->fetchObject();
 		
 		$hits_table = "UPDATE `shots` SET `hits` = ".$this->db->quote($hits_query->hits+1).", `weapon_id` = ".$this->db->quote($weaponNum)." WHERE `player_id` = ".$this->db->quote($shooterinfo->id)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `round_id` = ".$this->db->quote($this->TurnNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-		//Console::println($hits_table);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($hits_table);
 		$this->db->execute($hits_table);
 		
 		$q1 = "SELECT * FROM `players` WHERE `login` = ".$this->db->quote($content->Event->Victim->Login)."";
-		//Console::println($q1);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q1);
 		$victiminfo = $this->db->execute($q1)->fetchObject();
 		
 		$q1 = "SELECT * FROM `player_maps` WHERE `player_id` = ".$this->db->quote($victiminfo->id)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `match_id` = ".$this->db->quote($this->MatchNumber)."";
-		//Console::println($q1);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q1);
 		$counterhits = $this->db->execute($q1)->fetchObject();
 		 
 		$q1 = "UPDATE `player_maps` SET `counterhits` = ".$this->db->quote($counterhits->counterhits+1)." WHERE `player_id` = ".$this->db->quote($victiminfo->id)."  and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `match_id` = ".$this->db->quote($this->MatchNumber)."";
-		//Console::println($q1);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q1);
 		$this->db->execute($q1);
 		
 		$q1 = "SELECT * FROM `shots` WHERE `player_id` = ".$this->db->quote($victiminfo->id)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `round_id` = ".$this->db->quote($this->TurnNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-		//Console::println($q1);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q1);
 		$counterhits_query = $this->db->execute($q1)->fetchObject();
 		
 		$counterhits_table = "UPDATE `shots` SET `counterhits` = ".$this->db->quote($counterhits_query->counterhits+1).", `weapon_id` = ".$this->db->quote($weaponNum)." WHERE `player_id` = ".$this->db->quote($victiminfo->id)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `round_id` = ".$this->db->quote($this->TurnNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-		//Console::println($counterhits_table);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($counterhits_table);
 		$this->db->execute($counterhits_table);
 		
 		$qhitdist = "INSERT INTO `hits` (
@@ -1164,7 +1196,7 @@ PRIMARY KEY (`id`)
 					'".$WeaponName."',
 					".$this->db->quote($this->storage->serverLogin)."
 				  )";
-				   //Console::println($qhitdist);
+				   \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qhitdist);
 				$this->db->execute($qhitdist);
 	}
 	
@@ -1185,20 +1217,20 @@ PRIMARY KEY (`id`)
 			    '".date('Y-m-d H:i:s')."',
 				".$this->db->quote($this->storage->serverLogin)."
 			  )";
-			   //Console::println($qCap);
+			   \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qCap);
 		$this->db->execute($qCap);
 
 		// update capture statistics
 		$q = "SELECT * FROM `players` WHERE `login` = ".$this->db->quote($content->Event->Player->Login)."";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$info = $this->db->execute($q)->fetchObject();
 		
 		$q = "SELECT * FROM `player_maps` WHERE `player_id` = ".$this->db->quote($info->id)." and `match_map_id` = ".$this->db->quote($this->MapNumber)."  and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `match_id` = ".$this->db->quote($this->MatchNumber)."";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$captures = $this->db->execute($q)->fetchObject();
 		
 		$q = "UPDATE `player_maps` SET `captures` = ".$this->db->quote($captures->captures+1)." WHERE `player_id` = ".$this->db->quote($info->id)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `match_id` = ".$this->db->quote($this->MatchNumber)."";
-		//Console::println($q);
+		\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 		$this->db->execute($q);
 	}
 	
@@ -1211,17 +1243,17 @@ PRIMARY KEY (`id`)
 	$map = $this->connection->getCurrentMapInfo();
 	
 	$q = "SELECT * FROM `players` WHERE `login` = ".$this->db->quote($content->Event->Shooter->Login)."";
-	//Console::println($q);
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 	$shooterinfo = $this->db->execute($q)->fetchObject();
 	
 	$q = "SELECT * FROM `player_maps` WHERE `player_id` = ".$this->db->quote($shooterinfo->id)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `match_id` = ".$this->db->quote($this->MatchNumber)."";
-	//Console::println($q);
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 	$nearmisses = $this->db->execute($q)->fetchObject();
 	
 
 	
 	$q = "UPDATE `player_maps` SET `nearmisses` = ".$this->db->quote($nearmisses->nearmisses+1)." WHERE `player_id` = ".$this->db->quote($shooterinfo->id)." and `match_map_id` = ".$this->db->quote($this->MapNumber)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `match_id` = ".$this->db->quote($this->MatchNumber)."";
-	//Console::println($q);
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($q);
 	$this->db->execute($q);
 			$qnearmiss = "INSERT INTO `nearmisses` (
 					`match_map_id`,
@@ -1240,7 +1272,7 @@ PRIMARY KEY (`id`)
 					'".$WeaponName."',
 					".$this->db->quote($this->storage->serverLogin)."
 				  )";
-				   //Console::println($qnearmiss);
+				   \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qnearmiss);
 				$this->db->execute($qnearmiss);		  
 	}
 	
@@ -1255,20 +1287,20 @@ PRIMARY KEY (`id`)
 	 `TurnNumber` = '".$this->TurnNumber."',
 	 `AllReady` = '0'
 	 where `match_id` = ".$this->db->quote($this->MatchNumber)." and `map_uid` = ".$this->db->quote($map->uId)." and `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)."";
-	 //Console::println($querymapEnd);
+	 \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($querymapEnd);
 	$this->db->execute($querymapEnd);
 	
-	$Clan1MapScore = $content->Clan1MapScore;
-	$Clan2MapScore = $content->Clan2MapScore;
+	$this->connection->triggerModeScriptEvent('LibXmlRpc_GetScores','');
+	
 		//MatchScore Blue
 	$qmmsb = "UPDATE `matches`
-	set Matchscore_blue = ".$this->db->quote($Clan1MapScore)." where `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `id` = ".$this->db->quote($this->MatchNumber)."";
-	 //Console::println($qmmsb);
+	set Matchscore_blue = ".$this->db->quote($this->BlueScoreMatch)." where `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `id` = ".$this->db->quote($this->MatchNumber)."";
+	 \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qmmsb);
 	$this->db->execute($qmmsb);
 	//MatchScore Red
 	$qmmsr = "UPDATE `matches`
-	set Matchscore_red = ".$this->db->quote($Clan2MapScore)." where `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `id` = ".$this->db->quote($this->MatchNumber)."";
-	 //Console::println($qmmsr);
+	set Matchscore_red = ".$this->db->quote($this->RedScoreMatch)." where `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `id` = ".$this->db->quote($this->MatchNumber)."";
+	 \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qmmsr);
 	$this->db->execute($qmmsr);
 	
 	}
@@ -1279,20 +1311,20 @@ PRIMARY KEY (`id`)
 	//print_r("Nb Map to win: ") . var_dump($MapWin['S_MapWin']);
 	$queryMapWinSettingsEnd = "UPDATE `matches` SET `MatchEnd` = '".date('Y-m-d H:i:s')."'
 	where `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `id` = ".$this->db->quote($this->MatchNumber)."";
-	//Console::println($queryMapWinSettingsEnd);
+	\ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($queryMapWinSettingsEnd);
 	$this->db->execute($queryMapWinSettingsEnd);
 	
-	$Clan1MapScore = $content->Clan1MapScore;
-	$Clan2MapScore = $content->Clan2MapScore;
+	$this->connection->triggerModeScriptEvent('LibXmlRpc_GetScores','');
+
 		//MatchScore Blue
 	$qmmsb = "UPDATE `matches`
-	set Matchscore_blue = ".$this->db->quote($Clan1MapScore)." where `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `id` = ".$this->db->quote($this->MatchNumber)."";
-	 //Console::println($qmmsb);
+	set Matchscore_blue = ".$this->db->quote($this->BlueScoreMatch)." where `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `id` = ".$this->db->quote($this->MatchNumber)."";
+	 \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qmmsb);
 	$this->db->execute($qmmsb);
 	//MatchScore Red
 	$qmmsr = "UPDATE `matches`
-	set Matchscore_red = ".$this->db->quote($Clan2MapScore)." where `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `id` = ".$this->db->quote($this->MatchNumber)."";
-	 //Console::println($qmmsr);
+	set Matchscore_red = ".$this->db->quote($this->RedScoreMatch)." where `matchServerLogin` = ".$this->db->quote($this->storage->serverLogin)." and `id` = ".$this->db->quote($this->MatchNumber)."";
+	 \ManiaLive\Utilities\Logger::getLog("ElitePlugin-'".$this->storage->serverLogin."'")->write($qmmsr);
 	$this->db->execute($qmmsr);
 	}
 	
