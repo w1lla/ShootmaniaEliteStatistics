@@ -175,6 +175,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `captures` mediumint(9) NOT NULL DEFAULT '0',
   `atkrounds` mediumint(9) NOT NULL DEFAULT '0',
   `atkSucces` mediumint(9) NOT NULL DEFAULT '0',
+  `elimination_3x` mediumint(9) NOT NULL DEFAULT '0',
    `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
@@ -207,7 +208,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `MatchEnd` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
 
@@ -236,7 +237,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `match_map_id` mediumint(9) NOT NULL DEFAULT '0',
   `round_id` int(3) NOT NULL,
   `map_uid` varchar(60) NOT NULL,
-  `nearMissDist` float default '0',
+  `nearMissDist` REAL default '0',
   `player_login` varchar(50) NOT NULL,
   `weaponid` int(11) NOT NULL,
   `weaponname` varchar(45) DEFAULT NULL,
@@ -252,7 +253,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `match_map_id` mediumint(9) NOT NULL DEFAULT '0',
   `round_id` int(3) NOT NULL,
   `map_uid` varchar(60) NOT NULL,
-  `HitDist` float default '0',
+  `HitDist` REAL default '0',
   `shooter_player_login` varchar(60) NOT NULL,
   `victim_player_login` varchar(60) NOT NULL,
   `weaponid` int(11) NOT NULL,
@@ -282,7 +283,7 @@ PRIMARY KEY (`id`)
         $this->connection->setModeScriptSettings(array('S_UseScriptCallbacks' => true));
 
         $this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => true)); //Debug Way...
-        //$this->connection->setModeScriptSettings(array('S_Mode' => 1)); //Debug Way...
+        $this->connection->setModeScriptSettings(array('S_Mode' => 1)); //Debug Way...
 
         $this->connection->setCallVoteRatiosEx(false, array(
             new \DedicatedApi\Structures\VoteRatio('SetModeScriptSettingsAndCommands', -1.)
@@ -305,6 +306,10 @@ PRIMARY KEY (`id`)
         $this->enableDedicatedEvents(ServerEvent::ON_VOTE_UPDATED);
 
         foreach ($this->storage->players as $player) {
+            $this->onPlayerConnect($player->login, false);
+        }
+		
+		foreach ($this->storage->spectators as $player) {
             $this->onPlayerConnect($player->login, false);
         }
     }
@@ -410,6 +415,7 @@ PRIMARY KEY (`id`)
                 break;
             case 'BeginTurn':
                 $this->onXmlRpcEliteBeginTurn(new JsonCallbacks\BeginTurn($json));
+				 $this->connection->triggerModeScriptEvent('LibXmlRpc_GetScores', '');
                 break;
             case 'OnShoot':
                 $this->onXmlRpcEliteShoot(new JsonCallbacks\OnShoot($json));
@@ -428,6 +434,7 @@ PRIMARY KEY (`id`)
                 break;
             case 'EndTurn':
                 $this->onXmlRpcEliteEndTurn(new JsonCallbacks\EndTurn($json));
+				$this->connection->triggerModeScriptEvent('LibXmlRpc_GetScores', '');
                 break;
             case 'EndMatch':
                 $this->onXmlRpcEliteEndMatch(new JsonCallbacks\EndMatch($json));
@@ -457,7 +464,7 @@ PRIMARY KEY (`id`)
     function updateServerChallenges() {
         //get server challenges
         $serverChallenges = $this->storage->maps;
-
+	
         //get database challenges
         $q = "SELECT * FROM `maps`;";
         $query = $this->db->query($q);
@@ -893,8 +900,8 @@ PRIMARY KEY (`id`)
         $mapmatchAtk = "UPDATE `match_maps`
 				  SET `AtkId` = 0,
 				  `turnNumber` = " . $this->db->quote($content->turnNumber) . ",
-				  `Roundscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . ",
-				  `Roundscore_red` = " . $this->db->quote($this->BlueScoreMatch) . "
+				  `Roundscore_blue` = " . $this->db->quote($this->BlueMapScore) . ",
+				  `Roundscore_red` = " . $this->db->quote($this->RedMapScore) . "
 				  WHERE `match_id` = " . $this->db->quote($this->MatchNumber) . " and 
                                         `map_uid` = " . $this->db->quote($map->uId) . " and 
                                         `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
@@ -912,6 +919,12 @@ PRIMARY KEY (`id`)
 				  SET `capture` = capture + 1 WHERE `team_id` = " . $this->db->quote($attackingClan->name) . " and `map_uid` = " . $this->db->quote($map->uId) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
             $this->logger->write($qcapture);
             $this->db->execute($qcapture);
+			
+			$attackerId = $this->getPlayerId($content->attackingPlayer->login);
+			
+		    $q = "UPDATE `player_maps` SET `atkSucces` =  atkSucces + 1 WHERE `player_id` = " . $this->db->quote($attackerId) . "  and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . "";
+            $this->db->execute($q);
+            $this->logger->write($q);
         }
 
         if ($content->winType == 'DefenseEliminated') {
@@ -952,8 +965,25 @@ PRIMARY KEY (`id`)
             $this->logger->write($qde);
             $this->db->execute($qde);
         }
-
-
+		
+		foreach($content->scoresTable as $shooters){
+		$TurnHits = $shooters->turnHits;
+		$playerlogin = $shooters->login;
+		$total = count((array)$TurnHits);
+		$PlayerIdEndTurn = $this->getPlayerId($playerlogin);
+		$currentclan = $shooters->currentClan;
+		if ($currentclan == $content->defendingClan){
+		if ($total == (int)3){
+		$qth = "UPDATE `player_maps`
+		SET `elimination_3x` = elimination_3x + 1 
+		WHERE `player_id` = " . $this->db->quote($PlayerIdEndTurn) . "  and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . "";
+            $this->logger->write($qth);
+            $this->db->execute($qth);
+		}
+		}
+		
+		}
+		
         /*
           Store CurrentReplays for a Turn.
          */
@@ -1147,9 +1177,7 @@ PRIMARY KEY (`id`)
 
     function onXmlRpcEliteEndMap(JsonCallbacks\EndMap $content) {
         $querymapEnd = "UPDATE `match_maps`
-	SET `MapEnd` = '" . date('Y-m-d H:i:s', $content->timestamp) . "', 
-	 `Roundscore_blue` = " . $this->db->quote($content->clan1MapScore) . ",
-	 `Roundscore_red` = " . $this->db->quote($content->clan2MapScore) . ",
+	SET `MapEnd` = '" . date('Y-m-d H:i:s', $content->timestamp) . "',
 	 `TurnNumber` = '" . $this->TurnNumber . "',
 	 `AllReady` = '0'
 	 where `match_id` = " . $this->db->quote($this->MatchNumber) . " and `map_uid` = " . $this->db->quote($this->storage->currentMap->uId) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
