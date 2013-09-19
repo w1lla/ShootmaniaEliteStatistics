@@ -847,9 +847,30 @@ PRIMARY KEY (`id`)
     }
 
     function updateClublink($url) {
-        $context = stream_context_create(array('http' => array('header' => 'Accept: application/xml')));
-        $data = file_get_contents($url, true, $context);
-        $xml = simplexml_load_string($data);
+        	$options = array(
+		CURLOPT_RETURNTRANSFER => true,     // return web page
+		CURLOPT_HEADER         => false,    // don't return headers
+		CURLOPT_FOLLOWLOCATION => true,     // follow redirects
+		CURLOPT_ENCODING       => "",       // handle compressed
+		CURLOPT_USERAGENT      => "ShootManiaEliteStatistics", // who am i
+		CURLOPT_AUTOREFERER    => true,     // set referer on redirect
+		CURLOPT_CONNECTTIMEOUT => 120,      // timeout on connect
+		CURLOPT_TIMEOUT        => 120,      // timeout on response
+		CURLOPT_MAXREDIRS      => 10,       // stop after 10 redirects
+	);
+
+	$ch      = curl_init($url);
+	curl_setopt_array($ch, $options);
+	$content = curl_exec( $ch );
+	$err     = curl_errno( $ch );
+	$errmsg  = curl_error( $ch );
+	$header  = curl_getinfo( $ch );
+	curl_close( $ch );
+
+	$header['errno']   = $err;
+	$header['errmsg']  = $errmsg;
+	$header['content'] = $content;
+    $xml = simplexml_load_string($content);
 
         // incase the xml is malformed, bail out
         if ($xml === false)
@@ -881,7 +902,7 @@ PRIMARY KEY (`id`)
             $this->db->execute($qBlueClublink);
             $this->logger->write($qBlueClublink);
         } else {
-            /** @todo this doesn't make sense... please do review */
+            /** @todo this doesn't make sense... please do review */ /* */
             /*
               $qBlueClublink = "UPDATE `clublinks`
               SET `Clublink_Name` = " . $this->db->quote($name) . "
