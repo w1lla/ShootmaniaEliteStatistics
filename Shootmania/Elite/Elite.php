@@ -273,7 +273,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `Clublink_Primary_RGB` varchar(6) NOT NULL,
   `Clublink_Secondary_RGB` varchar(6) NOT NULL,
 PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
 		$this->db->execute($q);
 		}
 
@@ -283,7 +283,7 @@ PRIMARY KEY (`id`)
         $this->connection->setModeScriptSettings(array('S_UseScriptCallbacks' => true));
 
         $this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => true)); //Debug Way...
-        $this->connection->setModeScriptSettings(array('S_Mode' => 1)); //Debug Way...
+        $this->connection->setModeScriptSettings(array('S_UsePlayerClublinks' => true)); //Debug Way...
 
         $this->connection->setCallVoteRatiosEx(false, array(
             new \DedicatedApi\Structures\VoteRatio('SetModeScriptSettingsAndCommands', -1.)
@@ -842,7 +842,7 @@ PRIMARY KEY (`id`)
             $this->updateClublink($blue->clubLinkUrl);
         }
         if ($red->clubLinkUrl) {
-            $this->updateClublink($blue->clubLinkUrl);
+            $this->updateClublink($red->clubLinkUrl);
         }
     }
 
