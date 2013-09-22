@@ -15,7 +15,7 @@ class Log {
     }
 
     public function debug($message) {
-        \ManiaLive\Utilities\Logger::debug($message, true, "ElitePluginDebug-'" . $this->serverLogin . "'");
+        \ManiaLive\Utilities\Logger::log($message, true, "ElitePluginDebug-'" . $this->serverLogin . "'");
     }
 
 }
