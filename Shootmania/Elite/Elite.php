@@ -348,20 +348,6 @@ PRIMARY KEY (`id`)
                 $this->db->execute($queryNextMap);
                 $this->logger->write($queryNextMap);
             }
-            if ($cmdName == "SetModeScriptSettingsAndCommands") {
-                $querySMSSAC = "UPDATE `match_maps`
-	SET `NextMap` = '1'
-	 where `match_id` = " . $this->db->quote($this->MatchNumber) . " and `map_uid` = " . $this->db->quote($this->storage->currentMap->uId) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
-                $this->db->execute($querySMSSAC);
-                $this->logger->write($querySMSSAC);
-            }
-            if ($cmdName == "JumpToMapIndex") {
-                $queryJTMI = "UPDATE `match_maps`
-	SET `NextMap` = '1'
-	 where `match_id` = " . $this->db->quote($this->MatchNumber) . " and `map_uid` = " . $this->db->quote($this->storage->currentMap->uId) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
-                $this->db->execute($queryJTMI);
-                $this->logger->write($queryJTMI);
-            }
         }
     }
 
@@ -453,6 +439,13 @@ PRIMARY KEY (`id`)
                 $this->onXmlRpcEliteEndMatch(new JsonCallbacks\EndMatch($json));
                 break;
             case 'EndMap':
+			               $qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+                    $this->logger->write($qmmsb);
+                    $this->db->execute($qmmsb);
+                    //MatchScore Red
+                    $qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+                    $this->logger->write($qmmsr);
+                    $this->db->execute($qmmsr);
                 $this->onXmlRpcEliteEndMap(new JsonCallbacks\EndMap($json));
                 break;
         }
