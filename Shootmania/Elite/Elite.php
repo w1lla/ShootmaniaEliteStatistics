@@ -282,9 +282,9 @@ PRIMARY KEY (`id`)
 
         $this->connection->setModeScriptSettings(array('S_UseScriptCallbacks' => true));
 
-        //$this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => true)); //Debug Way...
+        $this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => true)); //Debug Way...
         $this->connection->setModeScriptSettings(array('S_UsePlayerClublinks' => true)); //Debug Way...
-
+		$this->connection->setModeScriptSettings(array('S_Mode' => 1));
         $this->connection->setCallVoteRatiosEx(false, array(
             new \DedicatedApi\Structures\VoteRatio('SetModeScriptSettingsAndCommands', -1.)
         ));
@@ -341,7 +341,7 @@ PRIMARY KEY (`id`)
 
     public function onVoteUpdated($stateName, $login, $cmdName, $cmdParam) {
         if ($stateName == "VotePassed") {
-            if ($cmdName == "NextMap") {
+            if ($cmdName == "SetNextMapIndex") {
                 $queryNextMap = "UPDATE `match_maps`
 	SET `NextMap` = '1'
 	 where `match_id` = " . $this->db->quote($this->MatchNumber) . " and `map_uid` = " . $this->db->quote($this->storage->currentMap->uId) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
@@ -379,9 +379,9 @@ PRIMARY KEY (`id`)
 
     function updateMatchState($matchId) {
         $state = date('Y-m-d H:i:s');
-        $matches_update = "UPDATE matches SET `MatchEnd` = '" . $state . "' WHERE id = " . intval($matchId) . "";
+        $matches_update = "UPDATE matches SET `MatchEnd` = " . $this->db->quote($state . " WHERE id = " . intval($matchId) . "";
         $this->db->execute($matches_update);
-        $match_maps_update = "UPDATE match_maps SET `MapEnd` = '" . $state . "' WHERE match_id = " . intval($matchId) . "";
+        $match_maps_update = "UPDATE match_maps SET `MapEnd` = " . $this->db->quote($state . " WHERE match_id = " . intval($matchId) . "";
         $this->db->execute($match_maps_update);
     }
 
