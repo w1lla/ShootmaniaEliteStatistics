@@ -141,7 +141,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `defenceWinEliminate` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
    `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf-8 AUTO_INCREMENT=1 ;";
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
 		
