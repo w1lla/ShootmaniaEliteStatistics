@@ -379,9 +379,9 @@ PRIMARY KEY (`id`)
 
     function updateMatchState($matchId) {
         $state = date('Y-m-d H:i:s');
-        $matches_update = "UPDATE matches SET `MatchEnd` = " . $this->db->quote($state . " WHERE id = " . intval($matchId) . "";
+        $matches_update = "UPDATE matches SET `MatchEnd` = " . $this->db->quote($state) . " WHERE id = " . intval($matchId) . "";
         $this->db->execute($matches_update);
-        $match_maps_update = "UPDATE match_maps SET `MapEnd` = " . $this->db->quote($state . " WHERE match_id = " . intval($matchId) . "";
+        $match_maps_update = "UPDATE match_maps SET `MapEnd` = " . $this->db->quote($state) . " WHERE match_id = " . intval($matchId) . "";
         $this->db->execute($match_maps_update);
     }
 
