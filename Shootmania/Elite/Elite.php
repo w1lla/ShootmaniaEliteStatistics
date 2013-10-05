@@ -805,9 +805,12 @@ PRIMARY KEY (`id`)
             
         }
 
-        // Players and stuff       
+        // Players and stuff
+		if ($content->attackingPlayer == NULL){
+		}
+		else
+		{
         $AtkPlayer = $this->getPlayerId($content->attackingPlayer->login);
-
         $mapmatchAtk = "UPDATE `match_maps` SET 
                                             `AtkId` = " . $this->db->quote($AtkPlayer) . "
                                             WHERE 
@@ -833,7 +836,7 @@ PRIMARY KEY (`id`)
                                     `match_id` = " . $this->MatchNumber . "";
         $this->logger->write($q);
         $this->db->execute($q);
-
+		}
         /* Clublinks */
 
         if ($blue->clubLinkUrl) {
