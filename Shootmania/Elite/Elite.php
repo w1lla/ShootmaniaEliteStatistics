@@ -428,10 +428,10 @@ PRIMARY KEY (`id`)
                 $this->onXmlRpcEliteEndTurn(new JsonCallbacks\EndTurn($json));
                 break;
             case 'EndMatch':			
-						if ($this->MatchNumber) {
-					$ClanMapDataVariables = $this->connection->getModeScriptVariables();
-                    $this->BlueScoreMatch = $ClanMapDataVariables['Clan1MatchPoints'];
-                    $this->RedScoreMatch = $ClanMapDataVariables['Clan2MatchPoints'];
+					if ($this->MatchNumber) {
+					$ClanEndMatchDataVariables = $this->connection->getModeScriptVariables();
+                    $this->BlueScoreMatch = $ClanEndMatchDataVariables['Clan1MatchPoints'];
+                    $this->RedScoreMatch = $ClanEndMatchDataVariables['Clan2MatchPoints'];
 				$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
                     $this->logger->write($qmmsb);
                     $this->db->execute($qmmsb);
@@ -443,10 +443,10 @@ PRIMARY KEY (`id`)
                 $this->onXmlRpcEliteEndMatch(new JsonCallbacks\EndMatch($json));
                 break;
             case 'EndMap':
-									if ($this->MatchNumber) {
-					$ClanMapDataVariables = $this->connection->getModeScriptVariables();
-                    $this->BlueScoreMatch = $ClanMapDataVariables['Clan1MatchPoints'];
-                    $this->RedScoreMatch = $ClanMapDataVariables['Clan2MatchPoints'];
+					if ($this->MatchNumber) {
+					$ClanEndMapDataVariables = $this->connection->getModeScriptVariables();
+                    $this->BlueScoreMatch = $ClanEndMapDataVariables['Clan1MatchPoints'];
+                    $this->RedScoreMatch = $ClanEndMapDataVariables['Clan2MatchPoints'];
 				$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
                     $this->logger->write($qmmsb);
                     $this->db->execute($qmmsb);
@@ -457,6 +457,20 @@ PRIMARY KEY (`id`)
 				}
                 $this->onXmlRpcEliteEndMap(new JsonCallbacks\EndMap($json));
                 break;
+			case 'LibXmlRpc_Scores':
+				if($this->MatchNumber)
+				{
+					$this->BlueScoreMatch = $json[0];
+					$this->RedScoreMatch = $json[1];
+					$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+                    $this->logger->write($qmmsb);
+                    $this->db->execute($qmmsb);
+                 //MatchScore Red
+                $qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+                    $this->logger->write($qmmsr);
+                    $this->db->execute($qmmsr);
+				}
+				break;
         }
     }
 
