@@ -201,8 +201,8 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `teamRed` varchar(50) NOT NULL DEFAULT '',
   `teamRed_emblem` varchar(250) NOT NULL DEFAULT '',
   `teamRed_RGB` varchar(50) NOT NULL DEFAULT '',
-  `Matchscore_blue` mediumint(9) NOT NULL DEFAULT '0',
-  `Matchscore_red` mediumint(9) NOT NULL DEFAULT '0',
+  `Matchscore_blue` INT(10) NOT NULL DEFAULT '0',
+  `Matchscore_red` INT(10) NOT NULL DEFAULT '0',
   `MatchStart` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `MatchEnd` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `matchServerLogin` VARCHAR(250) NOT NULL,
@@ -219,8 +219,8 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `match_id` mediumint(9) NOT NULL DEFAULT '0',
   `map_uid` varchar(60) NOT NULL,
   `turnNumber` mediumint(9) NOT NULL DEFAULT '0',
-  `Roundscore_blue` mediumint(9) NOT NULL DEFAULT '0',
-  `Roundscore_red` mediumint(9) NOT NULL DEFAULT '0',
+  `Roundscore_blue` INT(10) NOT NULL DEFAULT '0',
+  `Roundscore_red` INT(10) NOT NULL DEFAULT '0',
   `MapStart` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `MapEnd` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `AtkId` mediumint(9) DEFAULT '0',
@@ -393,18 +393,6 @@ PRIMARY KEY (`id`)
                 $this->onXmlRpcEliteMatchStart(new JsonCallbacks\BeginMatch($json));
                 break;
             case 'BeginMap':
-			if ($this->MatchNumber) {
-					$ClanMapDataVariables = $this->connection->getModeScriptVariables();
-                    $this->BlueScoreMatch = $ClanMapDataVariables['Clan1MatchPoints'];
-                    $this->RedScoreMatch = $ClanMapDataVariables['Clan2MatchPoints'];
-				$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
-                    $this->logger->write($qmmsb);
-                    $this->db->execute($qmmsb);
-                 //MatchScore Red
-                $qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
-                    $this->logger->write($qmmsr);
-                    $this->db->execute($qmmsr);
-				}
                 $this->onXmlRpcEliteMapStart(new JsonCallbacks\BeginMap($json));
                 break;
             case 'BeginWarmup':
@@ -440,7 +428,18 @@ PRIMARY KEY (`id`)
                 $this->onXmlRpcEliteEndTurn(new JsonCallbacks\EndTurn($json));
                 break;
             case 'EndMatch':			
-			 //MatchScore Blue
+						if ($this->MatchNumber) {
+					$ClanMapDataVariables = $this->connection->getModeScriptVariables();
+                    $this->BlueScoreMatch = $ClanMapDataVariables['Clan1MatchPoints'];
+                    $this->RedScoreMatch = $ClanMapDataVariables['Clan2MatchPoints'];
+				$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+                    $this->logger->write($qmmsb);
+                    $this->db->execute($qmmsb);
+                 //MatchScore Red
+                $qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+                    $this->logger->write($qmmsr);
+                    $this->db->execute($qmmsr);
+				}
                 $this->onXmlRpcEliteEndMatch(new JsonCallbacks\EndMatch($json));
                 break;
             case 'EndMap':
@@ -1221,8 +1220,7 @@ PRIMARY KEY (`id`)
         $this->db->execute($queryMapWinSettingsEnd);
     }
 
-    protected
-            function getWeaponName($num) {
+    protected function getWeaponName($num) {
         switch ($num) {
             case 1:
                 return 'laser';
