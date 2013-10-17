@@ -3,7 +3,7 @@
 /**
   Name: Willem 'W1lla' van den Munckhof
   Date: Unknown but before ESWC
-  Project Name: eXpansion project www.exp-tm.team.com
+  Project Name: ESWC ELite Statistics
 
   What to do:
 
@@ -206,7 +206,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `MatchStart` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `MatchEnd` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `matchServerLogin` VARCHAR(250) NOT NULL,
-  `competition_id` INT NOT NULL DEFAULT '1',
+  `competition_id` INT(10) NOT NULL DEFAULT '1',
   `show` boolean default '0',
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
@@ -356,7 +356,7 @@ PRIMARY KEY (`id`)
     function onEcho($internal, $public) {
         switch ($internal) {
             case "map_pause":
-                $getdata = $this->connection->sendModeScriptCommands(array("Command_ForceWarmUp" => true));
+                $this->connection->sendModeScriptCommands(array("Command_ForceWarmUp" => true));
                 break;
             case "map_warmup_extend":
                 try {
