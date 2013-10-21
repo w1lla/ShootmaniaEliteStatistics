@@ -2,12 +2,11 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: Unknown but before ESWC
-  Project Name: ESWC ELite Statistics
+  Date: 21-10-2013
+  Project Name: ESWC Elite Statistics
 
   What to do:
 
- * */
 /**
  * ---------------------------------------------------------------------
  * This program is free software: you can redistribute it and/or modify
@@ -891,7 +890,10 @@ PRIMARY KEY (`id`)
         // incase the xml is malformed, bail out
         if ($xml === false)
             return;
-
+		
+		if ($xml->getName() != "club")
+		return;
+		
         $zone = explode("|", $xml->zone);
         if ($zone[0] == "") {
             $zone[2] = "World";
