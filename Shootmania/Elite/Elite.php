@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 21-10-2013
+  Date: 31-10-2013
   Project Name: ESWC Elite Statistics
 
   What to do:
@@ -78,6 +78,9 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 
         $cmd = $this->registerChatCommand('pause', 'pause', 0, true);
         $cmd->help = 'Pauses match in Elite by Callvote.';
+		
+		$cmd = $this->registerChatCommand('newmatch', 'newmatch', 0, true, $admins);
+        $cmd->help = 'Admin Starts a new Match.';
 
         $this->enableDatabase();
         $this->enableDedicatedEvents();
@@ -282,9 +285,9 @@ PRIMARY KEY (`id`)
 
         $this->connection->setModeScriptSettings(array('S_UseScriptCallbacks' => true));
 
-        $this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => false)); //Debug Way...
+        //$this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => false)); //Debug Way...
         $this->connection->setModeScriptSettings(array('S_UsePlayerClublinks' => true)); //Debug Way...
-		$this->connection->setModeScriptSettings(array('S_Mode' => 1));
+		$this->connection->setModeScriptSettings(array('S_Mode' => 0));
         $this->connection->setCallVoteRatiosEx(false, array(
             new \DedicatedApi\Structures\VoteRatio('SetModeScriptSettingsAndCommands', -1.)
         ));
@@ -336,6 +339,18 @@ PRIMARY KEY (`id`)
         $vote->cmdName = 'Echo';
         $vote->cmdParam = array('Set Map to Pause', 'map_pause');
         $this->connection->callVote($vote, 0.5, 0, 1);
+    }
+	
+	function newmatch($login) {
+        $match = $this->getServerCurrentMatch($this->storage->serverLogin);
+        if ($match) {
+            //var_dump($match);
+            $this->updateMatchState($match);
+        }
+
+        //Restart map to initialize script
+        $this->connection->executeMulticall(); // Flush calls
+        $this->connection->restartMap();
     }
 
     /* Callbacks and Methods  */
@@ -920,14 +935,6 @@ PRIMARY KEY (`id`)
             $this->db->execute($qBlueClublink);
             $this->logger->write($qBlueClublink);
         } else {
-            /** @todo this doesn't make sense... please do review */ /* */
-            /*
-              $qBlueClublink = "UPDATE `clublinks`
-              SET `Clublink_Name` = " . $this->db->quote($name) . "
-              WHERE `Clublink_Name` = " . $this->db->quote($player->login) . "";
-              $this->db->execute($qBlueClublink);
-              $this->logger->write($qBlueClublink);
-             */
         }
     }
 
