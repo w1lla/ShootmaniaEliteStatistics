@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 31-10-2013
+  Date: 1/11/2013
   Project Name: ESWC Elite Statistics
 
   What to do:
@@ -81,7 +81,14 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 		
 		$cmd = $this->registerChatCommand('newmatch', 'newmatch', 0, true, $admins);
         $cmd->help = 'Admin Starts a new Match.';
-
+		
+		$cmd = $this->registerChatCommand('bo5', 'bo5', 0, true, $admins);
+        $cmd->help = 'Admin set mapWin to 3.';
+		
+		$cmd = $this->registerChatCommand('bo3', 'bo3', 0, true, $admins);
+        $cmd->help = 'Admin set mapWin to 2';
+		
+		
         $this->enableDatabase();
         $this->enableDedicatedEvents();
 
@@ -158,7 +165,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   UNIQUE KEY `login` (`login`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
-		}
+		}		
 		
 		if(!$this->db->tableExists('player_maps')) {
 			$q = "CREATE TABLE IF NOT EXISTS `player_maps` (
@@ -351,6 +358,14 @@ PRIMARY KEY (`id`)
         //Restart map to initialize script
         $this->connection->executeMulticall(); // Flush calls
         $this->connection->restartMap();
+    }
+	
+	function bo3($login) {
+	$this->connection->setModeScriptSettings(array('S_MapWin' => 2));
+    }
+	
+	function bo5($login) {
+       $this->connection->setModeScriptSettings(array('S_MapWin' => 3));
     }
 
     /* Callbacks and Methods  */
