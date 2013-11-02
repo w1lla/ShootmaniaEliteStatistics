@@ -203,6 +203,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 				if(!$this->db->tableExists('matches')) {
 			$q = "CREATE TABLE IF NOT EXISTS `matches` (
   `id` INT NOT NULL AUTO_INCREMENT,
+  `matchId` INT(10) NULL DEFAULT NULL,
   `MatchName` varchar(50) NOT NULL DEFAULT '',
   `teamBlue` varchar(50) NOT NULL DEFAULT '',
   `teamBlue_emblem` varchar(250) NOT NULL DEFAULT '',
@@ -403,14 +404,14 @@ PRIMARY KEY (`id`)
 
     function getServerCurrentMatch($serverLogin) {
         return $this->db->execute(
-                        'SELECT id FROM matches ' .
+                        'SELECT matchId FROM matches ' .
                         'where MatchEnd = "0000-00-00 00:00:00" and `matchServerLogin` = ' . $this->db->quote($serverLogin) .
                         'order by id desc')->fetchSingleValue();
     }
 
     function updateMatchState($matchId) {
         $state = date('Y-m-d H:i:s');
-        $matches_update = "UPDATE matches SET `MatchEnd` = " . $this->db->quote($state) . " WHERE id = " . intval($matchId) . "";
+        $matches_update = "UPDATE matches SET `MatchEnd` = " . $this->db->quote($state) . " WHERE matchId = " . intval($matchId) . "";
         $this->db->execute($matches_update);
         $match_maps_update = "UPDATE match_maps SET `MapEnd` = " . $this->db->quote($state) . " WHERE match_id = " . intval($matchId) . "";
         $this->db->execute($match_maps_update);
@@ -461,11 +462,11 @@ PRIMARY KEY (`id`)
 					$ClanEndMatchDataVariables = $this->connection->getModeScriptVariables();
                     $this->BlueScoreMatch = $ClanEndMatchDataVariables['Clan1MatchPoints'];
                     $this->RedScoreMatch = $ClanEndMatchDataVariables['Clan2MatchPoints'];
-				$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+				$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `matchId` = " . $this->db->quote($this->MatchNumber) . "";
                     $this->logger->write($qmmsb);
                     $this->db->execute($qmmsb);
                  //MatchScore Red
-                $qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+                $qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `matchId` = " . $this->db->quote($this->MatchNumber) . "";
                     $this->logger->write($qmmsr);
                     $this->db->execute($qmmsr);
 				}
@@ -476,11 +477,11 @@ PRIMARY KEY (`id`)
 					$ClanEndMapDataVariables = $this->connection->getModeScriptVariables();
                     $this->BlueScoreMatch = $ClanEndMapDataVariables['Clan1MatchPoints'];
                     $this->RedScoreMatch = $ClanEndMapDataVariables['Clan2MatchPoints'];
-				$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+				$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `matchId` = " . $this->db->quote($this->MatchNumber) . "";
                     $this->logger->write($qmmsb);
                     $this->db->execute($qmmsb);
                  //MatchScore Red
-                $qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+                $qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `matchId` = " . $this->db->quote($this->MatchNumber) . "";
                     $this->logger->write($qmmsr);
                     $this->db->execute($qmmsr);
 				}
@@ -491,11 +492,11 @@ PRIMARY KEY (`id`)
 				{
 					$this->BlueScoreMatch = $json[0];
 					$this->RedScoreMatch = $json[1];
-					$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+					$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `matchId` = " . $this->db->quote($this->MatchNumber) . "";
                     $this->logger->write($qmmsb);
                     $this->db->execute($qmmsb);
                  //MatchScore Red
-                $qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+                $qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `matchId` = " . $this->db->quote($this->MatchNumber) . "";
                     $this->logger->write($qmmsr);
                     $this->db->execute($qmmsr);
 				}
@@ -626,12 +627,13 @@ PRIMARY KEY (`id`)
 
         $MatchName = '' . $blue->name . ' vs ' . $red->name . '';
         $state = date('Y-m-d H:i:s');
-		$q = "SELECT * FROM `matches` WHERE `id` = " . $this->db->quote($content->matchNumber) . " and MatchEnd = " . $this->db->quote($state) . ";";
+		$q = "SELECT * FROM `matches` WHERE `matchId` = " . $this->db->quote($content->matchNumber) . " and MatchEnd = " . $this->db->quote($state) . ";";
         $this->logger->write($q);
         $execute = $this->db->execute($q);
 
         if ($execute->recordCount() == 0) {
         $qmatch = "INSERT INTO `matches` (
+						`matchId`,
 						`MatchName`,
 						`teamBlue`,
 						`teamBlue_emblem`,
@@ -644,6 +646,7 @@ PRIMARY KEY (`id`)
 						`MatchStart`,
 						`matchServerLogin`
 					  ) VALUES (
+						" . $this->db->quote($content->matchNumber) . ",
 						" . $this->db->quote($MatchName) . ",
 						" . $this->db->quote($blue->name) . ",
 						" . $this->db->quote($blue->emblemUrl) . ",
@@ -659,6 +662,7 @@ PRIMARY KEY (`id`)
         $this->logger->write($qmatch);
         $this->db->execute($qmatch);
         $this->MatchNumber = $this->db->insertID();
+		$matchId = $this->MatchNumber;
 		}
 		else{
 		$qmatch = "INSERT INTO `matches` (
@@ -737,7 +741,7 @@ PRIMARY KEY (`id`)
 	SET teamBlue = " . $this->db->quote($blue->name) . ",
             teamBlue_emblem = " . $this->db->quote($blue->emblemUrl) . ",
             teamBlue_RGB = " . $this->db->quote($blue->rGB) . " 
-            WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+            WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `matchId` = " . $this->db->quote($this->MatchNumber) . "";
         $this->logger->write($qmmsb);
         $this->db->execute($qmmsb);
 
@@ -745,7 +749,7 @@ PRIMARY KEY (`id`)
 	SET teamRed = " . $this->db->quote($red->name) . ",
             teamRed_emblem = " . $this->db->quote($red->emblemUrl) . ",
             teamRed_RGB = " . $this->db->quote($red->rGB) . " 
-            WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+            WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `matchId` = " . $this->db->quote($this->MatchNumber) . "";
         $this->logger->write($qmmsr);
         $this->db->execute($qmmsr);
 
@@ -1298,7 +1302,7 @@ PRIMARY KEY (`id`)
                                                     `MatchEnd` = '" . date('Y-m-d H:i:s') . "'
                                                      WHERE
                                                     `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and 
-                                                    `id` = " . $this->db->quote($this->MatchNumber) . "";
+                                                    `matchId` = " . $this->db->quote($this->MatchNumber) . "";
         $this->logger->write($queryMapWinSettingsEnd);
         $this->db->execute($queryMapWinSettingsEnd);
     }
