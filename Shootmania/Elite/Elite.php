@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 1/11/2013
+  Date: 2-11-2013
   Project Name: ESWC Elite Statistics
 
   What to do:
@@ -625,7 +625,12 @@ PRIMARY KEY (`id`)
         $red = $this->connection->getTeamInfo(2);
 
         $MatchName = '' . $blue->name . ' vs ' . $red->name . '';
+        
+		$q = "SELECT * FROM `matches` WHERE `id` = " . $this->db->quote($content->matchNumber) . ";";
+        $this->logger->write($q);
+        $execute = $this->db->execute($q);
 
+        if ($execute->recordCount() == 0) {
         $qmatch = "INSERT INTO `matches` (
 						`MatchName`,
 						`teamBlue`,
@@ -654,6 +659,7 @@ PRIMARY KEY (`id`)
         $this->logger->write($qmatch);
         $this->db->execute($qmatch);
         $this->MatchNumber = $this->db->insertID();
+		}
     }
 
     function onXmlRpcEliteMapStart(JsonCallbacks\BeginMap $content) {
