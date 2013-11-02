@@ -625,8 +625,8 @@ PRIMARY KEY (`id`)
         $red = $this->connection->getTeamInfo(2);
 
         $MatchName = '' . $blue->name . ' vs ' . $red->name . '';
-        
-		$q = "SELECT * FROM `matches` WHERE `id` = " . $this->db->quote($content->matchNumber) . ";";
+        $state = date('Y-m-d H:i:s');
+		$q = "SELECT * FROM `matches` WHERE `id` = " . $this->db->quote($content->matchNumber) . " and MatchEnd = " . $this->db->quote($state) . ";";
         $this->logger->write($q);
         $execute = $this->db->execute($q);
 
@@ -659,6 +659,33 @@ PRIMARY KEY (`id`)
         $this->logger->write($qmatch);
         $this->db->execute($qmatch);
         $this->MatchNumber = $this->db->insertID();
+		}
+		else{
+		$qmatch = "INSERT INTO `matches` (
+						`MatchName`,
+						`teamBlue`,
+						`teamBlue_emblem`,
+						`teamBlue_RGB`,
+						`teamRed`,
+						`teamRed_emblem`,
+						`teamRed_RGB`,
+						`Matchscore_blue`,
+						`Matchscore_red`,
+						`MatchStart`,
+						`matchServerLogin`
+					  ) VALUES (
+						" . $this->db->quote($MatchName) . ",
+						" . $this->db->quote($blue->name) . ",
+						" . $this->db->quote($blue->emblemUrl) . ",
+						" . $this->db->quote($blue->rGB) . ",
+						" . $this->db->quote($red->name) . ",
+						" . $this->db->quote($red->emblemUrl) . ",
+						" . $this->db->quote($red->rGB) . ",
+						'0',
+						'0',
+						'" . date('Y-m-d H:i:s') . "',
+						" . $this->db->quote($this->storage->serverLogin) . "
+					  )";
 		}
     }
 
