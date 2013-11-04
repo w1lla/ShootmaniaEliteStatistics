@@ -39,6 +39,7 @@ use ManiaLive\DedicatedApi\Callback\Event as ServerEvent;
 use ManiaLive\Utilities\Validation;
 use ManiaLivePlugins\Shootmania\Elite\JsonCallbacks;
 use ManiaLivePlugins\Shootmania\Elite\Classes\Log;
+use ManiaLib\Gui\Elements\Icons128x128_1;
 
 class Elite extends \ManiaLive\PluginHandler\Plugin {
 
@@ -63,7 +64,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
 
     function onInit() {
-        $this->setVersion('0.0.1');
+        $this->setVersion('0.4.0');
 		
         $this->logger = new Log($this->storage->serverLogin);
 	}
@@ -80,17 +81,21 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
         $cmd->help = 'Pauses match in Elite by Callvote.';
 		
 		$cmd = $this->registerChatCommand('newmatch', 'newmatch', 0, true, $admins);
+		$cmd->isPublic = false;
         $cmd->help = 'Admin Starts a new Match.';
 		
 		$cmd = $this->registerChatCommand('bo5', 'bo5', 0, true, $admins);
+		$cmd->isPublic = false;
         $cmd->help = 'Admin set mapWin to 3.';
 		
 		$cmd = $this->registerChatCommand('bo3', 'bo3', 0, true, $admins);
+		$cmd->isPublic = false;
         $cmd->help = 'Admin set mapWin to 2';
 		
 		
         $this->enableDatabase();
         $this->enableDedicatedEvents();
+		$this->enablePluginEvents();
 
         if(!$this->db->tableExists('captures')) {
 			$q = "CREATE TABLE IF NOT EXISTS `captures` (
@@ -286,15 +291,18 @@ PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
 		$this->db->execute($q);
 		}
+		
+				if($this->isPluginLoaded('Standard\Menubar'))
+			$this->onPluginLoaded('Standard\Menubar');
 	}
 	    function onReady() {
         $this->updateServerChallenges();
 
         $this->connection->setModeScriptSettings(array('S_UseScriptCallbacks' => true));
 
-        //$this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => false)); //Debug Way...
+        $this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => false)); //Debug Way...
         $this->connection->setModeScriptSettings(array('S_UsePlayerClublinks' => true)); //Debug Way...
-		$this->connection->setModeScriptSettings(array('S_Mode' => 0));
+		//$this->connection->setModeScriptSettings(array('S_Mode' => 0));
         $this->connection->setCallVoteRatiosEx(false, array(
             new \DedicatedApi\Structures\VoteRatio('SetModeScriptSettingsAndCommands', -1.)
         ));
@@ -324,10 +332,83 @@ PRIMARY KEY (`id`)
         }
 		
     }
+	
+	function onPluginLoaded($pluginId)
+	{
+		if($pluginId == 'Standard\Menubar')
+			$this->buildMenu();
+	}
+	
+	function buildMenu()
+	{
+		$this->callPublicMethod('Standard\Menubar',
+			'initMenu',
+			Icons128x128_1::Custom);
+		
+		$this->callPublicMethod('Standard\Menubar',
+			'addButton',
+			'Mode: Classic (3v3)',
+			array($this, 'S_Mode0'),
+			true);
+		
+		$this->callPublicMethod('Standard\Menubar',
+			'addButton',
+			'Mode: Free ',
+			array($this, 'S_Mode1'),
+			true);
+		
+		$this->callPublicMethod('Standard\Menubar',
+			'addButton',
+			'WarmUp Extend',
+			array($this, 'WarmUp_Extend'),
+			true);
+			
+		$this->callPublicMethod('Standard\Menubar',
+			'addButton',
+			'WarmUp Stop',
+			array($this, 'WarmUp_Stop'),
+			true);
+
+		$this->callPublicMethod('Standard\Menubar',
+			'addButton',
+			'Pause',
+			array($this, 'pause'),
+			true);
+
+		$this->callPublicMethod('Standard\Menubar',
+			'addButton',
+			'New Match',
+			array($this, 'newmatch'),
+			true);
+			
+		$this->callPublicMethod('Standard\Menubar',
+			'addButton',
+			'BO3',
+			array($this, 'bo3'),
+			true);
+			
+		$this->callPublicMethod('Standard\Menubar',
+			'addButton',
+			'BO5',
+			array($this, 'bo5'),
+			true);
+			
+		$this->callPublicMethod('Standard\Menubar',
+			'addButton',
+			'Reset Callvotes active',
+			array($this, 'InitiateVotes'),
+			true);
+		
+		$this->callPublicMethod('Standard\Menubar',
+			'addButton',
+			'Set Callvotes inactive',
+			array($this, 'DeactivateVotes'),
+			true);
+	}
 
     /* Chat messages */
 
-    function WarmUp_Extend($login, $amount) {
+    function WarmUp_Extend($login) {
         $vote = new \DedicatedApi\Structures\Vote();
         $vote->cmdName = 'Echo';
         $vote->cmdParam = array('Set WarmUp Extend', 'map_warmup_extend');
@@ -347,6 +428,26 @@ PRIMARY KEY (`id`)
         $vote->cmdParam = array('Set Map to Pause', 'map_pause');
         $this->connection->callVote($vote, 0.5, 0, 1);
     }
+	
+	function S_Mode0($login) {
+	$this->connection->setModeScriptSettings(array('S_Mode' => 0));
+    }
+	
+	function S_Mode1($login) {
+	$this->connection->setModeScriptSettings(array('S_Mode' => 1));
+    }
+	
+	function InitiateVotes($login){
+	$this->connection->setCallVoteRatiosEx(false, array(
+            new \DedicatedApi\Structures\VoteRatio('SetModeScriptSettingsAndCommands', 0.)
+        ));
+	}
+	
+	function DeactivateVotes($login){
+	$this->connection->setCallVoteRatiosEx(false, array(
+            new \DedicatedApi\Structures\VoteRatio('SetModeScriptSettingsAndCommands', -1.)
+        ));
+	}
 	
 	function newmatch($login) {
         $match = $this->getServerCurrentMatch($this->storage->serverLogin);
