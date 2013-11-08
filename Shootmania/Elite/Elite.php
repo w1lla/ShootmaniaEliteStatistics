@@ -221,7 +221,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `MatchEnd` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `matchServerLogin` VARCHAR(250) NOT NULL,
   `competition_id` INT(10) NOT NULL DEFAULT '1',
-  `show` boolean default '0',
+  `show` enum('0','1') NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
