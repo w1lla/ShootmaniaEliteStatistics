@@ -478,7 +478,7 @@ PRIMARY KEY (`id`)
 	SET `NextMap` = '1'
 	 where `match_id` = " . $this->db->quote($this->MatchNumber) . " and `map_uid` = " . $this->db->quote($this->storage->currentMap->uId) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
                 $this->db->execute($queryNextMap);
-                $this->logger->write($queryNextMap);
+                $this->logger->Debug($queryNextMap);
             }
         }
     }
@@ -512,8 +512,10 @@ PRIMARY KEY (`id`)
     function updateMatchState($matchId) {
         $state = date('Y-m-d H:i:s');
         $matches_update = "UPDATE matches SET `MatchEnd` = " . $this->db->quote($state) . " WHERE id = " . intval($matchId) . "";
+		$this->logger->Debug($matches_update);
         $this->db->execute($matches_update);
         $match_maps_update = "UPDATE match_maps SET `MapEnd` = " . $this->db->quote($state) . " WHERE match_id = " . intval($matchId) . "";
+		$this->logger->Debug($match_maps_update);
         $this->db->execute($match_maps_update);
     }
 
@@ -563,11 +565,11 @@ PRIMARY KEY (`id`)
                     $this->BlueScoreMatch = $ClanEndMatchDataVariables['Clan1MatchPoints'];
                     $this->RedScoreMatch = $ClanEndMatchDataVariables['Clan2MatchPoints'];
 				$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
-                    $this->logger->write($qmmsb);
+                    $this->logger->Debug($qmmsb);
                     $this->db->execute($qmmsb);
                  //MatchScore Red
                 $qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
-                    $this->logger->write($qmmsr);
+                    $this->logger->Debug($qmmsr);
                     $this->db->execute($qmmsr);
 				}
                 $this->onXmlRpcEliteEndMatch(new JsonCallbacks\EndMatch($json));
@@ -578,11 +580,11 @@ PRIMARY KEY (`id`)
                     $this->BlueScoreMatch = $ClanEndMapDataVariables['Clan1MatchPoints'];
                     $this->RedScoreMatch = $ClanEndMapDataVariables['Clan2MatchPoints'];
 				$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
-                    $this->logger->write($qmmsb);
+                    $this->logger->Debug($qmmsb);
                     $this->db->execute($qmmsb);
                  //MatchScore Red
                 $qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
-                    $this->logger->write($qmmsr);
+                    $this->logger->Debug($qmmsr);
                     $this->db->execute($qmmsr);
 				}
                 $this->onXmlRpcEliteEndMap(new JsonCallbacks\EndMap($json));
@@ -593,11 +595,11 @@ PRIMARY KEY (`id`)
 					$this->BlueScoreMatch = $json[0];
 					$this->RedScoreMatch = $json[1];
 					$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
-                    $this->logger->write($qmmsb);
+                    $this->logger->Debug($qmmsb);
                     $this->db->execute($qmmsb);
                  //MatchScore Red
                 $qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
-                    $this->logger->write($qmmsr);
+                    $this->logger->Debug($qmmsr);
                     $this->db->execute($qmmsr);
 				}
 				break;
@@ -611,7 +613,7 @@ PRIMARY KEY (`id`)
         //get database challenges
         $q = "SELECT * FROM `maps`;";
         $query = $this->db->query($q);
-        $this->logger->write($q);
+        $this->logger->Debug($q);
 
         $databaseUid = array();
 
@@ -633,7 +635,7 @@ PRIMARY KEY (`id`)
 
     public function insertMap($data) {
         $q = "INSERT INTO `maps` (`uid`, `name`, `author` ) VALUES (" . $this->db->quote($data->uId) . "," . $this->db->quote($data->name) . "," . $this->db->quote($data->author) . ")";
-        $this->logger->write($q);
+        $this->logger->Debug($q);
         $this->db->query($q);
     }
 
@@ -653,7 +655,7 @@ PRIMARY KEY (`id`)
             return $this->playerIDs[$login];
         } else {
             $q = "SELECT id FROM `players` WHERE `login` = " . $this->db->quote($login) . "";
-            $this->logger->write($q);
+            $this->logger->Debug($q);
             return $this->db->execute($q)->fetchObject()->id;
         }
     }
@@ -664,7 +666,7 @@ PRIMARY KEY (`id`)
             $zone[2] = "World";
         }
         $q = "SELECT * FROM `players` WHERE `login` = " . $this->db->quote($player->login) . ";";
-        $this->logger->write($q);
+        $this->logger->Debug($q);
         $execute = $this->db->execute($q);
 
         if ($execute->recordCount() == 0) {
@@ -681,14 +683,14 @@ PRIMARY KEY (`id`)
 				  )";
             $this->db->execute($q);
             $this->playerIDs[$player->login] = $this->db->insertID();
-            $this->logger->write($q);
+            $this->logger->Debug($q);
         } else {
             $q = "UPDATE `players` SET `nickname` = " . $this->db->quote($player->nickName) . ",
 				       `nation` = " . $this->db->quote($zone[2]) . ",
 				       `updatedate` = '" . date('Y-m-d H:i:s') . "'
                                    WHERE `login` = " . $this->db->quote($player->login) . "";
             $this->db->execute($q);
-            $this->logger->write($q);
+            $this->logger->Debug($q);
             $this->playerIDs[$player->login] = $execute->fetchObject()->id;
         }
     }
@@ -700,7 +702,7 @@ PRIMARY KEY (`id`)
 				  WHERE `match_id` =" . $this->db->quote($this->MatchNumber) . " and 
                                         `map_uid` = " . $this->db->quote($this->storage->currentMap->uId) . " and 
                                         `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
-            $this->logger->write($q);
+            $this->logger->Debug($q);
             $this->db->execute($q);
         } else {
             
@@ -714,7 +716,7 @@ PRIMARY KEY (`id`)
 				  WHERE `match_id` = " . $this->db->quote($this->MatchNumber) . " and 
                                         `map_uid` = " . $this->db->quote($this->storage->currentMap->uId) . " and 
                                         `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
-            $this->logger->write($q);
+            $this->logger->Debug($q);
             $this->db->execute($q);
         } else {
             
@@ -752,7 +754,7 @@ PRIMARY KEY (`id`)
 						'" . date('Y-m-d H:i:s') . "',
 						" . $this->db->quote($this->storage->serverLogin) . "
 					  )";
-        $this->logger->write($qmatch);
+        $this->logger->Debug($qmatch);
         $this->db->execute($qmatch);
         $this->MatchNumber = $this->db->insertID();
     }
@@ -761,7 +763,7 @@ PRIMARY KEY (`id`)
 
         $map = $this->connection->getCurrentMapInfo();
         $mapmatch = "SELECT * FROM `match_maps` WHERE `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `map_uid` = " . $this->db->quote($map->uId) . "";
-        $this->logger->write($mapmatch);
+        $this->logger->Debug($mapmatch);
         $mapmatchexecute = $this->db->execute($mapmatch);
         if ($mapmatchexecute->recordCount() == 0) {
             $qmapmatch = "INSERT INTO `match_maps` (
@@ -779,7 +781,7 @@ PRIMARY KEY (`id`)
 						'" . date('Y-m-d H:i:s') . "',
 						" . $this->db->quote($this->storage->serverLogin) . "
 					  )";
-            $this->logger->write($qmapmatch);
+            $this->logger->Debug($qmapmatch);
             $this->db->execute($qmapmatch);
             $this->MapNumber = $this->db->insertID();
         } else {
@@ -806,7 +808,7 @@ PRIMARY KEY (`id`)
             teamBlue_emblem = " . $this->db->quote($blue->emblemUrl) . ",
             teamBlue_RGB = " . $this->db->quote($blue->rGB) . " 
             WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
-        $this->logger->write($qmmsb);
+        $this->logger->Debug($qmmsb);
         $this->db->execute($qmmsb);
 
         $qmmsr = "UPDATE `matches`
@@ -814,13 +816,13 @@ PRIMARY KEY (`id`)
             teamRed_emblem = " . $this->db->quote($red->emblemUrl) . ",
             teamRed_RGB = " . $this->db->quote($red->rGB) . " 
             WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
-        $this->logger->write($qmmsr);
+        $this->logger->Debug($qmmsr);
         $this->db->execute($qmmsr);
 
 
         foreach ($this->storage->players as $login => $player) {
             $shots_table = "SELECT * FROM `shots` WHERE `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `round_id` = " . $this->db->quote($content->turnNumber) . " and `player_id` = " . $this->db->quote($this->getPlayerId($login)) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . ";";
-            $this->logger->write($shots_table);
+            $this->logger->Debug($shots_table);
             $execute = $this->db->execute($shots_table);
             if ($execute->recordCount() == 0) {
                 $shots_insert = "INSERT INTO `shots` (
@@ -842,14 +844,14 @@ PRIMARY KEY (`id`)
 					'0',
 					" . $this->db->quote($this->storage->serverLogin) . "
 				  )";
-                $this->logger->write($shots_insert);
+                $this->logger->Debug($shots_insert);
                 $this->db->execute($shots_insert);
             } else {
                 
             }
 
             $playermapinfo = "SELECT * FROM `player_maps` WHERE `player_id` = " . $this->db->quote($this->getPlayerId($login)) . " AND `match_id` = " . $this->db->quote($this->MatchNumber) . " AND `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . ";";
-            $this->logger->write($playermapinfo);
+            $this->logger->Debug($playermapinfo);
 
             $pmiexecute = $this->db->execute($playermapinfo);
 
@@ -868,7 +870,7 @@ PRIMARY KEY (`id`)
 						" . $this->db->quote($this->storage->serverLogin) . "
 					  )";
                 //var_dump($pmi);
-                $this->logger->write($pmi);
+                $this->logger->Debug($pmi);
                 $this->db->execute($pmi);
             }
         } //end foreach
@@ -878,7 +880,7 @@ PRIMARY KEY (`id`)
         $attackingClan = $teams[$content->attackingClan];
         
         $q = "SELECT * FROM `match_details` WHERE `map_uid` = " . $this->db->quote($this->storage->currentMap->uId) . " and `team_id` = " . $this->db->quote($attackingClan->name) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . ";";
-        $this->logger->write($q);
+        $this->logger->Debug($q);
         $execute = $this->db->execute($q);
         if ($execute->recordCount() == 0) {
             $q = "INSERT INTO `match_details` (
@@ -904,7 +906,7 @@ PRIMARY KEY (`id`)
 					'0',
 					" . $this->db->quote($this->storage->serverLogin) . "
 				  )";
-            $this->logger->write($q);
+            $this->logger->Debug($q);
             $this->db->execute($q);
         } else {
             
@@ -917,7 +919,7 @@ PRIMARY KEY (`id`)
                                             `match_id` = " . $this->db->quote($this->MatchNumber) . " AND
                                             `team_id` = " . $this->db->quote($defendingClan->name) . " AND 
                                             `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . ";";
-        $this->logger->write($q);
+        $this->logger->Debug($q);
         $execute = $this->db->execute($q);
 
         if ($execute->recordCount() == 0) {
@@ -944,7 +946,7 @@ PRIMARY KEY (`id`)
 					'0',
 					" . $this->db->quote($this->storage->serverLogin) . "
 				  )";
-            $this->logger->write($q);
+            $this->logger->Debug($q);
             $this->db->execute($q);
         } else {
             
@@ -962,14 +964,14 @@ PRIMARY KEY (`id`)
                                             `match_id` = " . $this->db->quote($this->MatchNumber) . " and 
                                             `map_uid` = " . $this->db->quote($this->storage->currentMap->uId) . " and 
                                             `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
-        $this->logger->write($mapmatchAtk);
+        $this->logger->Debug($mapmatchAtk);
         $this->db->execute($mapmatchAtk);
 
         $q = "SELECT * FROM `player_maps` WHERE `player_id` = " . $this->db->quote($AtkPlayer) . " AND 
                                                 `match_id` = " . $this->db->quote($this->MatchNumber) . " AND 
                                                 `match_map_id` = " . $this->db->quote($this->MapNumber) . " AND 
                                                 `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
-        $this->logger->write($q);
+        $this->logger->Debug($q);
         $Atker = $this->db->execute($q)->fetchObject();
 
         $q = "UPDATE `player_maps` 
@@ -979,7 +981,7 @@ PRIMARY KEY (`id`)
                                     `match_map_id` = " . $this->db->quote($this->MapNumber) . " AND 
                                     `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND
                                     `match_id` = " . $this->MatchNumber . "";
-        $this->logger->write($q);
+        $this->logger->Debug($q);
         $this->db->execute($q);
 		}
         /* Clublinks */
@@ -1031,7 +1033,7 @@ PRIMARY KEY (`id`)
         }
 
         $qcblnk = "SELECT * FROM `clublinks` WHERE `Clublink_Name` = " . $this->db->quote($xml->name) . ";";
-        $this->logger->write($qcblnk);
+        $this->logger->Debug($qcblnk);
         $execute = $this->db->execute($qcblnk);
 
         if ($execute->recordCount() == 0) {
@@ -1049,14 +1051,14 @@ PRIMARY KEY (`id`)
 					" . $this->db->quote($xml->color['secondary']) . "
 				  )";
             $this->db->execute($qBlueClublink);
-            $this->logger->write($qBlueClublink);
+            $this->logger->Debug($qBlueClublink);
         } else {
         }
     }
 
     function onXmlRpcEliteEndTurn(JsonCallbacks\EndTurn $content) {
 	$message = 'Blue - Red: '.$this->BlueMapScore.' - '.$this->RedMapScore.'';
-	$this->logger->debug($message);
+	$this->logger->Console($message);
         $map = $this->storage->currentMap;
         $attackingClan = $this->connection->getTeamInfo($content->attackingClan);
         $defendingClan = $this->connection->getTeamInfo($content->defendingClan);
@@ -1069,26 +1071,26 @@ PRIMARY KEY (`id`)
 				  WHERE `match_id` = " . $this->db->quote($this->MatchNumber) . " and 
                                         `map_uid` = " . $this->db->quote($map->uId) . " and 
                                         `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
-        $this->logger->write($mapmatchAtk);
+        $this->logger->Debug($mapmatchAtk);
         $this->db->execute($mapmatchAtk);
 
         $qatk = "UPDATE `match_details`
 				  SET `attack` = attack + 1 
 				  WHERE `team_id` = " . $this->db->quote($attackingClan->name) . " and `map_uid` = " . $this->db->quote($map->uId) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
-        $this->logger->write($qatk);
+        $this->logger->Debug($qatk);
         $this->db->execute($qatk);
 
         if ($content->winType == 'Capture') {
             $qcapture = "UPDATE `match_details`
 				  SET `capture` = capture + 1 WHERE `team_id` = " . $this->db->quote($attackingClan->name) . " and `map_uid` = " . $this->db->quote($map->uId) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
-            $this->logger->write($qcapture);
+            $this->logger->Debug($qcapture);
             $this->db->execute($qcapture);
 			
 			$attackerId = $this->getPlayerId($content->attackingPlayer->login);
 			
 		    $q = "UPDATE `player_maps` SET `atkSucces` =  atkSucces + 1 WHERE `player_id` = " . $this->db->quote($attackerId) . "  and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . "";
             $this->db->execute($q);
-            $this->logger->write($q);
+            $this->logger->Debug($q);
         }
 
         if ($content->winType == 'DefenseEliminated') {
@@ -1098,27 +1100,27 @@ PRIMARY KEY (`id`)
                                         `map_uid` = " . $this->db->quote($map->uId) . " and 
                                         `match_id` = " . $this->db->quote($this->MatchNumber) . " and 
                                         `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
-            $this->logger->write($qawe);
+            $this->logger->Debug($qawe);
             $this->db->execute($qawe);
 
             $attackerId = $this->getPlayerId($content->attackingPlayer->login);
 
             $q = "UPDATE `player_maps` SET `atkSucces` =  atkSucces + 1 WHERE `player_id` = " . $this->db->quote($attackerId) . "  and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . "";
             $this->db->execute($q);
-            $this->logger->write($q);
+            $this->logger->Debug($q);
         }
 
         $qdef = "UPDATE `match_details`
 				  SET `defence` = defence + 1
 				  WHERE `team_id` = " . $this->db->quote($defendingClan->name) . " and `map_uid` = " . $this->db->quote($map->uId) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
-        $this->logger->write($qdef);
+        $this->logger->Debug($qdef);
         $this->db->execute($qdef);
 
         if ($content->winType == 'TimeLimit') {
             $qtl = "UPDATE `match_details`
 				  SET `timeOver` = timeOver + 1
 				  WHERE `team_id` = " . $this->db->quote($defendingClan->name) . " and `map_uid` = " . $this->db->quote($map->uId) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
-            $this->logger->write($qtl);
+            $this->logger->Debug($qtl);
             $this->db->execute($qtl);
         }
 
@@ -1126,7 +1128,7 @@ PRIMARY KEY (`id`)
             $qde = "UPDATE `match_details`
 				  SET `defenceWinEliminate` = defenceWinEliminate + 1 
 				  WHERE `team_id` = " . $this->db->quote($defendingClan->name) . " and `map_uid` = " . $this->db->quote($map->uId) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
-            $this->logger->write($qde);
+            $this->logger->Debug($qde);
             $this->db->execute($qde);
         }
 		
@@ -1141,7 +1143,7 @@ PRIMARY KEY (`id`)
 		$qth = "UPDATE `player_maps`
 		SET `elimination_3x` = elimination_3x + 1 
 		WHERE `player_id` = " . $this->db->quote($PlayerIdEndTurn) . "  and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . "";
-            $this->logger->write($qth);
+            $this->logger->Debug($qth);
             $this->db->execute($qth);
 		}
 		}
@@ -1161,7 +1163,7 @@ PRIMARY KEY (`id`)
         $victim = $content->event->victim;
 
         if ($shooter == NULL) {
-            $this->logger->write('Player ' . $victim->login . ' was killed in offzone.');
+            $this->logger->Debug('Player ' . $victim->login . ' was killed in offzone.');
             return;
         }
 
@@ -1181,49 +1183,49 @@ PRIMARY KEY (`id`)
 			    " . $this->db->quote($this->storage->currentMap->uId) . ",
                             " . $this->db->quote($this->storage->serverLogin) . "
 			  )";
-        $this->logger->write($q);
+        $this->logger->Debug($q);
         $this->db->execute($q);
 
         // update kill/death statistics
         $shooterId = $this->getPlayerId($content->event->shooter->login);
 
         $q = "UPDATE `player_maps` SET `kills` = kills + 1  WHERE `player_id` = " . $this->db->quote($shooterId) . " and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . "";
-        $this->logger->write($q);
+        $this->logger->Debug($q);
         $this->db->execute($q);
 
         $eliminations_table = "UPDATE `shots` SET `eliminations` = eliminations + 1, `weapon_id` = " . $this->db->quote($content->event->weaponNum) . " WHERE `player_id` = " . $this->db->quote($shooterId) . " and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `round_id` = " . $this->db->quote($this->TurnNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
-        $this->logger->write($eliminations_table);
+        $this->logger->Debug($eliminations_table);
         $this->db->execute($eliminations_table);
 
         $victimId = $this->getPlayerId($content->event->victim->login);
 
         $q = "UPDATE `player_maps` SET `deaths` = deaths + 1  WHERE `player_id` = " . $this->db->quote($victimId) . "  and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . "";
         $this->db->execute($q);
-        $this->logger->write($q);
+        $this->logger->Debug($q);
 
-        $this->logger->write('[' . date('H:i:s') . '] [ShootMania] [Elite] ' . $content->event->victim->login . ' was killed by ' . $content->event->shooter->login);
+        $this->logger->Debug('[' . date('H:i:s') . '] [ShootMania] [Elite] ' . $content->event->victim->login . ' was killed by ' . $content->event->shooter->login);
     }
 
     function onXmlRpcEliteShoot(JsonCallbacks\OnShoot $content) {
 	$message = ''.$content->event->shooter->login.' shot with '.$content->event->weaponNum.'';
-	$this->logger->debug($message);
+	$this->logger->Console($message);
         if (!isset($this->TurnNumber))
             $this->TurnNumber = 0;
 			
         $shooterId = $this->getPlayerId($content->event->shooter->login);
 
         $q = "UPDATE `player_maps` SET `shots` = shots + 1  WHERE `player_id` = " . $this->db->quote($shooterId) . "  and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . "";
-        $this->logger->write($q);
+        $this->logger->Debug($q);
         $this->db->execute($q);
 
         $shots_table = "UPDATE `shots` SET `shots` = shots + 1, `weapon_id` = " . $this->db->quote($content->event->weaponNum) . " WHERE `player_id` = " . $this->db->quote($shooterId) . " and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `round_id` = " . $this->db->quote($this->TurnNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
-        $this->logger->write($shots_table);
+        $this->logger->Debug($shots_table);
         $this->db->execute($shots_table);
     }
 
     function onXmlRpcEliteHit(JsonCallbacks\OnHit $content) {
 		$message = ''.$content->event->shooter->login.' hit '.$content->event->victim->login.' with '.$content->event->weaponNum.'';
-	$this->logger->debug($message);
+	$this->logger->Console($message);
         if (!isset($this->TurnNumber))
             $this->TurnNumber = 0;
 
@@ -1233,22 +1235,22 @@ PRIMARY KEY (`id`)
         $shooterId = $this->getPlayerId($content->event->shooter->login);
 
         $q = "UPDATE `player_maps` SET `hits` = hits + 1 WHERE `player_id` = " . $this->db->quote($shooterId) . "  and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . "";
-        $this->logger->write($q);
+        $this->logger->Debug($q);
         $this->db->execute($q);
 
         $hits_table = "UPDATE `shots` SET `hits` = hits + 1, `weapon_id` = " . $this->db->quote($content->event->weaponNum) . " WHERE `player_id` = " . $this->db->quote($shooterId) . " and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `round_id` = " . $this->db->quote($this->TurnNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
-        $this->logger->write($hits_table);
+        $this->logger->Debug($hits_table);
         $this->db->execute($hits_table);
 // victim info
 
         $victimId = $this->getPlayerId($content->event->victim->login);
 
         $q1 = "UPDATE `player_maps` SET `counterhits` = counterhits + 1 WHERE `player_id` = " . $this->db->quote($victimId) . "  and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . "";
-        $this->logger->write($q1);
+        $this->logger->Debug($q1);
         $this->db->execute($q1);
 
         $counterhits_table = "UPDATE `shots` SET `counterhits` = counterhits + 1, `weapon_id` = " . $this->db->quote($content->event->weaponNum) . " WHERE `player_id` = " . $this->db->quote($victimId) . " and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `round_id` = " . $this->db->quote($this->TurnNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
-        $this->logger->write($counterhits_table);
+        $this->logger->Debug($counterhits_table);
         $this->db->execute($counterhits_table);
 
 // hitdistance
@@ -1273,13 +1275,13 @@ PRIMARY KEY (`id`)
 					" . $this->db->quote($this->getWeaponName($content->event->weaponNum)) . ",
 					" . $this->db->quote($this->storage->serverLogin) . "
 				  )";
-        $this->logger->write($qhitdist);
+        $this->logger->Debug($qhitdist);
         $this->db->execute($qhitdist);
     }
 
     function onXmlRpcEliteCapture(JsonCallbacks\OnCapture $content) {
 	$message = ''.$content->event->player->login.' captured the pole';
-	$this->logger->debug($message);
+	$this->logger->Console($message);
         $map = $this->storage->currentMap;
 
         $qCap = "INSERT INTO `captures` (
@@ -1295,7 +1297,7 @@ PRIMARY KEY (`id`)
                                 " . $this->db->quote($map->uId) . ",
 				" . $this->db->quote($this->storage->serverLogin) . "
 			  )";
-        $this->logger->write($qCap);
+        $this->logger->Debug($qCap);
         $this->db->execute($qCap);
 
         // update capture statistics
@@ -1306,13 +1308,13 @@ PRIMARY KEY (`id`)
                                          `match_map_id` = " . $this->db->quote($this->MapNumber) . " and 
                                          `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and 
                                          `match_id` = " . $this->db->quote($this->MatchNumber) . "";
-        $this->logger->write($q);
+        $this->logger->Debug($q);
         $this->db->execute($q);
     }
 
     function onXmlRpcEliteNearMiss(JsonCallbacks\OnNearMiss $content) {
 	$message = ''.$content->event->shooter->login.' did a nearmissdist of '.$content->event->missDist.' cm';
-	$this->logger->debug($message);
+	$this->logger->Console($message);
         $shooterId = $this->getPlayerId($content->event->shooter->login);
 
         $q = "UPDATE `player_maps` SET nearmisses = nearmisses + 1 
@@ -1320,7 +1322,7 @@ PRIMARY KEY (`id`)
                                          `match_map_id` = " . $this->db->quote($this->MapNumber) . " and 
                                          `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and 
                                          `match_id` = " . $this->db->quote($this->MatchNumber) . "";
-        $this->logger->write($q);
+        $this->logger->Debug($q);
         $this->db->execute($q);
 
         $qnearmiss = "INSERT INTO `nearmisses` (
@@ -1342,19 +1344,19 @@ PRIMARY KEY (`id`)
 					" . $this->db->quote($this->getWeaponName($content->event->weaponNum)) . ",
 					" . $this->db->quote($this->storage->serverLogin) . "
 				  )";
-        $this->logger->write($qnearmiss);
+        $this->logger->Debug($qnearmiss);
         $this->db->execute($qnearmiss);
     }
 
     function onXmlRpcEliteEndMap(JsonCallbacks\EndMap $content) {
 		$message = 'Blue: '.$content->clan1MapScore.' - Red: '.$content->clan2MapScore.'';
-	$this->logger->debug($message);
+	$this->logger->Console($message);
         $querymapEnd = "UPDATE `match_maps`
 	SET `MapEnd` = '" . date('Y-m-d H:i:s') . "',
 	 `TurnNumber` = " . $this->db->quote($this->TurnNumber) . ",
 	 `AllReady` = '0'
 	 where `match_id` = " . $this->db->quote($this->MatchNumber) . " and `map_uid` = " . $this->db->quote($this->storage->currentMap->uId) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
-        $this->logger->write($querymapEnd);
+        $this->logger->Debug($querymapEnd);
         $this->db->execute($querymapEnd);
     }
 
@@ -1367,7 +1369,7 @@ PRIMARY KEY (`id`)
                                                      WHERE
                                                     `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and 
                                                     `id` = " . $this->db->quote($this->MatchNumber) . "";
-        $this->logger->write($queryMapWinSettingsEnd);
+        $this->logger->Debug($queryMapWinSettingsEnd);
         $this->db->execute($queryMapWinSettingsEnd);
     }
 
