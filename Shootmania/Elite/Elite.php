@@ -503,6 +503,11 @@ PRIMARY KEY (`id`)
     }
 
     function getServerCurrentMatch($serverLogin) {
+	 $CurrentMatchÏd = $this->db->execute(
+                        'SELECT id FROM matches ' .
+                        'where MatchEnd = "0000-00-00 00:00:00" and `matchServerLogin` = ' . $this->db->quote($serverLogin) .
+                        'order by id desc')->fetchSingleValue();
+	$this->logger->Normal($CurrentMatchÏd);					
         return $this->db->execute(
                         'SELECT id FROM matches ' .
                         'where MatchEnd = "0000-00-00 00:00:00" and `matchServerLogin` = ' . $this->db->quote($serverLogin) .
@@ -520,6 +525,8 @@ PRIMARY KEY (`id`)
     }
 
     public function onModeScriptCallback($event, $json) {
+	$this->logger->Callbacks($event);
+	$this->logger->Callbacks($json);
         switch ($event) {
             case 'BeginMatch':
                 $this->onXmlRpcEliteMatchStart(new JsonCallbacks\BeginMatch($json));

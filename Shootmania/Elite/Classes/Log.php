@@ -86,5 +86,30 @@ class Log {
 	}	
 	}
     }
+	
+	public function Callbacks($message) {
+    if ($this->config->Callbacks == true)
+	{
+	try
+	{
+        \ManiaLive\Utilities\Logger::log($message, true, "ElitePlugin_Callbacks_Log-'" . $this->serverLogin . "'");
+	}
+	catch(\Exception $e)
+	{
+	    \ManiaLive\Utilities\Logger::log($message, true, "ElitePlugin_Callbacks_Log-'" . $this->serverLogin . "'");
+	}	
+	}
+	else 
+	{
+	try
+	{
+        \ManiaLive\Utilities\Logger::log($message, true, "ElitePlugin_Callbacks_Log-'" . $this->serverLogin . "'");
+	}
+	catch(\Exception $e)
+	{
+	    \ManiaLive\Utilities\Logger::log($message, true, "ElitePlugin_Callbacks_Log-'" . $this->serverLogin . "'");
+	}	
+	}
+    }
 
 }
