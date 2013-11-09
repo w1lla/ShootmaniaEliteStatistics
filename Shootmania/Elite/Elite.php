@@ -1163,7 +1163,7 @@ PRIMARY KEY (`id`)
         $victim = $content->event->victim;
 
         if ($shooter == NULL) {
-            $this->logger->Debug('Player ' . $victim->login . ' was killed in offzone.');
+            $this->logger->Normal('Player ' . $victim->login . ' was killed in offzone.');
             return;
         }
 
@@ -1203,12 +1203,12 @@ PRIMARY KEY (`id`)
         $this->db->execute($q);
         $this->logger->Debug($q);
 
-        $this->logger->Debug('[' . date('H:i:s') . '] [ShootMania] [Elite] ' . $content->event->victim->login . ' was killed by ' . $content->event->shooter->login);
+        $this->logger->Normal('[' . date('H:i:s') . '] [ShootMania] [Elite] ' . $content->event->victim->login . ' was killed by ' . $content->event->shooter->login);
     }
 
     function onXmlRpcEliteShoot(JsonCallbacks\OnShoot $content) {
 	$message = ''.$content->event->shooter->login.' shot with '.$content->event->weaponNum.'';
-	$this->logger->Console($message);
+	$this->logger->Normal($message);
         if (!isset($this->TurnNumber))
             $this->TurnNumber = 0;
 			
@@ -1225,7 +1225,7 @@ PRIMARY KEY (`id`)
 
     function onXmlRpcEliteHit(JsonCallbacks\OnHit $content) {
 		$message = ''.$content->event->shooter->login.' hit '.$content->event->victim->login.' with '.$content->event->weaponNum.'';
-	$this->logger->Console($message);
+	$this->logger->Normal($message);
         if (!isset($this->TurnNumber))
             $this->TurnNumber = 0;
 
@@ -1281,7 +1281,7 @@ PRIMARY KEY (`id`)
 
     function onXmlRpcEliteCapture(JsonCallbacks\OnCapture $content) {
 	$message = ''.$content->event->player->login.' captured the pole';
-	$this->logger->Console($message);
+	$this->logger->Normal($message);
         $map = $this->storage->currentMap;
 
         $qCap = "INSERT INTO `captures` (
@@ -1314,7 +1314,7 @@ PRIMARY KEY (`id`)
 
     function onXmlRpcEliteNearMiss(JsonCallbacks\OnNearMiss $content) {
 	$message = ''.$content->event->shooter->login.' did a nearmissdist of '.$content->event->missDist.' cm';
-	$this->logger->Console($message);
+	$this->logger->Normal($message);
         $shooterId = $this->getPlayerId($content->event->shooter->login);
 
         $q = "UPDATE `player_maps` SET nearmisses = nearmisses + 1 
@@ -1350,7 +1350,7 @@ PRIMARY KEY (`id`)
 
     function onXmlRpcEliteEndMap(JsonCallbacks\EndMap $content) {
 		$message = 'Blue: '.$content->clan1MapScore.' - Red: '.$content->clan2MapScore.'';
-	$this->logger->Console($message);
+	$this->logger->Normal($message);
         $querymapEnd = "UPDATE `match_maps`
 	SET `MapEnd` = '" . date('Y-m-d H:i:s') . "',
 	 `TurnNumber` = " . $this->db->quote($this->TurnNumber) . ",
