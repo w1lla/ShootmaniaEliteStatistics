@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 3/11/2013
+  Date: 11/11/2013
   Project Name: ESWC Elite Statistics
 
   What to do:
@@ -289,6 +289,33 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `Clublink_Secondary_RGB` varchar(6) NOT NULL,
 PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
+		$this->db->execute($q);
+		}
+		
+		if(!$this->db->tableExists('player_stats')) {
+			$q = "CREATE TABLE IF NOT EXISTS `player_stats` (
+  `competition_id` int(10) NOT NULL DEFAULT '1',
+  `player_id` int(9) NOT NULL,
+  `player_login` varchar(50) NOT NULL,
+  `player_nickname` varchar(255) NOT NULL,
+  `player_nation` varchar(100) NOT NULL,
+  `team_name` varchar(50) NOT NULL,
+  `shots_laser` int(9) NOT NULL DEFAULT '0',
+  `hits_laser` int(9) NOT NULL DEFAULT '0',
+  `ratio_laser` decimal(5,2) NOT NULL,
+  `shots_rockets` int(9) NOT NULL DEFAULT '0',
+  `hits_rockets` int(9) NOT NULL DEFAULT '0',
+  `ratio_rockets` decimal(5,2) NOT NULL,
+  `shots_nucleus` int(9) NOT NULL DEFAULT '0',
+  `hits_nucleus` int(9) NOT NULL DEFAULT '0',
+  `ratio_nucleus` decimal(5,2) NOT NULL,
+  `nb_atk` int(9) NOT NULL DEFAULT '0',
+  `success_atk` int(9) NOT NULL DEFAULT '0',
+  `ratio_atk` decimal(5,2) NOT NULL,
+  `captures` int(9) NOT NULL DEFAULT '0',
+  `ratio_hits` decimal(5,2) NOT NULL,
+  `elimination_3x` int(9) NOT NULL DEFAULT '0'
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
 		$this->db->execute($q);
 		}
 		
@@ -1231,7 +1258,8 @@ PRIMARY KEY (`id`)
     }
 
     function onXmlRpcEliteHit(JsonCallbacks\OnHit $content) {
-		$message = ''.$content->event->shooter->login.' hit '.$content->event->victim->login.' with '.$content->event->weaponNum.'';
+	
+	$message = ''.$content->event->shooter->login.' hit '.$content->event->victim->login.' with '.$content->event->weaponNum.'';
 	$this->logger->Normal($message);
         if (!isset($this->TurnNumber))
             $this->TurnNumber = 0;
