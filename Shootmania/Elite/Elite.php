@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 11/11/2013
+  Date: 12/11/2013
   Project Name: ESWC Elite Statistics
 
   What to do:
@@ -64,7 +64,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
 
     function onInit() {
-        $this->setVersion('0.4.0');
+        $this->setVersion('0.7.0');
 		
         $this->logger = new Log($this->storage->serverLogin);
 	}
@@ -287,6 +287,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `Clublink_ZonePath` varchar(50) NOT NULL,
   `Clublink_Primary_RGB` varchar(6) NOT NULL,
   `Clublink_Secondary_RGB` varchar(6) NOT NULL,
+  `Clublink_URL` VARCHAR(250) NOT NULL,
 PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
 		$this->db->execute($q);
@@ -333,10 +334,12 @@ PRIMARY KEY (`id`)
         $this->connection->setCallVoteRatiosEx(false, array(
             new \DedicatedApi\Structures\VoteRatio('SetModeScriptSettingsAndCommands', -1.)
         ));
-
-        Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Core v' . $this->getVersion());
-        $this->connection->chatSendServerMessage('$fff» $fa0Welcome, this server uses $fff [Shootmania] Elite Stats$fa0!');
-
+		
+		Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Core v' . $this->getVersion());
+		foreach ($this->storage->players as $player) {
+        $this->connection->chatSendServerMessage('$fff» $fa0Welcome, this server uses $fff [Shootmania] Elite Stats$fa0!', $player->login);
+		}
+		
         $match = $this->getServerCurrentMatch($this->storage->serverLogin);
         if ($match) {
             //var_dump($match);
@@ -1076,13 +1079,15 @@ PRIMARY KEY (`id`)
 					`Clublink_EmblemUrl`,
 					`Clublink_ZonePath`,
 					`Clublink_Primary_RGB`,
-					`Clublink_Secondary_RGB`
+					`Clublink_Secondary_RGB`,
+					`Clublink_URL`
 				  ) VALUES (
 					" . $this->db->quote($xml->name) . ",
 					" . $this->db->quote($xml->emblem_web) . ",
 					" . $this->db->quote($zone[2]) . ",
 					" . $this->db->quote($xml->color['primary']) . ",
-					" . $this->db->quote($xml->color['secondary']) . "
+					" . $this->db->quote($xml->color['secondary']) . ",
+					" . $this->db->quote($url) . ",
 				  )";
             $this->db->execute($qBlueClublink);
             $this->logger->Debug($qBlueClublink);
