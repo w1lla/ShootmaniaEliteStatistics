@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 12/11/2013
+  Date: 15/11/2013
   Project Name: ESWC Elite Statistics
 
   What to do:
@@ -47,15 +47,17 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
     protected $MatchNumber = false;
  
     /** @var integer */
-    protected $TurnNumber;
-    protected $Mapscore_blue;
-    protected $Mapscore_red;
-    protected $WarmUpAllReady;
-    protected $MapNumber;
-    protected $BlueScoreMatch;
-    protected $RedScoreMatch;
-    protected $BlueMapScore;
-    protected $RedMapScore;
+	private $AtkPlayer;
+	private $AtkRatio;
+	private $AtkRounds;
+	private $AtkSucces;
+	private $AtkCapture;
+	private $AtkShots;
+	private $AtkHits;
+	private $HitRatio;
+	private $AttackPlayer;
+	private $Team;
+	private $AtkPlayerLogin;
 	
     /** @var Log */
     private $logger;
@@ -118,13 +120,13 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		}
 		else
 		{
-        $AtkPlayer = $this->getPlayerId($content->attackingPlayer->login);
+        $this->AtkPlayer = $this->getPlayerId($content->attackingPlayer->login);
 		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces, (
 SUM( player_maps.atkSucces ) / SUM( player_maps.atkrounds ) * 100
 ) AS AtkRatio
 FROM player_maps
 JOIN matches ON player_maps.match_id = matches.id
-WHERE player_maps.player_id = " . $this->db->quote($AtkPlayer) . "
+WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
 AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		$this->logger->Debug($queryCurrentMatchAtkPlayerStats);
 		$this->db->execute($queryCurrentMatchAtkPlayerStats);
@@ -132,69 +134,69 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 	
 		$AtkRatioObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->AtkRatio;
 		if ($AtkRatioObject == NULL){
-		$AtkRatio = 0;
+		$this->AtkRatio = 0;
 		}
 		else 
 		{
-		$AtkRatio =  number_format($AtkRatioObject, 2, ',', '');
+		$this->AtkRatio =  number_format($AtkRatioObject, 2, ',', '');
 		}
 		
 		$AtkRoundsObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkrounds;
 		if ($AtkRoundsObject == NULL){
-		$AtkRounds = 0;
+		$this->AtkRounds = 0;
 		}
 		else 
 		{
-		$AtkRounds = $AtkRoundsObject;
+		$this->AtkRounds = $AtkRoundsObject;
 		}
 		
 		$AtkSuccesObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkSucces;
 		if ($AtkSuccesObject == NULL){
-		$AtkSucces = 0;
+		$this->AtkSucces = 0;
 		}
 		else 
 		{
-		$AtkSucces = $AtkSuccesObject;
+		$this->AtkSucces = $AtkSuccesObject;
 		}
 		
 		$queryCurrentMatchAtkPlayerStatsCaptures = "SELECT SUM( player_maps.captures ) AS Captures
 		FROM player_maps
 		JOIN matches ON player_maps.match_id = matches.id
-		WHERE player_maps.player_id = " . $this->db->quote($AtkPlayer) . "
+		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
 		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		$this->logger->Debug($queryCurrentMatchAtkPlayerStatsCaptures);
 		$this->db->execute($queryCurrentMatchAtkPlayerStatsCaptures);
 		
 		$AtkCaptureObject = $this->db->execute($queryCurrentMatchAtkPlayerStatsCaptures)->fetchObject()->Captures;
 		if ($AtkCaptureObject == NULL){
-		$AtkCapture = 0;
+		$this->AtkCapture = 0;
 		}
 		else 
 		{
-		$AtkCapture = $AtkCaptureObject;
+		$this->AtkCapture = $AtkCaptureObject;
 		}
 		
 		$QueryShots_HitsAtkPlayer = "SELECT SUM( player_maps.shots ) AS shots, SUM( player_maps.hits ) AS hits
 		FROM player_maps
 		JOIN matches ON player_maps.match_id = matches.id
-		WHERE player_maps.player_id = " . $this->db->quote($AtkPlayer) . "
+		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
 		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 
 		$this->logger->Debug($QueryShots_HitsAtkPlayer);
 		$this->db->execute($QueryShots_HitsAtkPlayer);
 		
 		$AtkShotsObject = $this->db->execute($QueryShots_HitsAtkPlayer)->fetchObject()->shots;
-		$AtkShots = $AtkShotsObject;
+		$this->AtkShots = $AtkShotsObject;
 		
 		$AtkHitsObject = $this->db->execute($QueryShots_HitsAtkPlayer)->fetchObject()->hits;
-		$AtkHits = $AtkHitsObject;
+		$this->AtkHits = $AtkHitsObject;
 		
 		$queryAtkHitRatio = "SELECT (
 SUM( player_maps.hits ) / SUM( player_maps.shots ) * 100
 ) AS HitRatio
 FROM player_maps
 JOIN matches ON player_maps.match_id = matches.id
-WHERE player_maps.player_id = " . $this->db->quote($AtkPlayer) . "
+WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
 AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		$this->logger->Debug($queryAtkHitRatio);
 		$this->db->execute($queryAtkHitRatio);
@@ -202,59 +204,67 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 	
 		$HitRatioObject = $this->db->execute($queryAtkHitRatio)->fetchObject()->HitRatio;
 		if ($HitRatioObject == NULL){
-		$HitRatio = 0;
+		$this->HitRatio = 0;
 		}
 		else 
 		{
-		$HitRatio =  number_format($HitRatioObject, 2, ',', '');
+		$this->HitRatio =  number_format($HitRatioObject, 2, ',', '');
 		}
 		
-		$AttackPlayer = $content->attackingPlayer->name;
-		$Team = $content->attackingPlayer->currentClan;
+		$this->AttackPlayer = $content->attackingPlayer->name;
+		$this->Team = $content->attackingPlayer->currentClan;
+		$this->AtkPlayerLogin = $content->attackingPlayer->login;
 		
+		
+		$this->ShowWidget($login = null, $this->AttackPlayer, $this->AtkRatio, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->AtkShots, $this->AtkHits, $this->HitRatio, $this->Team, $this->AtkPlayerLogin);
+		
+		}
+		}
+	
+	function ShowWidget($login = null, $AttackPlayerNick, $RatioAtk, $RoundsAtk, $RoundsSuccess, $CaptureAtk, $ShotsAtk, $HitsAtk, $RatioHit, $TeamNr, $AttackPlayerLogin){
+	
 		$blue = $this->connection->getTeamInfo(1);
         $red = $this->connection->getTeamInfo(2);
-		
-		$xml  = '<?xml version="1.0" encoding="utf-8"?>';
-		$xml .= '<manialink version="1" background="1" navigable3d="0" id="AtkSpecDetails">';
-		$xml .= '<frame posn="-60 -5 0" id="AtkSpecDetails">';
-		$xml .= '<quad style="UiSMSpectatorScoreBig" substyle="PlayerSlotCenter" posn="-90 8 0" sizen="50 70"/>'; // MainWindow
-		$xml .= '<quad posn="-80 -4 0.5" sizen="4.5 4.5" style="Icons64x64_1" substyle="TV" />';
-		$xml .= '<label posn="-72 -5 0.5" sizen="100 0" textsize="1" text="'.$content->attackingPlayer->name.'"/>';
-		$xml .= '<quad posn="-80 -10 0.5" sizen="4.5 4.5" style="BgRaceScore2" substyle="Points" />';
-		$xml .= '<label posn="-72 -11 0.5" sizen="100 0" textsize="1" text="AtkRounds: '.$AtkRounds.'"/>';
-		$xml .= '<quad posn="-80 -16 0.5" sizen="4.5 4.5" style="BgRaceScore2" substyle="Podium" />';
-		$xml .= '<label posn="-72 -17 0.5" sizen="100 0" textsize="1" text="AtkSucces: '.$AtkSucces.'"/>';
-		$xml .= '<quad posn="-80 -22 0.5" sizen="4.5 4.5" style="ManiaplanetSystem" substyle="Statistics" />';
-		$xml .= '<label posn="-72 -23 0.5" sizen="100 0" textsize="1" text="AtkRatio: '.$AtkRatio.' %"/>';
-		$xml .= '<quad posn="-80 -28 0.5" sizen="4.5 4.5" style="Icons64x64_1" substyle="Finish" />';
-		$xml .= '<label posn="-72 -29 0.5" sizen="100 0" textsize="1" text="Captures: '.$AtkCapture.'"/>';
-		$xml .= '<quad posn="-80 -34 0.5" sizen="4.5 4.5" style="Icons64x64_2" substyle="UnknownElimination" />';
-		$xml .= '<label posn="-72 -35 0.5" sizen="100 0" textsize="1" text="Shots: '.$AtkShots.'"/>';
-		$xml .= '<quad posn="-80 -40 0.5" sizen="4.5 4.5" style="Icons64x64_2" substyle="UnknownHit" />';
-		$xml .= '<label posn="-72 -41 0.5" sizen="100 0" textsize="1" text="Hits: '.$AtkHits.'"/>';
-		$xml .= '<quad posn="-80 -46 0.5" sizen="4.5 4.5" style="Icons64x64_2" substyle="ServerNotice" />';
-		$xml .= '<label posn="-72 -47 0.5" sizen="100 0" textsize="1" text="HitRatio: '.$HitRatio.' %"/>';
-		if ($Team == 1){
-		if ($blue->clubLinkUrl) {
+	$xml  = '<?xml version="1.0" encoding="utf-8"?>';
+                $xml .= '<manialink version="1" background="1" navigable3d="0" id="AtkSpecDetails">';
+                $xml .= '<frame posn="-60 -5 0" id="AtkSpecDetails">';
+                $xml .= '<quad style="UiSMSpectatorScoreBig" substyle="PlayerSlotCenter" posn="-90 8 0" sizen="50 70"/>'; // MainWindow
+                $xml .= '<quad posn="-80 -4 0.5" sizen="4.5 4.5" style="Icons64x64_1" substyle="TV" />';
+                $xml .= '<label posn="-72 -5 0.5" sizen="100 0" textsize="1" text="'.$AttackPlayerNick.'"/>';
+                $xml .= '<quad posn="-80 -10 0.5" sizen="4.5 4.5" style="BgRaceScore2" substyle="Points" />';
+                $xml .= '<label posn="-72 -11 0.5" sizen="100 0" textsize="1" text="AtkRounds: '.$RoundsAtk.'"/>';
+                $xml .= '<quad posn="-80 -16 0.5" sizen="4.5 4.5" style="BgRaceScore2" substyle="Podium" />';
+                $xml .= '<label posn="-72 -17 0.5" sizen="100 0" textsize="1" text="AtkSucces: '.$RoundsSuccess.'"/>';
+                $xml .= '<quad posn="-80 -22 0.5" sizen="4.5 4.5" style="ManiaplanetSystem" substyle="Statistics" />';
+                $xml .= '<label posn="-72 -23 0.5" sizen="100 0" textsize="1" text="AtkRatio: '.$RatioAtk.' %"/>';
+                $xml .= '<quad posn="-80 -28 0.5" sizen="4.5 4.5" style="Icons64x64_1" substyle="Finish" />';
+                $xml .= '<label posn="-72 -29 0.5" sizen="100 0" textsize="1" text="Captures: '.$CaptureAtk.'"/>';
+                $xml .= '<quad posn="-80 -34 0.5" sizen="4.5 4.5" style="Icons64x64_2" substyle="UnknownElimination" />';
+                $xml .= '<label posn="-72 -35 0.5" sizen="100 0" textsize="1" text="Shots: '.$ShotsAtk.'"/>';
+                $xml .= '<quad posn="-80 -40 0.5" sizen="4.5 4.5" style="Icons64x64_2" substyle="UnknownHit" />';
+                $xml .= '<label posn="-72 -41 0.5" sizen="100 0" textsize="1" text="Hits: '.$HitsAtk.'"/>';
+                $xml .= '<quad posn="-80 -46 0.5" sizen="4.5 4.5" style="Icons64x64_2" substyle="ServerNotice" />';
+                $xml .= '<label posn="-72 -47 0.5" sizen="100 0" textsize="1" text="HitRatio: '.$RatioHit.' %"/>';
+                if ($TeamNr == 1){
+                if ($blue->clubLinkUrl) {
         $xml .= '<quad image="'.$this->Clublink($blue->clubLinkUrl).'" posn="-88 -26 0.5" sizen="7 7" />';   
         }
-		else{
-		$xml .= '<quad posn="-88 -26 0.5" sizen="7 7" style="Emblems" substyle="#1" />';
-		}
-		}
-		if ($Team == 2){
-		if ($red->clubLinkUrl) {
+                else{
+                $xml .= '<quad posn="-88 -26 0.5" sizen="7 7" style="Emblems" substyle="#1" />';
+                }
+                }
+                if ($TeamNr== 2){
+                if ($red->clubLinkUrl) {
         $xml .= '<quad image="'.$this->Clublink($red->clubLinkUrl).'" posn="-88 -26 0.5" sizen="7 7" />';   
         }
-		else{
-		$xml .= '<quad posn="-88 -26 0.5" sizen="7 7" style="Emblems" substyle="#1" />';
-		}
-		}
+                else{
+                $xml .= '<quad posn="-88 -26 0.5" sizen="7 7" style="Emblems" substyle="#1" />';
+                }
+                }
 
 
-		$xml .= '</frame>';
-		$xml .= '<script><!--
+                $xml .= '</frame>';
+                $xml .= '<script><!--
     main () {
         declare FrameRules  <=> Page.GetFirstChild("AtkSpecDetails");
         declare ShowRules = True;
@@ -284,15 +294,13 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
         }
     }
 --></script>'; // F7 Keypress
-		$xml .= '</manialink>';
-		
-		foreach ($this->storage->spectators as $login => $player) { // get players
+                $xml .= '</manialink>';
+                
+                foreach ($this->storage->spectators as $login => $player) { // get players
         $this->connection->sendDisplayManialinkPage($player->login, $xml, 0, true, true);
-		$this->connection->forceSpectatorTarget($player->login, $content->attackingPlayer->login, 1, true);
+        $this->connection->forceSpectatorTarget($player->login, $AttackPlayerLogin, 1, true);
         }
-		}
-		
-	}
+                }
 	
 	function Clublink($URL){
 	        	$options = array(
