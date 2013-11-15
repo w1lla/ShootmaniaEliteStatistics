@@ -62,7 +62,6 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
  
     /** @var $playerIDs[$login] = number */
     private $playerIDs = array();
-	
  
     function onInit() {
         $this->setVersion('0.1.0');
@@ -218,24 +217,24 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		
 		$xml  = '<?xml version="1.0" encoding="utf-8"?>';
 		$xml .= '<manialink version="1" background="1" navigable3d="0" id="AtkSpecDetails">';
-		$xml .= '<frame posn="-60 -5 0">';
-		$xml .= '<quad image="http://static.maniaplanet.com/manialinks/lobbies/background.png" posn="-90 0 0" sizen="50 55"/>'; // MainWindow
+		$xml .= '<frame posn="-60 -5 0" id="AtkSpecDetails">';
+		$xml .= '<quad style="UiSMSpectatorScoreBig" substyle="PlayerSlotCenter" posn="-90 8 0" sizen="50 70"/>'; // MainWindow
 		$xml .= '<quad posn="-80 -4 0.5" sizen="4.5 4.5" style="Icons64x64_1" substyle="TV" />';
-		$xml .= '<label posn="-74 -5 0.5" sizen="100 0" textsize="1" text="'.$content->attackingPlayer->name.'"/>';
+		$xml .= '<label posn="-72 -5 0.5" sizen="100 0" textsize="1" text="'.$content->attackingPlayer->name.'"/>';
 		$xml .= '<quad posn="-80 -10 0.5" sizen="4.5 4.5" style="BgRaceScore2" substyle="Points" />';
-		$xml .= '<label posn="-74 -11 0.5" sizen="100 0" textsize="1" text="AtkRounds: '.$AtkRounds.'"/>';
+		$xml .= '<label posn="-72 -11 0.5" sizen="100 0" textsize="1" text="AtkRounds: '.$AtkRounds.'"/>';
 		$xml .= '<quad posn="-80 -16 0.5" sizen="4.5 4.5" style="BgRaceScore2" substyle="Podium" />';
-		$xml .= '<label posn="-74 -17 0.5" sizen="100 0" textsize="1" text="AtkSucces: '.$AtkSucces.'"/>';
+		$xml .= '<label posn="-72 -17 0.5" sizen="100 0" textsize="1" text="AtkSucces: '.$AtkSucces.'"/>';
 		$xml .= '<quad posn="-80 -22 0.5" sizen="4.5 4.5" style="ManiaplanetSystem" substyle="Statistics" />';
-		$xml .= '<label posn="-74 -23 0.5" sizen="100 0" textsize="1" text="AtkRatio: '.$AtkRatio.' %"/>';
+		$xml .= '<label posn="-72 -23 0.5" sizen="100 0" textsize="1" text="AtkRatio: '.$AtkRatio.' %"/>';
 		$xml .= '<quad posn="-80 -28 0.5" sizen="4.5 4.5" style="Icons64x64_1" substyle="Finish" />';
-		$xml .= '<label posn="-74 -29 0.5" sizen="100 0" textsize="1" text="Captures: '.$AtkCapture.'"/>';
+		$xml .= '<label posn="-72 -29 0.5" sizen="100 0" textsize="1" text="Captures: '.$AtkCapture.'"/>';
 		$xml .= '<quad posn="-80 -34 0.5" sizen="4.5 4.5" style="Icons64x64_2" substyle="UnknownElimination" />';
-		$xml .= '<label posn="-74 -35 0.5" sizen="100 0" textsize="1" text="Shots: '.$AtkShots.'"/>';
+		$xml .= '<label posn="-72 -35 0.5" sizen="100 0" textsize="1" text="Shots: '.$AtkShots.'"/>';
 		$xml .= '<quad posn="-80 -40 0.5" sizen="4.5 4.5" style="Icons64x64_2" substyle="UnknownHit" />';
-		$xml .= '<label posn="-74 -41 0.5" sizen="100 0" textsize="1" text="Hits: '.$AtkHits.'"/>';
+		$xml .= '<label posn="-72 -41 0.5" sizen="100 0" textsize="1" text="Hits: '.$AtkHits.'"/>';
 		$xml .= '<quad posn="-80 -46 0.5" sizen="4.5 4.5" style="Icons64x64_2" substyle="ServerNotice" />';
-		$xml .= '<label posn="-74 -47 0.5" sizen="100 0" textsize="1" text="HitRatio: '.$HitRatio.' %"/>';
+		$xml .= '<label posn="-72 -47 0.5" sizen="100 0" textsize="1" text="HitRatio: '.$HitRatio.' %"/>';
 		if ($Team == 1){
 		if ($blue->clubLinkUrl) {
         $xml .= '<quad image="'.$this->Clublink($blue->clubLinkUrl).'" posn="-88 -26 0.5" sizen="7 7" />';   
@@ -255,6 +254,36 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 
 
 		$xml .= '</frame>';
+		$xml .= '<script><!--
+    main () {
+        declare FrameRules  <=> Page.GetFirstChild("AtkSpecDetails");
+        declare ShowRules = True;
+
+        while(True) {
+            yield;
+
+            if (ShowRules) {
+                FrameRules.Show();
+            } else {
+                FrameRules.Hide();
+            }
+
+            foreach (Event in PendingEvents) {
+                switch (Event.Type) {
+                    case CMlEvent::Type::MouseClick :
+                    {
+                        if (Event.ControlId == "FrameRules") ShowRules = !ShowRules;
+                    }
+
+                    case CMlEvent::Type::KeyPress:
+                    {
+                        if (Event.CharPressed == "2818048") ShowRules = !ShowRules; // F7
+                    }
+                }
+            }
+        }
+    }
+--></script>'; // F7 Keypress
 		$xml .= '</manialink>';
 		
 		foreach ($this->storage->spectators as $login => $player) { // get players
