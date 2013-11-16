@@ -550,6 +550,12 @@ PRIMARY KEY (`id`)
 			case "newmatch":
                 $this->newmatch($public);
                 break;
+			case "bo3":
+                $this->bo3($public);
+                break;
+			case "bo5":
+                $this->bo5($public);
+                break;
         }
 		}
     }
