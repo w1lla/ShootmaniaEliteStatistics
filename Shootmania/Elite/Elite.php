@@ -514,6 +514,7 @@ PRIMARY KEY (`id`)
     }
 
     function onEcho($internal, $public) {
+	var_dump($internal);
         switch ($internal) {
             case "map_pause":
                 $this->connection->sendModeScriptCommands(array("Command_ForceWarmUp" => true));
@@ -530,6 +531,27 @@ PRIMARY KEY (`id`)
                 $this->connection->triggerModeScriptEvent('WarmUp_Stop', '');
                 break;
         }
+		if ($public == "DrakoniaTest"){
+		switch ($internal) {
+            case "map_pause":
+                $this->connection->sendModeScriptCommands(array("Command_ForceWarmUp" => true));
+                break;
+            case "map_warmup_extend":
+                try {
+                    Validation::int(6000, 0);
+                } catch (\Exception $e) {
+                    return;
+                }
+                $this->connection->triggerModeScriptEvent('WarmUp_Extend', '6000');
+                break;
+            case "map_warmup_end":
+                $this->connection->triggerModeScriptEvent('WarmUp_Stop', '');
+                break;
+			case "newmatch":
+                $this->newmatch($public);
+                break;
+        }
+		}
     }
 
     function getServerCurrentMatch($serverLogin) {
