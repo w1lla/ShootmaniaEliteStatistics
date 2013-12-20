@@ -1115,7 +1115,7 @@ PRIMARY KEY (`id`)
 					" . $this->db->quote($zone[2]) . ",
 					" . $this->db->quote($xml->color['primary']) . ",
 					" . $this->db->quote($xml->color['secondary']) . ",
-					" . $this->db->quote($url) . ",
+					" . $this->db->quote($url) . "
 				  )";
             $this->db->execute($qBlueClublink);
             $this->logger->Debug($qBlueClublink);
