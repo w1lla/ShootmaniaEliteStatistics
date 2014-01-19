@@ -58,6 +58,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 	private $AttackPlayer;
 	private $Team;
 	private $AtkPlayerLogin;
+	private $SpecTarget;
 	
     /** @var Log */
     private $logger;
@@ -120,7 +121,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		}
 		else
 		{
-        $this->AtkPlayer = $this->getPlayerId($content->attackingPlayer->login);
+        $this->AtkPlayer = $this->getPlayerId($this->SpecTarget->login);
 		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces, (
 SUM( player_maps.atkSucces ) / SUM( player_maps.atkrounds ) * 100
 ) AS AtkRatio
@@ -210,18 +211,38 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		{
 		$this->HitRatio =  number_format($HitRatioObject, 2, ',', '');
 		}
-		
-		$this->AttackPlayer = $content->attackingPlayer->name;
 		$this->Team = $content->attackingPlayer->currentClan;
-		$this->AtkPlayerLogin = $content->attackingPlayer->login;
+		$this->AtkPlayerLogin = $this->SpecTarget->login;
 		
+		}
+		}
 		
-		$this->ShowWidget($login = null, $this->AttackPlayer, $this->AtkRatio, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->AtkShots, $this->AtkHits, $this->HitRatio, $this->Team, $this->AtkPlayerLogin);
-		
+		function onPlayerInfoChanged($playerInfo){
+		 $player = \DedicatedApi\Structures\Player::fromArray($playerInfo);
+		 if($player->pureSpectator == 1){
+		 $SpecTarget = $this->getPlayerObjectById($player->currentTargetId);
+		 $this->SpecTarget = $SpecTarget;
+		 var_dump($this->SpecTarget);
+		$this->ShowWidget($player->login,  $this->SpecTarget->login, $this->AtkRatio, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->AtkShots, $this->AtkHits, $this->HitRatio, $this->Team, $this->AtkPlayerLogin);
 		}
 		}
 	
-	function ShowWidget($login = null, $AttackPlayerNick, $RatioAtk, $RoundsAtk, $RoundsSuccess, $CaptureAtk, $ShotsAtk, $HitsAtk, $RatioHit, $TeamNr, $AttackPlayerLogin){
+	public function getPlayerObjectById($id) {
+            if (!is_numeric($id))
+                throw new Exception("player id is not numeric");
+            foreach ($this->storage->players as $login => $player) {
+                if ($player->playerId == $id)
+                    return $player;
+            }
+            foreach ($this->storage->spectators as $login => $player) {
+                if ($player->playerId == $id)
+                    return $player;
+            }
+            return new \DedicatedApi\Structures\Player();
+        }
+
+	
+	function ShowWidget($login, $AttackPlayerNick, $RatioAtk, $RoundsAtk, $RoundsSuccess, $CaptureAtk, $ShotsAtk, $HitsAtk, $RatioHit, $TeamNr, $AttackPlayerLogin){
 	
 		$blue = $this->connection->getTeamInfo(1);
         $red = $this->connection->getTeamInfo(2);
@@ -296,10 +317,7 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 --></script>'; // F7 Keypress
                 $xml .= '</manialink>';
                 
-                foreach ($this->storage->spectators as $login => $player) { // get players
-        $this->connection->sendDisplayManialinkPage($player->login, $xml, 0, true, true);
-        $this->connection->forceSpectatorTarget($player->login, $AttackPlayerLogin, 1, true);
-        }
+        $this->connection->sendDisplayManialinkPage($login, $xml, 0, true, true);
                 }
 	
 	function Clublink($URL){
