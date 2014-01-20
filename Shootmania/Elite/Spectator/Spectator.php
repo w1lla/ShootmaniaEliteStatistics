@@ -104,23 +104,22 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 	$this->logger->Callbacks($event);
 	$this->logger->Callbacks($json);
         switch ($event) {
-            case 'BeginTurn':
-                $this->onXmlRpcEliteSpectatorBeginTurn(new JsonCallbacks\BeginTurn($json));
-                break;
 			case 'EndTurn':
                 $this->onXmlRpcEliteSpectatorEndTurn(new JsonCallbacks\EndTurn($json));
                 break;
     }	
     }
 	
-	    function onXmlRpcEliteSpectatorBeginTurn(JsonCallbacks\BeginTurn $content) {
-		sleep(2);
-		$this->MatchNumber = $this->getServerCurrentMatch($this->storage->serverLogin);
-		 // Players and stuff
-		if ($content->attackingPlayer == NULL){
-		}
-		else
-		{
+		
+		function onPlayerInfoChanged($playerInfo){
+		foreach ($this->storage->players as $login => $player) { // get players
+		 $player = \DedicatedApi\Structures\Player::fromArray($playerInfo);
+		 if($player->pureSpectator == true){
+		 $SpecTarget = $this->getPlayerObjectById($player->currentTargetId);
+		 if (empty($SpecTarget->login) || $SpecTarget->login == $this->storage->server)
+                return;
+		 $this->SpecTarget = $SpecTarget;
+		 $this->MatchNumber = $this->getServerCurrentMatch($this->storage->serverLogin);
         $this->AtkPlayer = $this->getPlayerId($this->SpecTarget->login);
 		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces, (
 SUM( player_maps.atkSucces ) / SUM( player_maps.atkrounds ) * 100
@@ -211,21 +210,22 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		{
 		$this->HitRatio =  number_format($HitRatioObject, 2, ',', '');
 		}
-		$this->Team = $content->attackingPlayer->currentClan;
+		$this->Team = ($this->SpecTarget->teamId + 1);
 		$this->AtkPlayerLogin = $this->SpecTarget->login;
 		
-		}
-		}
-		
-		function onPlayerInfoChanged($playerInfo){
-		 $player = \DedicatedApi\Structures\Player::fromArray($playerInfo);
-		 if($player->pureSpectator == 1){
-		 $SpecTarget = $this->getPlayerObjectById($player->currentTargetId);
-		 $this->SpecTarget = $SpecTarget;
-		 var_dump($this->SpecTarget);
 		$this->ShowWidget($player->login,  $this->SpecTarget->login, $this->AtkRatio, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->AtkShots, $this->AtkHits, $this->HitRatio, $this->Team, $this->AtkPlayerLogin);
 		}
 		}
+	$xml  = '<?xml version="1.0" encoding="UTF-8"?>';
+  	$xml .= '<manialink id="AtkSpecDetails">';
+  	$xml .= '</manialink>';
+	$xml .= '</manialinks>';
+	foreach ($this->storage->players as $login => $player) { // get players
+	 if($player->pureSpectator == false){
+        $this->connection->sendHideManialinkPage($player->login, $xml, 0, true, true);
+        }
+		}
+	}
 	
 	public function getPlayerObjectById($id) {
             if (!is_numeric($id))
@@ -274,12 +274,12 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
                 $xml .= '<quad posn="-88 -26 0.5" sizen="7 7" style="Emblems" substyle="#1" />';
                 }
                 }
-                if ($TeamNr== 2){
+                if ($TeamNr == 2){
                 if ($red->clubLinkUrl) {
         $xml .= '<quad image="'.$this->Clublink($red->clubLinkUrl).'" posn="-88 -26 0.5" sizen="7 7" />';   
         }
                 else{
-                $xml .= '<quad posn="-88 -26 0.5" sizen="7 7" style="Emblems" substyle="#1" />';
+                $xml .= '<quad posn="-88 -26 0.5" sizen="7 7" style="Emblems" substyle="#2" />';
                 }
                 }
 
@@ -363,8 +363,10 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
   	$xml .= '</manialink>';
 	$xml .= '</manialinks>';
 	foreach ($this->storage->spectators as $login => $player) { // get players
+	 if($player->pureSpectator == true){
         $this->connection->sendHideManialinkPage($player->login, $xml, 0, true, true);
         }
+		}
 	}
 		
 	
