@@ -40,6 +40,7 @@ use ManiaLive\Utilities\Validation;
 use ManiaLivePlugins\Shootmania\Elite\JsonCallbacks;
 use ManiaLivePlugins\Shootmania\Elite\Classes\Log;
 use ManiaLib\Gui\Elements\Icons128x128_1;
+use ManiaLive\Data\Event as PlayerEvent;
 
 class Spectator extends \ManiaLive\PluginHandler\Plugin {
 
@@ -60,6 +61,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 	private $AtkPlayerLogin;
 	private $SpecTarget;
 	private $tickCounter = 0;
+	private $SpecPlayer;
     /** @var Log */
     private $logger;
  
@@ -76,7 +78,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 	    $this->enableDatabase();
         $this->enableDedicatedEvents();
 		$this->enablePluginEvents();
-		
+		$this->enableStorageEvents(PlayerEvent::ON_PLAYER_CHANGE_SIDE);
 	}
 	
 	function onReady() {
@@ -113,130 +115,119 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 	function onTick() {
         
         if($this->tickCounter % 3 == 0){
+		echo 'Hi';
+		$this->MatchNumber = $this->getServerCurrentMatch($this->storage->serverLogin);
+		 if (empty($this->SpecTarget->login) || $this->SpecTarget->login == $this->storage->server)
+                return;
+				 if($this->SpecPlayer->spectator){
+		 if (empty($this->SpecTarget->login) || $this->SpecTarget->login == $this->storage->server)
+                return;
+        $this->AtkPlayer = $this->getPlayerId($this->SpecTarget->login);
+		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces, (
+SUM( player_maps.atkSucces ) / SUM( player_maps.atkrounds ) * 100
+) AS AtkRatio
+FROM player_maps
+JOIN matches ON player_maps.match_id = matches.id
+WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
+AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
+		//$this->logger->Debug($queryCurrentMatchAtkPlayerStats);
+		$this->db->execute($queryCurrentMatchAtkPlayerStats);
+		
+		$AtkRatioObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->AtkRatio;
+		if ($AtkRatioObject == NULL){
+		$this->AtkRatio = 0;
+		}
+		else 
+		{
+		$this->AtkRatio =  number_format($AtkRatioObject, 2, ',', '');
+		}
+		
+		$AtkRoundsObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkrounds;
+		if ($AtkRoundsObject == NULL){
+		$this->AtkRounds = 0;
+		}
+		else 
+		{
+		$this->AtkRounds = $AtkRoundsObject;
+		}
+		
+		$AtkSuccesObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkSucces;
+		if ($AtkSuccesObject == NULL){
+		$this->AtkSucces = 0;
+		}
+		else 
+		{
+		$this->AtkSucces = $AtkSuccesObject;
+		}
+		
+		$queryCurrentMatchAtkPlayerStatsCaptures = "SELECT SUM( player_maps.captures ) AS Captures
+		FROM player_maps
+		JOIN matches ON player_maps.match_id = matches.id
+		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
+		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
+		//$this->logger->Debug($queryCurrentMatchAtkPlayerStatsCaptures);
+		$this->db->execute($queryCurrentMatchAtkPlayerStatsCaptures);
+		
+		$AtkCaptureObject = $this->db->execute($queryCurrentMatchAtkPlayerStatsCaptures)->fetchObject()->Captures;
+		if ($AtkCaptureObject == NULL){
+		$this->AtkCapture = 0;
+		}
+		else 
+		{
+		$this->AtkCapture = $AtkCaptureObject;
+		}
+		
+		$QueryShots_HitsAtkPlayer = "SELECT SUM( player_maps.shots ) AS shots, SUM( player_maps.hits ) AS hits
+		FROM player_maps
+		JOIN matches ON player_maps.match_id = matches.id
+		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
+		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
+
+		//$this->logger->Debug($QueryShots_HitsAtkPlayer);
+		$this->db->execute($QueryShots_HitsAtkPlayer);
+		
+		$AtkShotsObject = $this->db->execute($QueryShots_HitsAtkPlayer)->fetchObject()->shots;
+		$this->AtkShots = $AtkShotsObject;
+		
+		$AtkHitsObject = $this->db->execute($QueryShots_HitsAtkPlayer)->fetchObject()->hits;
+		$this->AtkHits = $AtkHitsObject;
+		
+		$queryAtkHitRatio = "SELECT (
+SUM( player_maps.hits ) / SUM( player_maps.shots ) * 100
+) AS HitRatio
+FROM player_maps
+JOIN matches ON player_maps.match_id = matches.id
+WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
+AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
+		//$this->logger->Debug($queryAtkHitRatio);
+		$this->db->execute($queryAtkHitRatio);
+		
+	
+		$HitRatioObject = $this->db->execute($queryAtkHitRatio)->fetchObject()->HitRatio;
+		if ($HitRatioObject == NULL){
+		$this->HitRatio = 0;
+		}
+		else 
+		{
+		$this->HitRatio =  number_format($HitRatioObject, 2, ',', '');
+		}
+		$this->Team = ($this->SpecTarget->teamId + 1);
+		$this->AtkPlayerLogin = $this->SpecTarget->login;
+		
+		$this->ShowWidget($this->SpecPlayer->login,  $this->SpecTarget->login, $this->AtkRatio, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->AtkShots, $this->AtkHits, $this->HitRatio, $this->Team, $this->AtkPlayerLogin);
             $this->tickCounter++;
+					}
         }else{
             $this->tickCounter = 0;
-            foreach ($this->storage->players as $login => $player) { // get players
-		 if($player->pureSpectator == true){
-		 $SpecTarget = $this->getPlayerObjectById($player->currentTargetId);
-		 if (empty($SpecTarget->login) || $SpecTarget->login == $this->storage->server)
-                return;
-		 $this->SpecTarget = $SpecTarget;
-		 $this->MatchNumber = $this->getServerCurrentMatch($this->storage->serverLogin);
-        $this->AtkPlayer = $this->getPlayerId($this->SpecTarget->login);
-		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces, (
-SUM( player_maps.atkSucces ) / SUM( player_maps.atkrounds ) * 100
-) AS AtkRatio
-FROM player_maps
-JOIN matches ON player_maps.match_id = matches.id
-WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
-AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
-		//$this->logger->Debug($queryCurrentMatchAtkPlayerStats);
-		$this->db->execute($queryCurrentMatchAtkPlayerStats);
-		
-		$AtkRatioObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->AtkRatio;
-		if ($AtkRatioObject == NULL){
-		$this->AtkRatio = 0;
-		}
-		else 
-		{
-		$this->AtkRatio =  number_format($AtkRatioObject, 2, ',', '');
-		}
-		
-		$AtkRoundsObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkrounds;
-		if ($AtkRoundsObject == NULL){
-		$this->AtkRounds = 0;
-		}
-		else 
-		{
-		$this->AtkRounds = $AtkRoundsObject;
-		}
-		
-		$AtkSuccesObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkSucces;
-		if ($AtkSuccesObject == NULL){
-		$this->AtkSucces = 0;
-		}
-		else 
-		{
-		$this->AtkSucces = $AtkSuccesObject;
-		}
-		
-		$queryCurrentMatchAtkPlayerStatsCaptures = "SELECT SUM( player_maps.captures ) AS Captures
-		FROM player_maps
-		JOIN matches ON player_maps.match_id = matches.id
-		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
-		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
-		//$this->logger->Debug($queryCurrentMatchAtkPlayerStatsCaptures);
-		$this->db->execute($queryCurrentMatchAtkPlayerStatsCaptures);
-		
-		$AtkCaptureObject = $this->db->execute($queryCurrentMatchAtkPlayerStatsCaptures)->fetchObject()->Captures;
-		if ($AtkCaptureObject == NULL){
-		$this->AtkCapture = 0;
-		}
-		else 
-		{
-		$this->AtkCapture = $AtkCaptureObject;
-		}
-		
-		$QueryShots_HitsAtkPlayer = "SELECT SUM( player_maps.shots ) AS shots, SUM( player_maps.hits ) AS hits
-		FROM player_maps
-		JOIN matches ON player_maps.match_id = matches.id
-		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
-		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
-
-		//$this->logger->Debug($QueryShots_HitsAtkPlayer);
-		$this->db->execute($QueryShots_HitsAtkPlayer);
-		
-		$AtkShotsObject = $this->db->execute($QueryShots_HitsAtkPlayer)->fetchObject()->shots;
-		$this->AtkShots = $AtkShotsObject;
-		
-		$AtkHitsObject = $this->db->execute($QueryShots_HitsAtkPlayer)->fetchObject()->hits;
-		$this->AtkHits = $AtkHitsObject;
-		
-		$queryAtkHitRatio = "SELECT (
-SUM( player_maps.hits ) / SUM( player_maps.shots ) * 100
-) AS HitRatio
-FROM player_maps
-JOIN matches ON player_maps.match_id = matches.id
-WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
-AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
-		//$this->logger->Debug($queryAtkHitRatio);
-		$this->db->execute($queryAtkHitRatio);
-		
-	
-		$HitRatioObject = $this->db->execute($queryAtkHitRatio)->fetchObject()->HitRatio;
-		if ($HitRatioObject == NULL){
-		$this->HitRatio = 0;
-		}
-		else 
-		{
-		$this->HitRatio =  number_format($HitRatioObject, 2, ',', '');
-		}
-		$this->Team = ($this->SpecTarget->teamId + 1);
-		$this->AtkPlayerLogin = $this->SpecTarget->login;
-		
-		$this->ShowWidget($player->login,  $this->SpecTarget->login, $this->AtkRatio, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->AtkShots, $this->AtkHits, $this->HitRatio, $this->Team, $this->AtkPlayerLogin);
-		}
-		}
-  	$xml = '<manialinks>';
-  	$xml .= '<manialink id="AtkSpecDetails">';
-	$xml .= '</manialink>';
-	$xml .= '</manialinks>';
-	foreach ($this->storage->players as $login => $player) { // get players
-	 if($player->pureSpectator == false){
-        $this->connection->sendHideManialinkPage($player->login, $xml, 0, true, true);
-        }
 		}
             }
-        }
 	
 		
-		function onPlayerInfoChanged($playerInfo){
-		foreach ($this->storage->players as $login => $player) { // get players
-		 $player = \DedicatedApi\Structures\Player::fromArray($playerInfo);
-		 if($player->pureSpectator == true){
+		function onPlayerChangeSide($player, $oldSide){
+		 $this->SpecPlayer = $player;
+		 if($player->spectator == true && $player->pureSpectator == true){
 		 $SpecTarget = $this->getPlayerObjectById($player->currentTargetId);
-		 if (empty($SpecTarget->login) || $SpecTarget->login == $this->storage->server)
+		 if (empty($SpecTarget->login) || $SpecTarget->login == $this->storage->server || empty($SpecTarget))
                 return;
 		 $this->SpecTarget = $SpecTarget;
 		 $this->MatchNumber = $this->getServerCurrentMatch($this->storage->serverLogin);
@@ -334,16 +325,14 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		
 		$this->ShowWidget($player->login,  $this->SpecTarget->login, $this->AtkRatio, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->AtkShots, $this->AtkHits, $this->HitRatio, $this->Team, $this->AtkPlayerLogin);
 		}
-		}
+		else
+		{
   	$xml = '<manialinks>';
   	$xml .= '<manialink id="AtkSpecDetails">';
 	$xml .= '</manialink>';
 	$xml .= '</manialinks>';
-	foreach ($this->storage->players as $login => $player) { // get players
-	 if($player->pureSpectator == false){
         $this->connection->sendHideManialinkPage($player->login, $xml, 0, true, true);
         }
-		}
 	}
 	
 	public function getPlayerObjectById($id) {
@@ -568,7 +557,7 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		if ($xml->getName() != "club")
 		Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Spectator: Clublink name != club!');
 		
-	return $xml->emblem_web;
+	return $xml->emblem;
 	}
 	
 	function onXmlRpcEliteSpectatorEndTurn(JsonCallbacks\EndTurn $content) {
@@ -578,9 +567,13 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 	$xml .= '</manialink>';
 	$xml .= '</manialinks>';
 	foreach ($this->storage->spectators as $login => $player) { // get players
-	 if($player->pureSpectator == true){
+	 if($player->spectator == true && $player->pureSpectator == true){
         $this->connection->sendHideManialinkPage($player->login, $xml, 0, true, true);
         }
+		else
+		{
+		 $this->connection->sendHideManialinkPage($player->login, $xml, 0, true, true);
+		}
 		}
 	}
 		
