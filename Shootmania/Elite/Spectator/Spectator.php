@@ -223,8 +223,12 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
             }
 	
 		
-		function onPlayerChangeSide($player, $oldSide){
+		public function onPlayerInfoChanged($playerInfo){
+		$player = \DedicatedApi\Structures\Player::fromArray($playerInfo);
+		var_dump($player);
 		 $this->SpecPlayer = $player;
+		 if ($this->SpecPlayer->playerId == 0)
+            return;
 		 if($player->spectator == true && $player->pureSpectator == true){
 		 $SpecTarget = $this->getPlayerObjectById($player->currentTargetId);
 		 if (empty($SpecTarget->login) || $SpecTarget->login == $this->storage->server || empty($SpecTarget))
