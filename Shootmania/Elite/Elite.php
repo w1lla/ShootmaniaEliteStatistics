@@ -40,6 +40,7 @@ use ManiaLive\Utilities\Validation;
 use ManiaLivePlugins\Shootmania\Elite\JsonCallbacks;
 use ManiaLivePlugins\Shootmania\Elite\Classes\Log;
 use ManiaLib\Gui\Elements\Icons128x128_1;
+use DedicatedApi\Structures;
 
 class Elite extends \ManiaLive\PluginHandler\Plugin {
 
@@ -320,8 +321,8 @@ PRIMARY KEY (`id`)
 		$this->db->execute($q);
 		}
 		
-				if($this->isPluginLoaded('Standard\Menubar'))
-			$this->onPluginLoaded('Standard\Menubar');
+				if($this->isPluginLoaded('ManiaLivePlugins\Standard\Menubar\Menubar'))
+			$this->onPluginLoaded('ManiaLivePlugins\Standard\Menubar\Menubar');
 	}
 	    function onReady() {
         $this->updateServerChallenges();
@@ -331,9 +332,7 @@ PRIMARY KEY (`id`)
         $this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => false)); //Debug Way...
         $this->connection->setModeScriptSettings(array('S_UsePlayerClublinks' => true)); //Debug Way...
 		//$this->connection->setModeScriptSettings(array('S_Mode' => 0));
-        $this->connection->setCallVoteRatiosEx(false, array(
-            new \DedicatedApi\Structures\VoteRatio('SetModeScriptSettingsAndCommands', -1.)
-        ));
+        $this->connection->setCallVoteRatios(array(array('Command' => 'SetModeScriptSettingsAndCommands', 'Ratio' => -1. )));
 		
 		Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Core v' . $this->getVersion());
 		foreach ($this->storage->players as $player) {
@@ -365,71 +364,71 @@ PRIMARY KEY (`id`)
 	
 	function onPluginLoaded($pluginId)
 	{
-		if($pluginId == 'Standard\Menubar')
+		if($pluginId == 'ManiaLivePlugins\Standard\Menubar\Menubar')
 			$this->buildMenu();
 	}
 	
 	function buildMenu()
 	{
-		$this->callPublicMethod('Standard\Menubar',
+		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
 			'initMenu',
 			Icons128x128_1::Custom);
 		
-		$this->callPublicMethod('Standard\Menubar',
+		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
 			'addButton',
 			'Mode: Classic (3v3)',
 			array($this, 'S_Mode0'),
 			true);
 		
-		$this->callPublicMethod('Standard\Menubar',
+		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
 			'addButton',
 			'Mode: Free ',
 			array($this, 'S_Mode1'),
 			true);
 		
-		$this->callPublicMethod('Standard\Menubar',
+		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
 			'addButton',
 			'WarmUp Extend',
 			array($this, 'WarmUp_Extend'),
 			true);
 			
-		$this->callPublicMethod('Standard\Menubar',
+		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
 			'addButton',
 			'WarmUp Stop',
 			array($this, 'WarmUp_Stop'),
 			true);
 
-		$this->callPublicMethod('Standard\Menubar',
+		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
 			'addButton',
 			'Pause',
 			array($this, 'pause'),
 			true);
 
-		$this->callPublicMethod('Standard\Menubar',
+		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
 			'addButton',
 			'New Match',
 			array($this, 'newmatch'),
 			true);
 			
-		$this->callPublicMethod('Standard\Menubar',
+		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
 			'addButton',
 			'BO3',
 			array($this, 'bo3'),
 			true);
 			
-		$this->callPublicMethod('Standard\Menubar',
+		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
 			'addButton',
 			'BO5',
 			array($this, 'bo5'),
 			true);
 			
-		$this->callPublicMethod('Standard\Menubar',
+		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
 			'addButton',
 			'Reset Callvotes active',
 			array($this, 'InitiateVotes'),
 			true);
 		
-		$this->callPublicMethod('Standard\Menubar',
+		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
 			'addButton',
 			'Set Callvotes inactive',
 			array($this, 'DeactivateVotes'),
