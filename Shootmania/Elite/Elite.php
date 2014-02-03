@@ -513,7 +513,6 @@ PRIMARY KEY (`id`)
     }
 
     function onEcho($internal, $public) {
-	var_dump($internal);
         switch ($internal) {
             case "map_pause":
                 $this->connection->sendModeScriptCommands(array("Command_ForceWarmUp" => true));
