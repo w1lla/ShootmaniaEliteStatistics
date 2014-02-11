@@ -106,7 +106,8 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `player_login` varchar(60) NOT NULL,
   `map_uid` varchar(60) NOT NULL,
   `matchServerLogin` VARCHAR(250) NOT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  ADD KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
@@ -123,7 +124,8 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `counterhits` mediumint(9) NOT NULL DEFAULT '0',
   `eliminations` int(11) NOT NULL DEFAULT '0',
   `matchServerLogin` VARCHAR(250) NOT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  ADD KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
@@ -137,7 +139,8 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `player_shooter` varchar(60) NOT NULL,
   `map_uid` varchar(60) NOT NULL,
   `matchServerLogin` VARCHAR(250) NOT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  ADD KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
@@ -155,7 +158,8 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `attackWinEliminate` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
   `defenceWinEliminate` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
    `matchServerLogin` VARCHAR(250) NOT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  ADD KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
@@ -168,7 +172,8 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `nation` varchar(50) NOT NULL,
   `updatedate` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `login` (`login`)
+  UNIQUE KEY `login` (`login`),
+  ADD KEY(matchServerLogin)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}		
@@ -191,7 +196,8 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `atkSucces` mediumint(9) NOT NULL DEFAULT '0',
   `elimination_3x` mediumint(9) NOT NULL DEFAULT '0',
    `matchServerLogin` VARCHAR(250) NOT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  ADD KEY(matchServerLogin)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
@@ -223,7 +229,8 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `matchServerLogin` VARCHAR(250) NOT NULL,
   `competition_id` INT(10) NOT NULL DEFAULT '1',
   `show` boolean default '0',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  ADD KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
@@ -242,7 +249,8 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `AllReady` boolean default '0',
   `NextMap` boolean default '0',
   `matchServerLogin` VARCHAR(250) NOT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  ADD KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
@@ -258,7 +266,8 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `weaponid` int(11) NOT NULL,
   `weaponname` varchar(45) DEFAULT NULL,
   `matchServerLogin` VARCHAR(250) NOT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  ADD KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
@@ -275,7 +284,8 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `weaponid` int(11) NOT NULL,
   `weaponname` varchar(45) DEFAULT NULL,
   `matchServerLogin` VARCHAR(250) NOT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  ADD KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
@@ -513,6 +523,8 @@ PRIMARY KEY (`id`)
     }
 
     function onEcho($internal, $public) {
+	var_dump($internal);
+	var_dump($public);
         switch ($internal) {
             case "map_pause":
                 $this->connection->sendModeScriptCommands(array("Command_ForceWarmUp" => true));
@@ -562,12 +574,12 @@ PRIMARY KEY (`id`)
 	 $CurrentMatchÏd = $this->db->execute(
                         'SELECT id FROM matches ' .
                         'where MatchEnd = "0000-00-00 00:00:00" and `matchServerLogin` = ' . $this->db->quote($serverLogin) .
-                        'order by id desc')->fetchSingleValue();
+                        '')->fetchSingleValue();
 	$this->logger->Normal($CurrentMatchÏd);					
         return $this->db->execute(
                         'SELECT id FROM matches ' .
                         'where MatchEnd = "0000-00-00 00:00:00" and `matchServerLogin` = ' . $this->db->quote($serverLogin) .
-                        'order by id desc')->fetchSingleValue();
+                        '')->fetchSingleValue();
     }
 
     function updateMatchState($matchId) {
@@ -601,15 +613,18 @@ PRIMARY KEY (`id`)
                 break;
             case 'OnShoot':
                 $this->onXmlRpcEliteShoot(new JsonCallbacks\OnShoot($json));
+				var_dump($json);
                 break;
             case 'OnHit':
                 $this->onXmlRpcEliteHit(new JsonCallbacks\OnHit($json));
+				var_dump($json);
                 break;
             case 'OnCapture':
                 $this->onXmlRpcEliteCapture(new JsonCallbacks\OnCapture($json));
                 break;
             case 'OnArmorEmpty':
                 $this->onXmlRpcEliteArmorEmpty(new JsonCallbacks\OnArmorEmpty($json));
+				var_dump($json);
                 break;
             case 'OnNearMiss':
                 $this->onXmlRpcEliteNearMiss(new JsonCallbacks\OnNearMiss($json));
