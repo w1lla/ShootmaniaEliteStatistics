@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 12/11/2013
+  Date: 11-2-2014
   Project Name: ESWC Elite Statistics
 
   What to do:
@@ -107,7 +107,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `map_uid` varchar(60) NOT NULL,
   `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`),
-  ADD KEY(matchServerLogin)
+  KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
@@ -125,7 +125,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `eliminations` int(11) NOT NULL DEFAULT '0',
   `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`),
-  ADD KEY(matchServerLogin)
+  KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
@@ -140,7 +140,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `map_uid` varchar(60) NOT NULL,
   `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`),
-  ADD KEY(matchServerLogin)
+  KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
@@ -159,7 +159,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `defenceWinEliminate` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
    `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`),
-  ADD KEY(matchServerLogin)
+  KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
@@ -172,8 +172,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `nation` varchar(50) NOT NULL,
   `updatedate` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `login` (`login`),
-  ADD KEY(matchServerLogin)
+  UNIQUE KEY `login` (`login`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}		
@@ -197,7 +196,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `elimination_3x` mediumint(9) NOT NULL DEFAULT '0',
    `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`),
-  ADD KEY(matchServerLogin)
+  KEY(matchServerLogin)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
@@ -230,7 +229,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `competition_id` INT(10) NOT NULL DEFAULT '1',
   `show` boolean default '0',
   PRIMARY KEY (`id`),
-  ADD KEY(matchServerLogin)
+  KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
@@ -250,7 +249,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `NextMap` boolean default '0',
   `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`),
-  ADD KEY(matchServerLogin)
+  KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
@@ -267,7 +266,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `weaponname` varchar(45) DEFAULT NULL,
   `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`),
-  ADD KEY(matchServerLogin)
+  KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
@@ -285,7 +284,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `weaponname` varchar(45) DEFAULT NULL,
   `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`),
-  ADD KEY(matchServerLogin)
+  KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
 			$this->db->execute($q);
 		}
