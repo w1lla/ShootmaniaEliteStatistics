@@ -2,7 +2,7 @@
 
 namespace ManiaLivePlugins\Shootmania\Elite\JsonCallbacks;
 
-class ScorePlayer extends \DedicatedApi\Structures\AbstractStructure {
+class ScorePlayer extends \Maniaplanet\DedicatedServer\Structures\AbstractStructure {
 
     /** @var string */
     public $login = "";

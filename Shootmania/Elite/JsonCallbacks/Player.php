@@ -2,7 +2,7 @@
 
 namespace ManiaLivePlugins\Shootmania\Elite\JsonCallbacks;
 
-class Player extends \DedicatedApi\Structures\AbstractStructure {
+class Player extends \Maniaplanet\DedicatedServer\Structures\AbstractStructure {
 
     /** @var string */
     public $login = "";

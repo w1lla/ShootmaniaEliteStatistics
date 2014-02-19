@@ -2,7 +2,7 @@
 
 namespace ManiaLivePlugins\Shootmania\Elite\Classes;
 
-class RpcObject extends \DedicatedApi\Structures\AbstractStructure {
+class RpcObject extends \Maniaplanet\DedicatedServer\Structures\AbstractStructure {
     /**
      * 
      * @param string $json

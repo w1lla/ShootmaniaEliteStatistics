@@ -2,7 +2,7 @@
 
 namespace ManiaLivePlugins\Shootmania\Elite\JsonCallbacks;
 
-class Score extends \DedicatedApi\Structures\AbstractStructure {
+class Score extends \Maniaplanet\DedicatedServer\Structures\AbstractStructure {
 
     /** @var integer */
     public $atkPoints = 0;

@@ -2,7 +2,7 @@
 
 namespace ManiaLivePlugins\Shootmania\Elite\JsonCallbacks;
 
-class Event_OnArmorEmpty extends \DedicatedApi\Structures\AbstractStructure {
+class Event_OnArmorEmpty extends \Maniaplanet\DedicatedServer\Structures\AbstractStructure {
 
     /** @var string */
     public $type = "";

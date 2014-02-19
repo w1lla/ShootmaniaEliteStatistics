@@ -2,7 +2,7 @@
 
 namespace ManiaLivePlugins\Shootmania\Elite\JsonCallbacks;
 
-class Event_OnShoot extends \DedicatedApi\Structures\AbstractStructure {
+class Event_OnShoot extends \Maniaplanet\DedicatedServer\Structures\AbstractStructure {
 
     /** @var string */
     public $type = "";

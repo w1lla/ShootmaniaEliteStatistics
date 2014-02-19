@@ -115,7 +115,6 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 	function onTick() {
         
         if($this->tickCounter % 3 == 0){
-		echo 'Hi';
 		$this->MatchNumber = $this->getServerCurrentMatch($this->storage->serverLogin);
 		 if (empty($this->SpecTarget->login) || $this->SpecTarget->login == $this->storage->server)
                 return;
@@ -224,8 +223,8 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 	
 		
 		public function onPlayerInfoChanged($playerInfo){
-		$player = \DedicatedApi\Structures\Player::fromArray($playerInfo);
-		var_dump($player);
+		$player = \ManiaPlanet\DedicatedServer\Structures\Player::fromArray($playerInfo);
+		//var_dump($player);
 		 $this->SpecPlayer = $player;
 		 if ($this->SpecPlayer->playerId == 0)
             return;

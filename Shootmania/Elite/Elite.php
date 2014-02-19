@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 11-2-2014
+  Date: 19-2-2014
   Project Name: ESWC Elite Statistics
 
   What to do:
@@ -40,7 +40,7 @@ use ManiaLive\Utilities\Validation;
 use ManiaLivePlugins\Shootmania\Elite\JsonCallbacks;
 use ManiaLivePlugins\Shootmania\Elite\Classes\Log;
 use ManiaLib\Gui\Elements\Icons128x128_1;
-use DedicatedApi\Structures;
+use Maniaplanet\DedicatedServer\Structures;
 
 class Elite extends \ManiaLive\PluginHandler\Plugin {
 
@@ -447,21 +447,21 @@ PRIMARY KEY (`id`)
     /* Chat messages */
 
     function WarmUp_Extend($login) {
-        $vote = new \DedicatedApi\Structures\Vote();
+        $vote = new \Maniaplanet\DedicatedServer\Structures\Vote();
         $vote->cmdName = 'Echo';
         $vote->cmdParam = array('Set WarmUp Extend', 'map_warmup_extend');
         $this->connection->callVote($vote, 0.5, 0, 1);
     }
 
     function WarmUp_Stop($login) {
-        $vote = new \DedicatedApi\Structures\Vote();
+        $vote = new \Maniaplanet\DedicatedServer\Structures\Vote();
         $vote->cmdName = 'Echo';
         $vote->cmdParam = array('Set Warmup Stop', 'map_warmup_end');
         $this->connection->callVote($vote, 0.5, 0, 1);
     }
 
     function pause($login) {
-        $vote = new \DedicatedApi\Structures\Vote();
+        $vote = new \Maniaplanet\DedicatedServer\Structures\Vote();
         $vote->cmdName = 'Echo';
         $vote->cmdParam = array('Set Map to Pause', 'map_pause');
         $this->connection->callVote($vote, 0.5, 0, 1);
@@ -477,13 +477,13 @@ PRIMARY KEY (`id`)
 	
 	function InitiateVotes($login){
 	$this->connection->setCallVoteRatiosEx(false, array(
-            new \DedicatedApi\Structures\VoteRatio('SetModeScriptSettingsAndCommands', 0.)
+            new Structures\VoteRatio('SetModeScriptSettingsAndCommands', 0.)
         ));
 	}
 	
 	function DeactivateVotes($login){
 	$this->connection->setCallVoteRatiosEx(false, array(
-            new \DedicatedApi\Structures\VoteRatio('SetModeScriptSettingsAndCommands', -1.)
+            new Structures\VoteRatio('SetModeScriptSettingsAndCommands', -1.)
         ));
 	}
 	
