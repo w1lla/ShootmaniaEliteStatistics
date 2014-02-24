@@ -349,7 +349,7 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
                 if ($player->playerId == $id)
                     return $player;
             }
-            return new \DedicatedApi\Structures\Player();
+            return new \ManiaPlanet\DedicatedServer\Structures\Player();
         }
 	
 	function onPlayerManialinkPageAnswer($playerUid, $login, $answer,array $entries)
