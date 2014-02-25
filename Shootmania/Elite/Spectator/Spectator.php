@@ -49,7 +49,6 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
  
     /** @var integer */
 	private $AtkPlayer;
-	private $AtkRatio;
 	private $AtkRounds;
 	private $AtkSucces;
 	private $AtkCapture;
@@ -57,6 +56,9 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 	private $AtkHits;
 	private $HitRatio;
 	private $AttackPlayer;
+	private $RocketHits;
+	private $LaserAcc;
+	private $LongestLaser;
 	private $Team;
 	private $AtkPlayerLogin;
 	private $SpecTarget;
@@ -69,7 +71,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
  
     function onInit() {
-        $this->setVersion('0.1.0');
+        $this->setVersion('0.7.0');
 		
         $this->logger = new Log($this->storage->serverLogin);
 	}
@@ -122,24 +124,13 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		 if (empty($this->SpecTarget->login) || $this->SpecTarget->login == $this->storage->server)
                 return;
         $this->AtkPlayer = $this->getPlayerId($this->SpecTarget->login);
-		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces, (
-SUM( player_maps.atkSucces ) / SUM( player_maps.atkrounds ) * 100
-) AS AtkRatio
+		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
 FROM player_maps
 JOIN matches ON player_maps.match_id = matches.id
 WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
 AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		//$this->logger->Debug($queryCurrentMatchAtkPlayerStats);
 		$this->db->execute($queryCurrentMatchAtkPlayerStats);
-		
-		$AtkRatioObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->AtkRatio;
-		if ($AtkRatioObject == NULL){
-		$this->AtkRatio = 0;
-		}
-		else 
-		{
-		$this->AtkRatio =  number_format($AtkRatioObject, 2, ',', '');
-		}
 		
 		$AtkRoundsObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkrounds;
 		if ($AtkRoundsObject == NULL){
@@ -157,6 +148,43 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		else 
 		{
 		$this->AtkSucces = $AtkSuccesObject;
+		}
+		
+		$QueryRocketHits = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 2)) LIMIT 1";
+		//$this->logger->Debug($QueryRocketHits);
+		$this->db->execute($QueryRocketHits);
+		
+		$RocketHitsQuery = $this->db->execute($QueryRocketHits)->fetchObject()->hits;
+		if ($RocketHitsQuery == NULL){
+		$this->RocketHits = 0;
+		}
+		else 
+		{
+		$this->RocketHits = $RocketHitsQuery;
+		}
+		
+		$LaserAccQuery = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 1)) LIMIT 1";
+		//$this->logger->Debug($LaserAccQuery);
+		$this->db->execute($LaserAccQuery);
+		
+		$LaserAccRatio = $this->db->execute($LaserAccQuery)->fetchObject()->ratio;
+		if ($LaserAccRatio == NULL){
+		$this->LaserAcc = 0;
+		}
+		else 
+		{
+		$this->LaserAcc = $LaserAccRatio;
+		}
+		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_login` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1";
+		$this->db->execute($laserHitDist);
+		
+		$LongestLaserObject = $this->db->execute($laserHitDist)->fetchObject()->HitDist;
+		if ($LongestLaserObject == NULL){
+		$this->LongestLaser = 0;
+		}
+		else 
+		{
+		$this->LongestLaser = $LongestLaserObject;
 		}
 		
 		$queryCurrentMatchAtkPlayerStatsCaptures = "SELECT SUM( player_maps.captures ) AS Captures
@@ -213,7 +241,7 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		$this->Team = ($this->SpecTarget->teamId + 1);
 		$this->AtkPlayerLogin = $this->SpecTarget->login;
 		
-		$this->ShowWidget($this->SpecPlayer->login,  $this->SpecTarget->login, $this->AtkRatio, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->AtkShots, $this->AtkHits, $this->HitRatio, $this->Team, $this->AtkPlayerLogin);
+		$this->ShowWidget($this->SpecPlayer->login, $this->SpecTarget->login, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->RocketHits, $this->LaserAcc, $this->LongestLaser, $this->Team, $this->AtkPlayerLogin);
             $this->tickCounter++;
 					}
         }else{
@@ -235,24 +263,13 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		 $this->SpecTarget = $SpecTarget;
 		 $this->MatchNumber = $this->getServerCurrentMatch($this->storage->serverLogin);
         $this->AtkPlayer = $this->getPlayerId($this->SpecTarget->login);
-		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces, (
-SUM( player_maps.atkSucces ) / SUM( player_maps.atkrounds ) * 100
-) AS AtkRatio
+		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
 FROM player_maps
 JOIN matches ON player_maps.match_id = matches.id
 WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
 AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		//$this->logger->Debug($queryCurrentMatchAtkPlayerStats);
 		$this->db->execute($queryCurrentMatchAtkPlayerStats);
-		
-		$AtkRatioObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->AtkRatio;
-		if ($AtkRatioObject == NULL){
-		$this->AtkRatio = 0;
-		}
-		else 
-		{
-		$this->AtkRatio =  number_format($AtkRatioObject, 2, ',', '');
-		}
 		
 		$AtkRoundsObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkrounds;
 		if ($AtkRoundsObject == NULL){
@@ -270,6 +287,43 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		else 
 		{
 		$this->AtkSucces = $AtkSuccesObject;
+		}
+		
+		$QueryRocketHits = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 2)) LIMIT 1";
+		//$this->logger->Debug($QueryRocketHits);
+		$this->db->execute($QueryRocketHits);
+		
+		$RocketHitsQuery = $this->db->execute($QueryRocketHits)->fetchObject()->hits;
+		if ($RocketHitsQuery == NULL){
+		$this->RocketHits = 0;
+		}
+		else 
+		{
+		$this->RocketHits = $RocketHitsQuery;
+		}
+		
+		$LaserAccQuery = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 1)) LIMIT 1";
+		//$this->logger->Debug($LaserAccQuery);
+		$this->db->execute($LaserAccQuery);
+		
+		$LaserAccRatio = $this->db->execute($LaserAccQuery)->fetchObject()->ratio;
+		if ($LaserAccRatio == NULL){
+		$this->LaserAcc = 0;
+		}
+		else 
+		{
+		$this->LaserAcc = $LaserAccRatio;
+		}
+		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_login` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1";
+		$this->db->execute($laserHitDist);
+		
+		$LongestLaserObject = $this->db->execute($laserHitDist)->fetchObject()->HitDist;
+		if ($LongestLaserObject == NULL){
+		$this->LongestLaser = 0;
+		}
+		else 
+		{
+		$this->LongestLaser = $LongestLaserObject;
 		}
 		
 		$queryCurrentMatchAtkPlayerStatsCaptures = "SELECT SUM( player_maps.captures ) AS Captures
@@ -326,7 +380,8 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		$this->Team = ($this->SpecTarget->teamId + 1);
 		$this->AtkPlayerLogin = $this->SpecTarget->login;
 		
-		$this->ShowWidget($player->login,  $this->SpecTarget->login, $this->AtkRatio, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->AtkShots, $this->AtkHits, $this->HitRatio, $this->Team, $this->AtkPlayerLogin);
+		
+		$this->ShowWidget($player->login, $this->SpecTarget->login, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->RocketHits, $this->LaserAcc, $this->LongestLaser, $this->Team, $this->AtkPlayerLogin);
 		}
 		else
 		{
@@ -358,24 +413,13 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 	{
 	 $this->MatchNumber = $this->getServerCurrentMatch($this->storage->serverLogin);
         $this->AtkPlayer = $this->getPlayerId($this->SpecTarget->login);
-		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces, (
-SUM( player_maps.atkSucces ) / SUM( player_maps.atkrounds ) * 100
-) AS AtkRatio
+		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
 FROM player_maps
 JOIN matches ON player_maps.match_id = matches.id
 WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
 AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		//$this->logger->Debug($queryCurrentMatchAtkPlayerStats);
 		$this->db->execute($queryCurrentMatchAtkPlayerStats);
-		
-		$AtkRatioObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->AtkRatio;
-		if ($AtkRatioObject == NULL){
-		$this->AtkRatio = 0;
-		}
-		else 
-		{
-		$this->AtkRatio =  number_format($AtkRatioObject, 2, ',', '');
-		}
 		
 		$AtkRoundsObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkrounds;
 		if ($AtkRoundsObject == NULL){
@@ -393,6 +437,43 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		else 
 		{
 		$this->AtkSucces = $AtkSuccesObject;
+		}
+		
+		$QueryRocketHits = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 2)) LIMIT 1";
+		//$this->logger->Debug($QueryRocketHits);
+		$this->db->execute($QueryRocketHits);
+		
+		$RocketHitsQuery = $this->db->execute($QueryRocketHits)->fetchObject()->hits;
+		if ($RocketHitsQuery == NULL){
+		$this->RocketHits = 0;
+		}
+		else 
+		{
+		$this->RocketHits = $RocketHitsQuery;
+		}
+		
+		$LaserAccQuery = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 1)) LIMIT 1";
+		//$this->logger->Debug($LaserAccQuery);
+		$this->db->execute($LaserAccQuery);
+		
+		$LaserAccRatio = $this->db->execute($LaserAccQuery)->fetchObject()->ratio;
+		if ($LaserAccRatio == NULL){
+		$this->LaserAcc = 0;
+		}
+		else 
+		{
+		$this->LaserAcc = $LaserAccRatio;
+		}
+		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_login` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1";
+		$this->db->execute($laserHitDist);
+		
+		$LongestLaserObject = $this->db->execute($laserHitDist)->fetchObject()->HitDist;
+		if ($LongestLaserObject == NULL){
+		$this->LongestLaser = 0;
+		}
+		else 
+		{
+		$this->LongestLaser = $LongestLaserObject;
 		}
 		
 		$queryCurrentMatchAtkPlayerStatsCaptures = "SELECT SUM( player_maps.captures ) AS Captures
@@ -449,48 +530,40 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		$this->Team = ($this->SpecTarget->teamId + 1);
 		$this->AtkPlayerLogin = $this->SpecTarget->login;
 		
-	$this->ShowWidget($login,  $this->SpecTarget->login, $this->AtkRatio, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->AtkShots, $this->AtkHits, $this->HitRatio, $this->Team, $this->AtkPlayerLogin);
+		
+	$this->ShowWidget($login, $this->SpecTarget->login, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->RocketHits, $this->LaserAcc, $this->LongestLaser, $this->Team, $this->AtkPlayerLogin);
 	}
 	}
 	
-	function ShowWidget($login, $AttackPlayerNick, $RatioAtk, $RoundsAtk, $RoundsSuccess, $CaptureAtk, $ShotsAtk, $HitsAtk, $RatioHit, $TeamNr, $AttackPlayerLogin){
+	function ShowWidget($login, $AttackPlayerNick, $RoundsAtk, $RoundsSuccess, $CaptureAtk, $RocketHits, $LaserAcc, $LongestLaser, $TeamNr, $AttackPlayerLogin){
 		$blue = $this->connection->getTeamInfo(1);
         $red = $this->connection->getTeamInfo(2);
 		$xml = '<manialinks>';
                 $xml .= '<manialink version="1" background="1" navigable3d="0" id="AtkSpecDetails">';
-                $xml .= '<frame posn="-60 -5 0" id="AtkSpecDetails">';
-                $xml .= '<quad style="UiSMSpectatorScoreBig" substyle="PlayerSlotCenter" posn="-90 8 0" sizen="50 70"/>'; // MainWindow
-                $xml .= '<quad posn="-80 -4 0.5" sizen="4.5 4.5" style="Icons64x64_1" substyle="TV" />';
-                $xml .= '<label posn="-72 -5 0.5" sizen="100 0" textsize="1" text="'.$AttackPlayerNick.'"/>';
-                $xml .= '<quad posn="-80 -10 0.5" sizen="4.5 4.5" style="BgRaceScore2" substyle="Points" />';
-                $xml .= '<label posn="-72 -11 0.5" sizen="100 0" textsize="1" text="AtkRounds: '.$RoundsAtk.'"/>';
-                $xml .= '<quad posn="-80 -16 0.5" sizen="4.5 4.5" style="BgRaceScore2" substyle="Podium" />';
-                $xml .= '<label posn="-72 -17 0.5" sizen="100 0" textsize="1" text="AtkSucces: '.$RoundsSuccess.'"/>';
-                $xml .= '<quad posn="-80 -22 0.5" sizen="4.5 4.5" style="ManiaplanetSystem" substyle="Statistics" />';
-                $xml .= '<label posn="-72 -23 0.5" sizen="100 0" textsize="1" text="AtkRatio: '.$RatioAtk.' %"/>';
-                $xml .= '<quad posn="-80 -28 0.5" sizen="4.5 4.5" style="Icons64x64_1" substyle="Finish" />';
-                $xml .= '<label posn="-72 -29 0.5" sizen="100 0" textsize="1" text="Captures: '.$CaptureAtk.'"/>';
-                $xml .= '<quad posn="-80 -34 0.5" sizen="4.5 4.5" style="Icons64x64_2" substyle="UnknownElimination" />';
-                $xml .= '<label posn="-72 -35 0.5" sizen="100 0" textsize="1" text="Shots: '.$ShotsAtk.'"/>';
-                $xml .= '<quad posn="-80 -40 0.5" sizen="4.5 4.5" style="Icons64x64_2" substyle="UnknownHit" />';
-                $xml .= '<label posn="-72 -41 0.5" sizen="100 0" textsize="1" text="Hits: '.$HitsAtk.'"/>';
-                $xml .= '<quad posn="-80 -46 0.5" sizen="4.5 4.5" style="Icons64x64_2" substyle="ServerNotice" />';
-                $xml .= '<label posn="-72 -47 0.5" sizen="100 0" textsize="1" text="HitRatio: '.$RatioHit.' %"/>';
-				$xml .= '<quad posn="-47.5 0 0.5" sizen="7 7" style="Icons128x128_1" substyle="Default" id="Refresh_Data" action="41"/>';
+                $xml .= '<frame id="AtkSpecDetails">';
+                $xml .= '<quad image="http://elite.tmrankings.com/main_bg_SW.png" posn="-80 -60 -1" sizen="160 30"/>'; // MainWindow
+                $xml .= '<label posn="-77 -70 -1" sizen="30.33" textsize="2.75" style="TextRaceMessage" text="Laser: '.$LongestLaser.' m"/>';
+                $xml .= '<label posn="-50 -70 -1" sizen="30.33" textsize="2.75" style="TextRaceMessage" text="Captures: '.$CaptureAtk.'"/>';
+                $xml .= '<label posn="54 -70 -1" sizen="30.33" textsize="2.75" style="TextRaceMessage" text="Rocket: '.$RocketHits.'"/>';
+                $xml .= '<label posn="27 -70 -1" sizen="30.33" textsize="2.75" style="TextRaceMessage" text="Rail: '.$LaserAcc.' %"/>';
+                $xml .= '<label posn="-15 -65 -1" sizen="30.33" textsize="2.75" style="TextRaceMessage" text="AtkWins: '.$RoundsSuccess.' / '.$RoundsAtk.'"/>';
+				//if ($login == 'w1lla'){
+				//$xml .= '<quad posn="-10.5 -40 0.5" sizen="7 7" style="Icons128x128_1" substyle="Default" id="Refresh_Data" action="41"/>';
+				//}
                 if ($TeamNr == 1){
                 if ($blue->clubLinkUrl) {
-        $xml .= '<quad image="'.$this->Clublink($blue->clubLinkUrl).'" posn="-88 -26 0.5" sizen="7 7" />';   
-        }
+				//$xml .= '<quad image="'.$this->Clublink($blue->clubLinkUrl).'" posn="50 -20 0.5" sizen="15 15" />';   
+				}
                 else{
-                $xml .= '<quad posn="-88 -26 0.5" sizen="7 7" style="Emblems" substyle="#1" />';
+                //$xml .= '<quad posn="50 -20 0.5" sizen="15 15" style="Emblems" substyle="#1" />';
                 }
                 }
                 if ($TeamNr == 2){
                 if ($red->clubLinkUrl) {
-        $xml .= '<quad image="'.$this->Clublink($red->clubLinkUrl).'" posn="-88 -26 0.5" sizen="7 7" />';   
-        }
+				//$xml .= '<quad image="'.$this->Clublink($red->clubLinkUrl).'" posn="50 -20 0.5" sizen="15 15" />';   
+				}
                 else{
-                $xml .= '<quad posn="-88 -26 0.5" sizen="7 7" style="Emblems" substyle="#2" />';
+                //$xml .= '<quad posn="50 -20 0.5" sizen="15 15" style="Emblems" substyle="#2" />';
                 }
                 }
 
