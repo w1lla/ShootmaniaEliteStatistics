@@ -541,7 +541,7 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		$xml = '<manialinks>';
                 $xml .= '<manialink version="1" background="1" navigable3d="0" id="AtkSpecDetails">';
                 $xml .= '<frame id="AtkSpecDetails">';
-                $xml .= '<quad image="http://elite.tmrankings.com/main_bg_SW.png" posn="-80 -60 -1" sizen="160 30"/>'; // MainWindow
+                $xml .= '<quad image="file://Media/Manialinks/Common/Lobbies/header.png" posn="-82.5 -62 -1" sizen="165 32"/>'; // MainWindow
                 $xml .= '<label posn="-77 -70 -1" sizen="30.33" textsize="2.75" style="TextRaceMessage" text="Laser: '.$LongestLaser.' m"/>';
                 $xml .= '<label posn="-50 -70 -1" sizen="30.33" textsize="2.75" style="TextRaceMessage" text="Captures: '.$CaptureAtk.'"/>';
                 $xml .= '<label posn="54 -70 -1" sizen="30.33" textsize="2.75" style="TextRaceMessage" text="Rocket: '.$RocketHits.'"/>';
