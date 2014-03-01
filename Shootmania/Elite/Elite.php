@@ -59,7 +59,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     protected $BlueMapScore;
     protected $RedMapScore;
 							protected $ServerName;
-								
+							protected $replaydir = 'MatchReplays';	
     /** @var Log */
     private $logger;
 
@@ -372,7 +372,10 @@ PRIMARY KEY (`id`)
         }
         
         $this->ServerName = $this->connection->getServerName();
-		
+        $this->connection->setServerTag('server_name', json_encode($this->ServerName), true);
+														
+														$this->connection->setServerName($this->ServerName);
+					
     }
 	
 	function onPluginLoaded($pluginId)
@@ -780,6 +783,16 @@ PRIMARY KEY (`id`)
     }
 
     function onXmlRpcEliteEndWarmUp(JsonCallbacks\EndWarmup $content) {
+        $blue = $this->connection->getTeamInfo(1);
+        $red = $this->connection->getTeamInfo(2);
+
+        $MatchName = '' . $blue->name . ' $zvs ' . $red->name . '';
+														// set servername with clublinks....
+														
+														$this->connection->setServerTag('server_name', json_encode($MatchName), true);
+														
+														$this->connection->setServerName($MatchName);
+					
         if ($content->allReady === true) {
             $q = "UPDATE `match_maps`
 				  SET `AllReady` = '1'
@@ -799,9 +812,7 @@ PRIMARY KEY (`id`)
 
         $MatchName = '' . $blue->name . ' vs ' . $red->name . '';
 														// set servername with clublinks....
-														
-														$this->connection->setServerName($MatchName);
-														
+																												
         $qmatch = "INSERT INTO `matches` (
 						`MatchName`,
 						`teamBlue`,
@@ -1132,6 +1143,24 @@ PRIMARY KEY (`id`)
 
     function onXmlRpcEliteEndTurn(JsonCallbacks\EndTurn $content) {
 	$message = 'Blue - Red: '.$this->BlueMapScore.' - '.$this->RedMapScore.'';
+	
+	$replaymainfolder = $this->connection->gameDataDirectory();
+	if (!file_exists($replaymainfolder . 'Replays/' . $this->replaydir)) {
+						if (!mkdir($replaymainfolder . 'Replays/' . $this->replaydir)) {
+						echo 'Replays Dir cannot be created';
+						}
+					}
+					if (!is_writeable($replaymainfolder . 'Replays/' . $this->replaydir)) {
+					echo 'Replays Dir cannot be written to';
+					}
+	        $blue = $this->connection->getTeamInfo(1);
+        $red = $this->connection->getTeamInfo(2);
+
+        $MatchName = '' . $blue->name . ' $zvs ' . $red->name . '';
+	
+	$filename = sprintf('/Replay.%s.%s.Replay.Gbx',$MatchName.$this->storage->serverLogin;
+	$this->connection->saveCurrentReplay($this->replaydir.$filename);
+	
 	$this->logger->Console($message);
         $attackingClan = $this->connection->getTeamInfo($content->attackingClan);
         $defendingClan = $this->connection->getTeamInfo($content->defendingClan);
