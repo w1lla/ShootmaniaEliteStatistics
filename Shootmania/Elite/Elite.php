@@ -58,7 +58,8 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     protected $RedScoreMatch;
     protected $BlueMapScore;
     protected $RedMapScore;
-
+							protected $ServerName;
+								
     /** @var Log */
     private $logger;
 
@@ -369,6 +370,8 @@ PRIMARY KEY (`id`)
 		foreach ($this->storage->spectators as $player) {
             $this->onPlayerConnect($player->login, false);
         }
+        
+        $this->ServerName = $this->connection->getServerName();
 		
     }
 	
@@ -795,7 +798,10 @@ PRIMARY KEY (`id`)
         $red = $this->connection->getTeamInfo(2);
 
         $MatchName = '' . $blue->name . ' vs ' . $red->name . '';
-
+														// set servername with clublinks....
+														
+														$this->connection->setServerName($MatchName);
+														
         $qmatch = "INSERT INTO `matches` (
 						`MatchName`,
 						`teamBlue`,
@@ -1438,6 +1444,9 @@ PRIMARY KEY (`id`)
                                                     `id` = " . $this->db->quote($this->MatchNumber) . "";
         $this->logger->Debug($queryMapWinSettingsEnd);
         $this->db->execute($queryMapWinSettingsEnd);
+        
+        // set server back to old value.
+        $this->connection->setServerName($this->ServerName);
     }
 	
 	/*
