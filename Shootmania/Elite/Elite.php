@@ -312,7 +312,7 @@ PRIMARY KEY (`id`)
   `player_login` varchar(50) NOT NULL,
   `player_nickname` varchar(255) NOT NULL,
   `player_nation` varchar(100) NOT NULL,
-  `team_name` varchar(50) NOT NULL,
+  `team_id` mediumint(9) NOT NULL DEFAULT '0',
   `shots_laser` int(9) NOT NULL DEFAULT '0',
   `hits_laser` int(9) NOT NULL DEFAULT '0',
   `ratio_laser` decimal(5,2) NOT NULL,
