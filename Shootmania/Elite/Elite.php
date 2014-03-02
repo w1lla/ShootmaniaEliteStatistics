@@ -1458,7 +1458,8 @@ PRIMARY KEY (`id`)
         	$dataDir = $this->connection->gameDataDirectory();
         	$dataDir = str_replace('\\', '/', $dataDir);
         	$file = $this->connection->getServername();
-        	$challengeFile = $dataDir . "Replays/" . $file;
+        	$name = $this=>filterName($file);
+        	$challengeFile = $dataDir . "Replays/" . $name;
 													var_dump($challengeFile);
 // set server back to old value.
         $this->connection->setServerName($this->ServerName);
@@ -1506,6 +1507,39 @@ PRIMARY KEY (`id`)
                 return '';
         }
     }
+
+/**
+üü üü üü* filterName()
+üü üü üü* Function used to filter the tracks filename.
+üü üü üü*
+üü üü üü* @param mixed $text
+üü üü üü* @return string $output
+üü üü üü*/
+üü üü function filterName($text) {
+üü üü üü üü $str = trim(utf8_decode($text));
+üü üü üü üü $output = "";
+üü üü üü üü for ($i = 0; $i < strlen($str); $i++) {
+üü üü üü üü üü üü $c = ord($str[$i]);
+üü üü üü üü üü üü if ($c == 32) {
+üü üü üü üü üü üü üü üü $output .= "_";
+üü üü üü üü üü üü üü üü continue;
+üü üü üü üü üü üü } // space
+üü üü üü üü üü üü if ($c >= 48 && $c <= 57) {
+üü üü üü üü üü üü üü üü $output .= chr($c);
+üü üü üü üü üü üü üü üü continue;
+üü üü üü üü üü üü }// 0-9
+üü üü üü üü üü üü if ($c >= 65 && $c <= 90) {
+üü üü üü üü üü üü üü üü $output .= chr($c);
+üü üü üü üü üü üü üü üü continue;
+üü üü üü üü üü üü }// A-Z
+üü üü üü üü üü üü if ($c >= 97 && $c <= 122) {
+üü üü üü üü üü üü üü üü $output .= chr($c);
+üü üü üü üü üü üü üü üü continue;
+üü üü üü üü üü üü }// a-z
+üü üü üü üü üü üü $output .= "_";
+üü üü üü üü }
+üü üü üü üü return utf8_encode($output);
+üü üü }
 
 }
 
