@@ -1142,25 +1142,7 @@ PRIMARY KEY (`id`)
     }
 
     function onXmlRpcEliteEndTurn(JsonCallbacks\EndTurn $content) {
-	$message = 'Blue - Red: '.$this->BlueMapScore.' - '.$this->RedMapScore.'';
-	
-	$replaymainfolder = $this->connection->gameDataDirectory();
-	if (!file_exists($replaymainfolder . 'Replays/' . $this->replaydir)) {
-						if (!mkdir($replaymainfolder . 'Replays/' . $this->replaydir)) {
-						echo 'Replays Dir cannot be created';
-						}
-					}
-					if (!is_writeable($replaymainfolder . 'Replays/' . $this->replaydir)) {
-					echo 'Replays Dir cannot be written to';
-					}
-	        $blue = $this->connection->getTeamInfo(1);
-        $red = $this->connection->getTeamInfo(2);
-
-        $MatchName = '' . $blue->name . ' $zvs ' . $red->name . '';
-	
-	$filename = sprintf('/Replay.%s.%s.Replay.Gbx',$MatchName.$this->storage->serverLogin;
-	$this->connection->saveCurrentReplay($this->replaydir.$filename);
-	
+	$message = 'Blue - Red: '.$this->BlueMapScore.' - '.$this->RedMapScore.'';	
 	$this->logger->Console($message);
         $attackingClan = $this->connection->getTeamInfo($content->attackingClan);
         $defendingClan = $this->connection->getTeamInfo($content->defendingClan);
@@ -1441,7 +1423,7 @@ PRIMARY KEY (`id`)
 					" . $this->db->quote($this->TurnNumber) . ",
 					" . $this->db->quote($this->getMapid()) . ",
 					" . $this->db->quote($content->event->missDist) . ",
-					" . $this->db->quote($content->event->shooter->login) . ",
+					" . $this->db->quote($this->getPlayerId($content->event->shooter->login)) . ",
 					" . $this->db->quote($content->event->weaponNum) . ",
 					" . $this->db->quote($this->getWeaponName($content->event->weaponNum)) . ",
 					" . $this->db->quote($this->storage->serverLogin) . "
@@ -1473,8 +1455,12 @@ PRIMARY KEY (`id`)
                                                     `id` = " . $this->db->quote($this->MatchNumber) . "";
         $this->logger->Debug($queryMapWinSettingsEnd);
         $this->db->execute($queryMapWinSettingsEnd);
-        
-        // set server back to old value.
+        	$dataDir = $this->connection->gameDataDirectory();
+        	$dataDir = str_replace('\\', '/', $dataDir);
+        	$file = $this->connection->getServername();
+        	$challengeFile = $dataDir . "Replays/" . $file;
+													var_dump($challengeFile);
+// set server back to old value.
         $this->connection->setServerName($this->ServerName);
     }
 	
