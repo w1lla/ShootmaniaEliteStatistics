@@ -1458,7 +1458,7 @@ PRIMARY KEY (`id`)
         	$dataDir = $this->connection->gameDataDirectory();
         	$dataDir = str_replace('\\', '/', $dataDir);
         	$file = $this->connection->getServername();
-        	$name = $this->filterName($file);
+        	$name = \ManiaLib\Utils\Formatting::stripColors($file);
         	$challengeFile = $dataDir . "Replays/" . $name;
 													var_dump($challengeFile);
 // set server back to old value.
@@ -1508,38 +1508,6 @@ PRIMARY KEY (`id`)
         }
     }
 
-/**
-* filterName()
-* Function used to filter the tracks filename.
-*
-* @param mixed $text
-* @return string $output
-*/
- function filterName($text) {
- $str = trim(utf8_decode($text));
- $output = "";
- for ($i = 0; $i < strlen($str); $i++) {
- $c = ord($str[$i]);
-if ($c == 32) {
- $output .= "_";
- continue;
- } // space
- if ($c >= 48 && $c <= 57) {
- $output .= chr($c);
- continue;
- }// 0-9
-if ($c >= 65 && $c <= 90) {
- $output .= chr($c);
- continue;
- }// A-Z
- if ($c >= 97 && $c <= 122) {
- $output .= chr($c);
- continue;
- }// a-z
- $output .= "_";
-  }
- return utf8_encode($output);
-		}
 }
 
 ?>
