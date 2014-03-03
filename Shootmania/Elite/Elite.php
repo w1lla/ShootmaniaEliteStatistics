@@ -195,6 +195,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `captures` mediumint(9) NOT NULL DEFAULT '0',
   `atkrounds` mediumint(9) NOT NULL DEFAULT '0',
   `atkSucces` mediumint(9) NOT NULL DEFAULT '0',
+  `timeOver` mediumint(9) NOT NULL DEFAULT '0',
   `elimination_3x` mediumint(9) NOT NULL DEFAULT '0',
    `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`),
@@ -1206,6 +1207,13 @@ PRIMARY KEY (`id`)
 				  WHERE `team_id` = " . $this->db->quote($this->getTeamid($defendingClan->name)) . " and `map_id` = " . $this->db->quote($this->getMapid()) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
             $this->logger->Debug($qtl);
             $this->db->execute($qtl);
+            
+            $attackerId = $this->getPlayerId($content->attackingPlayer->login);
+
+            $q = "UPDATE `player_maps` SET `timeOver` =  timeOver + 1 WHERE `player_id` = " . $this->db->quote($attackerId) . "  and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . "";
+            $this->db->execute($q);
+            $this->logger->Debug($q);
+        
         }
 
         if ($content->winType == 'AttackEliminated') {
