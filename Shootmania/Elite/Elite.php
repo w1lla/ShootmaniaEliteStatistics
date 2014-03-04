@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 25-2-2014
+  Date: 4-3-2014
   Version: 2 (GA2K14)
   Project Name: ESWC Elite Statistics
 
@@ -70,7 +70,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
 
     function onInit() {
-        $this->setVersion('0.7.0');
+        $this->setVersion('1.0.2');
     
         $this->logger = new Log($this->storage->serverLogin);
   }
@@ -246,6 +246,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `matchServerLogin` VARCHAR(250) NOT NULL,
   `competition_id` INT(10) NOT NULL DEFAULT '1',
   `show` tinyint (1),
+  `Replay` VARCHAR(100) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
@@ -343,7 +344,7 @@ PRIMARY KEY (`id`)
   `player_login` varchar(50) NOT NULL,
   `player_nickname` varchar(255) NOT NULL,
   `player_nation` varchar(100) NOT NULL,
-  `team_id` mediumint(9) NOT NULL DEFAULT '0',
+  `team_id` mediumint(9) NOT NULL,
   `shots_laser` int(9) NOT NULL DEFAULT '0',
   `hits_laser` int(9) NOT NULL DEFAULT '0',
   `ratio_laser` decimal(5,2) NOT NULL,
@@ -357,6 +358,7 @@ PRIMARY KEY (`id`)
   `success_atk` int(9) NOT NULL DEFAULT '0',
   `ratio_atk` decimal(5,2) NOT NULL,
   `captures` int(9) NOT NULL DEFAULT '0',
+  `hits_received` mediumint(9) NOT NULL DEFAULT '0',
   `ratio_hits` decimal(5,2) NOT NULL,
   `elimination_3x` int(9) NOT NULL DEFAULT '0'
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
@@ -374,7 +376,7 @@ PRIMARY KEY (`id`)
         $this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => false)); //Debug Way...
         $this->connection->setModeScriptSettings(array('S_UsePlayerClublinks' => true)); //Debug Way...
     $this->connection->setModeScriptSettings(array('S_Mode' => 1));
-        $this->connection->setCallVoteRatios(array(array('Command' => 'SetModeScriptSettingsAndCommands', 'Ratio' => -1. )));
+        $this->connection->setCallVoteRatios(array(array('Command' => 'SetModeScriptSettingsAndCommands', 'Ratio' => 0.4 )));
     
     Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Core v' . $this->getVersion());
     foreach ($this->storage->players as $player) {
@@ -1564,40 +1566,60 @@ PRIMARY KEY (`id`)
           $dataDir = str_replace('\\', '/', $dataDir);
           $file = $this->connection->getServername();
           $name = \ManiaLib\Utils\Formatting::stripStyles($file);
-          $challengeFile = $dataDir . "Replays/" . $name;
+          $challengeFile = $dataDir . "Replays/" . $name."/";
           var_dump($challengeFile);
 
-          $sourcefolder = "$challengefile"; // Default: "./" 
-          $zipfilename  = $dataDir. "ToUpload/'.$name.'.zip"; // Default: "myarchive.zip"
+          $sourcefolder = "$challengeFile"; // Default: "./" 
+          $zipfilename  = $dataDir. "ToUpload/".$name."_".date('YmdHi').".zip"; // Default: "myarchive.zip"
+          $zipfilename2  = $name."_".date('YmdHi').".zip"; // Default: "myarchive.zip"
           $timeout      = 5000; // Default: 5000
 
           // instantate an iterator (before creating the zip archive, just
           // in case the zip file is created inside the source folder)
           // and traverse the directory to get the file list.
-          $dirlist = new RecursiveDirectoryIterator($sourcefolder);
-          $filelist = new RecursiveIteratorIterator($dirlist);
+          //$dirlist = new \RecursiveDirectoryIterator($sourcefolder);
+         // $filelist = new \RecursiveIteratorIterator($dirlist);
+          $filelist = new \RecursiveIteratorIterator(
+              new \RecursiveDirectoryIterator($sourcefolder),
+              \RecursiveIteratorIterator::LEAVES_ONLY
+          );
 
           // set script timeout value 
           //ini_set('max_execution_time', $timeout);
 
           // instantate object
-          $zip = new ZipArchive();
+          $zip = new \ZipArchive();
 
           // create and open the archive 
-          if ($zip->open("$zipfilename", ZipArchive::CREATE) !== TRUE) {
+          if ($zip->open("$zipfilename", \ZipArchive::CREATE) !== TRUE) {
               die ("Could not open archive");
           }
 
           // add each file in the file list to the archive
           foreach ($filelist as $key=>$value) {
-              $zip->addFile(realpath($key), $key) or die ("ERROR: Could not add file: $key");
+              $new_filename = substr($key,strrpos($key,'/') + 1);
+              $zip->addFile(realpath($key), $new_filename) or die ("ERROR: Could not add file: $key");
           }
 
           // close the archive
           $zip->close();
-          echo "Archive ". $zipfilename . " created successfully.";
+          echo "Archive ". $zipfilename2 . " created successfully.";
           
-// set server back to old value.
+          $challengeFile = $dataDir . "Replays/" . $name;
+          //Rename folder
+          $newfolder = "$challengeFile"."_".date('YmdHi');
+          rename($challengeFile,$newfolder);
+
+        $queryMapWinSettingsEnd = "UPDATE `matches` SET 
+                                  `Replay` = '" . $zipfilename2 . "'
+                                   WHERE
+                                  `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and 
+                                  `id` = " . $this->db->quote($this->MatchNumber) . "";
+        $this->logger->Debug($queryMapWinSettingsEnd);
+        $this->db->execute($queryMapWinSettingsEnd);
+
+
+    // set server back to old value.
         $this->connection->setServerName($this->ServerName);
     }
   
