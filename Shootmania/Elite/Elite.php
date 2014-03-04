@@ -98,7 +98,8 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     $cmd->isPublic = false;
         $cmd->help = 'Admin set mapWin to 2';
     
-    		$this->config = Config::getInstance();
+    
+		$this->config = Config::getInstance();
     			$this->competition_id = $this->config->competition_id;
      
         $this->enableDatabase();
@@ -763,43 +764,73 @@ PRIMARY KEY (`id`)
             unset($this->playerIDs[$login]);
     }
 
-    function insertPlayer($player) {
-        $zone = explode("|", $player->path);
-        if ($zone[0] == "") {
-            $zone[2] = "World";
-        }
-        $q = "SELECT * FROM `players` WHERE `login` = " . $this->db->quote($player->login) . ";";
-        $this->logger->Debug($q);
-        $execute = $this->db->execute($q);
 
-        if ($execute->recordCount() == 0) {
-            $q = "INSERT INTO `players` (
-          `login`,
-          `nation`,
-          `updatedate`
-          ) VALUES (
-          " . $this->db->quote($player->login) . ",
-        			" . $this->db->quote($zone[2]) . ",
-          '" . date('Y-m-d H:i:s') . "'
-          )";
-            $this->db->execute($q);
-            $this->playerIDs[$player->login] = $this->db->insertID();
-            $this->logger->Debug($q);
+  function insertPlayer($player) {
+      $zone = explode("|", $player->path);
+      if ($zone[0] == "") {
+          $zone[2] = "World";
+      }
+      $q = "SELECT * FROM `players` WHERE `login` = " . $this->db->quote($player->login) . ";";
+      $this->logger->Debug($q);
+      $execute = $this->db->execute($q);
+
+      if ($execute->recordCount() == 0) {
+           $q = "INSERT INTO `players` (
+            `login`,
+            `nation`,
+            `updatedate`
+            ) VALUES (
+            " . $this->db->quote($player->login) . ",
+             " . $this->db->quote($zone[2]) . ",
+            '" . date('Y-m-d H:i:s') . "'
+            )";
+          $this->db->execute($q);
+          $this->playerIDs[$player->login] = $this->db->insertID();
+          $this->logger->Debug($q);
           
-        $qnick = "INSERT INTO `player_nicknames` ( 
-        `player_id`,
-        `nickname`,
-        `competition_id`)
-        VALUES (
-        " . $this->db->quote($this->playerIDs[$player->login]) . ",
-        " . $this->db->quote($player->nickName) . ",
-        " . $this->db->quote($this->competition_id) . "
-        )";
-        $this->db->execute($qnick);
-        $this->logger->debug($qnick);    
-        } else {
-        }
-    }
+          $qnick = "INSERT INTO `player_nicknames` ( 
+          `player_id`,
+          `nickname`,
+          `competition_id`)
+          VALUES (
+          " . $this->db->quote($this->playerIDs[$player->login]) . ",
+          " . $this->db->quote($player->nickName) . ",
+          " . $this->db->quote($this->competition_id) . "
+          )";
+          $this->db->execute($qnick);
+          $this->logger->debug($qnick);    
+      } else {
+          
+          $q = "SELECT * FROM `players` WHERE `login` = " . $this->db->quote($player->login) . ";";
+          $this->logger->Debug($q);
+          $getplayerid = $this->db->execute($q)->fetchObject();
+          $q = "SELECT * FROM `player_nicknames` WHERE `player_id` = " . $this->db->quote($getplayerid->id) . " and `competition_id` = " . $this->db->quote($this->competition_id) . ";";
+          $this->logger->Debug($q);
+          $executeids = $this->db->execute($q);
+
+          if ($executeids->recordCount() == 0) {
+
+            $qnick = "INSERT INTO `player_nicknames` ( 
+            `player_id`,
+            `nickname`,
+            `competition_id`)
+            VALUES (
+            " . $this->db->quote($getplayerid->id) . ",
+            " . $this->db->quote($player->nickName) . ",
+            " . $this->db->quote($this->competition_id) . ");";
+            $this->logger->debug($qnick);   
+            $this->db->execute($qnick);
+
+          }else{
+
+            $qnick = "UPDATE `player_nicknames` SET `nickname` = " . $this->db->quote($player->nickName) . "
+            WHERE `player_id` = " . $this->db->quote($getplayerid->id) . "
+            AND `competition_id` = " . $this->db->quote($this->competition_id) . ";";
+            $this->logger->debug($qnick);  
+            $this->db->execute($qnick);
+           }
+      } 
+  }
 
     function onXmlRpcEliteBeginWarmUp(JsonCallbacks\BeginWarmup $content) {
         if ($content->allReady === false) {
@@ -853,7 +884,8 @@ PRIMARY KEY (`id`)
             `Matchscore_blue`,
             `Matchscore_red`,
             `MatchStart`,
-            `matchServerLogin`
+            `matchServerLogin`,
+            `competition_id`
             ) VALUES (
             " . $this->db->quote($MatchName) . ",
             " . $this->db->quote($this->getTeamid($blue->name)) . ",
@@ -865,7 +897,8 @@ PRIMARY KEY (`id`)
             '0',
             '0',
             '" . date('Y-m-d H:i:s') . "',
-            " . $this->db->quote($this->storage->serverLogin) . "
+            " . $this->db->quote($this->storage->serverLogin) . ",
+            " . $this->db->quote($this->competition_id) . "
             )";
         $this->logger->Debug($qmatch);
         $this->db->execute($qmatch);
