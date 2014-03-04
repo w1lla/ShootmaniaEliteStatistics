@@ -42,6 +42,7 @@ use ManiaLivePlugins\Shootmania\Elite\JsonCallbacks;
 use ManiaLivePlugins\Shootmania\Elite\Classes\Log;
 use ManiaLib\Gui\Elements\Icons128x128_1;
 use Maniaplanet\DedicatedServer\Structures;
+use ManiaLivePlugins\Shootmania\Elite\Config;
 
 class Elite extends \ManiaLive\PluginHandler\Plugin {
 
@@ -58,8 +59,10 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     protected $RedScoreMatch;
     protected $BlueMapScore;
     protected $RedMapScore;
-							protected $ServerName;
-							protected $replaydir = 'MatchReplays';	
+    protected $config;
+    protected $competition_id;
+    protected $ServerName;
+    protected $replaydir = 'MatchReplays';  
     /** @var Log */
     private $logger;
 
@@ -68,11 +71,11 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 
     function onInit() {
         $this->setVersion('0.7.0');
-		
+    
         $this->logger = new Log($this->storage->serverLogin);
-	}
-	
-	function onLoad() {
+  }
+  
+  function onLoad() {
         $admins = AdminGroup::get();
         $cmd = $this->registerChatCommand('extendWu', 'WarmUp_Extend', 0, true);
         $cmd->help = 'Extends WarmUp In Elite by Callvote.';
@@ -82,26 +85,28 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
 
         $cmd = $this->registerChatCommand('pause', 'pause', 0, true);
         $cmd->help = 'Pauses match in Elite by Callvote.';
-		
-		$cmd = $this->registerChatCommand('newmatch', 'newmatch', 0, true, $admins);
-		$cmd->isPublic = false;
+    
+    $cmd = $this->registerChatCommand('newmatch', 'newmatch', 0, true, $admins);
+    $cmd->isPublic = false;
         $cmd->help = 'Admin Starts a new Match.';
-		
-		$cmd = $this->registerChatCommand('bo5', 'bo5', 0, true, $admins);
-		$cmd->isPublic = false;
+    
+    $cmd = $this->registerChatCommand('bo5', 'bo5', 0, true, $admins);
+    $cmd->isPublic = false;
         $cmd->help = 'Admin set mapWin to 3.';
-		
-		$cmd = $this->registerChatCommand('bo3', 'bo3', 0, true, $admins);
-		$cmd->isPublic = false;
+    
+    $cmd = $this->registerChatCommand('bo3', 'bo3', 0, true, $admins);
+    $cmd->isPublic = false;
         $cmd->help = 'Admin set mapWin to 2';
-		
-		
+    
+    		$this->config = Config::getInstance();
+    			$this->competition_id = $this->config->competition_id;
+     
         $this->enableDatabase();
         $this->enableDedicatedEvents();
-		$this->enablePluginEvents();
+    $this->enablePluginEvents();
 
         if(!$this->db->tableExists('captures')) {
-			$q = "CREATE TABLE IF NOT EXISTS `captures` (
+      $q = "CREATE TABLE IF NOT EXISTS `captures` (
   `id` mediumint(9) NOT NULL AUTO_INCREMENT,
   `match_id` mediumint(9) NOT NULL DEFAULT '0',
   `round_id` int(3) NOT NULL,
@@ -111,11 +116,11 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   PRIMARY KEY (`id`),
   KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
-			$this->db->execute($q);
-		}
-		
-				if(!$this->db->tableExists('shots')) {
-			$q = "CREATE TABLE IF NOT EXISTS `shots` (
+      $this->db->execute($q);
+    }
+    
+        if(!$this->db->tableExists('shots')) {
+      $q = "CREATE TABLE IF NOT EXISTS `shots` (
   `id` mediumint(9) NOT NULL AUTO_INCREMENT,
   `match_map_id` mediumint(9) NOT NULL DEFAULT '0',
   `round_id` int(3) NOT NULL,
@@ -129,11 +134,11 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   PRIMARY KEY (`id`),
   KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
-			$this->db->execute($q);
-		}
-		
-		if(!$this->db->tableExists('kills')) {
-			$q = "CREATE TABLE IF NOT EXISTS `kills` (
+      $this->db->execute($q);
+    }
+    
+    if(!$this->db->tableExists('kills')) {
+      $q = "CREATE TABLE IF NOT EXISTS `kills` (
   `id` mediumint(9) NOT NULL AUTO_INCREMENT,
   `match_id` mediumint(9) NOT NULL DEFAULT '0',
   `round_id` int(3) NOT NULL,
@@ -144,11 +149,11 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   PRIMARY KEY (`id`),
   KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
-			$this->db->execute($q);
-		}
-		
-				if(!$this->db->tableExists('match_details')) {
-			$q = "CREATE TABLE IF NOT EXISTS `match_details` (
+      $this->db->execute($q);
+    }
+    
+        if(!$this->db->tableExists('match_details')) {
+      $q = "CREATE TABLE IF NOT EXISTS `match_details` (
   `id` mediumint(9) NOT NULL AUTO_INCREMENT,
   `match_id` mediumint(9) NOT NULL DEFAULT '0',
   `team_id` mediumint(9) NOT NULL DEFAULT '0',
@@ -163,24 +168,33 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   PRIMARY KEY (`id`),
   KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
-			$this->db->execute($q);
-		}
-		
-				if(!$this->db->tableExists('players')) {
-			$q = "CREATE TABLE IF NOT EXISTS `players` (
+      $this->db->execute($q);
+    }
+    
+        if(!$this->db->tableExists('players')) {
+      $q = "CREATE TABLE IF NOT EXISTS `players` (
    `id` mediumint(9) NOT NULL AUTO_INCREMENT,
   `login` varchar(50) NOT NULL,
-  `nickname` varchar(100) DEFAULT NULL,
   `nation` varchar(50) NOT NULL,
   `updatedate` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`id`),
   UNIQUE KEY `login` (`login`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
-			$this->db->execute($q);
-		}		
-		
-		if(!$this->db->tableExists('player_maps')) {
-			$q = "CREATE TABLE IF NOT EXISTS `player_maps` (
+      $this->db->execute($q);
+    }   
+    
+       if(!$this->db->tableExists('player_nicknames')) {
+      $q = "CREATE TABLE IF NOT EXISTS `player_nicknames` (
+ `player_id` mediumint(9) NOT NULL,  
+ `nickname` varchar(100) DEFAULT NULL,
+ `competition_id` INT(10) NOT NULL DEFAULT '1',
+ INDEX id (player_id, competition_id)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;";
+      $this->db->execute($q);
+    }
+    
+    if(!$this->db->tableExists('player_maps')) {
+      $q = "CREATE TABLE IF NOT EXISTS `player_maps` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `match_id` mediumint(9) NOT NULL DEFAULT '0',
   `player_id` mediumint(9) NOT NULL DEFAULT '0',
@@ -201,21 +215,21 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   PRIMARY KEY (`id`),
   KEY(matchServerLogin)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
-			$this->db->execute($q);
-		}
-		
-				if(!$this->db->tableExists('maps')) {
-			$q = "CREATE TABLE IF NOT EXISTS `maps` (
+      $this->db->execute($q);
+    }
+    
+        if(!$this->db->tableExists('maps')) {
+      $q = "CREATE TABLE IF NOT EXISTS `maps` (
   `id` MEDIUMINT( 5 ) NOT NULL AUTO_INCREMENT PRIMARY KEY ,
                                     `uid` VARCHAR( 27 ) NOT NULL ,
                                     `name` VARCHAR( 100 ) NOT NULL ,
-									`author` VARCHAR( 30 ) NOT NULL
+                  `author` VARCHAR( 30 ) NOT NULL
 ) CHARACTER SET utf8 COLLATE utf8_general_ci ENGINE = MYISAM ;";
-			$this->db->execute($q);
-		}
-		
-				if(!$this->db->tableExists('matches')) {
-			$q = "CREATE TABLE IF NOT EXISTS `matches` (
+      $this->db->execute($q);
+    }
+    
+        if(!$this->db->tableExists('matches')) {
+      $q = "CREATE TABLE IF NOT EXISTS `matches` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `MatchName` varchar(50) NOT NULL DEFAULT '',
   `teamBlue` mediumint(9) NOT NULL DEFAULT '0',
@@ -234,11 +248,11 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   PRIMARY KEY (`id`),
   KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
-			$this->db->execute($q);
-		}
+      $this->db->execute($q);
+    }
 
-		if(!$this->db->tableExists('match_maps')) {
-			$q = "CREATE TABLE IF NOT EXISTS `match_maps` (
+    if(!$this->db->tableExists('match_maps')) {
+      $q = "CREATE TABLE IF NOT EXISTS `match_maps` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `match_id` mediumint(9) NOT NULL DEFAULT '0',
   `map_id` mediumint(9) NOT NULL DEFAULT '0',
@@ -254,11 +268,11 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   PRIMARY KEY (`id`),
   KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
-			$this->db->execute($q);
-		}
-		
-				if(!$this->db->tableExists('nearmisses')) {
-			$q = "CREATE TABLE IF NOT EXISTS `nearmisses` (
+      $this->db->execute($q);
+    }
+    
+        if(!$this->db->tableExists('nearmisses')) {
+      $q = "CREATE TABLE IF NOT EXISTS `nearmisses` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `match_map_id` mediumint(9) NOT NULL DEFAULT '0',
   `round_id` int(3) NOT NULL,
@@ -271,11 +285,11 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   PRIMARY KEY (`id`),
   KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
-			$this->db->execute($q);
-		}
-		
-			if(!$this->db->tableExists('hits')) {
-			$q = "CREATE TABLE IF NOT EXISTS `hits` (
+      $this->db->execute($q);
+    }
+    
+      if(!$this->db->tableExists('hits')) {
+      $q = "CREATE TABLE IF NOT EXISTS `hits` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `match_map_id` mediumint(9) NOT NULL DEFAULT '0',
   `round_id` int(3) NOT NULL,
@@ -289,13 +303,14 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   PRIMARY KEY (`id`),
   KEY(matchServerLogin)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
-			$this->db->execute($q);
-		}
-		
-				if(!$this->db->tableExists('clublinks')) {
-			$q = "CREATE TABLE IF NOT EXISTS `clublinks` (
+      $this->db->execute($q);
+    }
+    
+        if(!$this->db->tableExists('clublinks')) {
+      $q = "CREATE TABLE IF NOT EXISTS `clublinks` (
   `id` mediumint(9) NOT NULL AUTO_INCREMENT,
   `Clublink_Name` varchar(255) NOT NULL DEFAULT '',
+  `Clublink_Name_Clean` varchar(255) NOT NULL DEFAULT '',
   `Clublink_EmblemUrl` varchar(255) DEFAULT NULL,
   `Clublink_ZonePath` varchar(50) NOT NULL,
   `Clublink_Primary_RGB` varchar(6) NOT NULL,
@@ -303,11 +318,25 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `Clublink_URL` VARCHAR(250) NOT NULL,
 PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
-		$this->db->execute($q);
-		}
-		
-		if(!$this->db->tableExists('player_stats')) {
-			$q = "CREATE TABLE IF NOT EXISTS `player_stats` (
+    $this->db->execute($q);
+    
+
+  $q = "INSERT INTO `clublinks` (
+  `id`, 
+  `Clublink_Name`, 
+  `Clublink_Name_Clean`, 
+  `Clublink_EmblemUrl`, 
+  `Clublink_ZonePath`, 
+  `Clublink_Primary_RGB`, 
+  `Clublink_Secondary_RGB`, 
+  `Clublink_URL`) VALUES
+  (1, 'Blue', 'Blue', NULL, 'France', '00F', 'F00', ''),
+  (2, 'Red', 'Red', NULL, 'France', 'F00', '00F', '');";
+  $this->db->execute($q);
+    }
+    
+    if(!$this->db->tableExists('player_stats')) {
+      $q = "CREATE TABLE IF NOT EXISTS `player_stats` (
   `competition_id` int(10) NOT NULL DEFAULT '1',
   `player_id` int(9) NOT NULL,
   `player_login` varchar(50) NOT NULL,
@@ -330,27 +359,27 @@ PRIMARY KEY (`id`)
   `ratio_hits` decimal(5,2) NOT NULL,
   `elimination_3x` int(9) NOT NULL DEFAULT '0'
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
-		$this->db->execute($q);
-		}
-		
-				if($this->isPluginLoaded('ManiaLivePlugins\Standard\Menubar\Menubar'))
-			$this->onPluginLoaded('ManiaLivePlugins\Standard\Menubar\Menubar');
-	}
-	    function onReady() {
+    $this->db->execute($q);
+    }
+    
+        if($this->isPluginLoaded('ManiaLivePlugins\Standard\Menubar\Menubar'))
+      $this->onPluginLoaded('ManiaLivePlugins\Standard\Menubar\Menubar');
+  }
+      function onReady() {
         $this->updateServerChallenges();
 
         $this->connection->setModeScriptSettings(array('S_UseScriptCallbacks' => true));
 
         $this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => false)); //Debug Way...
         $this->connection->setModeScriptSettings(array('S_UsePlayerClublinks' => true)); //Debug Way...
-		//$this->connection->setModeScriptSettings(array('S_Mode' => 0));
+    $this->connection->setModeScriptSettings(array('S_Mode' => 1));
         $this->connection->setCallVoteRatios(array(array('Command' => 'SetModeScriptSettingsAndCommands', 'Ratio' => -1. )));
-		
-		Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Core v' . $this->getVersion());
-		foreach ($this->storage->players as $player) {
+    
+    Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Core v' . $this->getVersion());
+    foreach ($this->storage->players as $player) {
         $this->connection->chatSendServerMessage('$fff» $fa0Welcome, this server uses $fff [Shootmania] Elite Stats$fa0!', $player->login);
-		}
-		
+    }
+    
         $match = $this->getServerCurrentMatch($this->storage->serverLogin);
         if ($match) {
             //var_dump($match);
@@ -367,90 +396,90 @@ PRIMARY KEY (`id`)
         foreach ($this->storage->players as $player) {
             $this->onPlayerConnect($player->login, false);
         }
-		
-		foreach ($this->storage->spectators as $player) {
+    
+    foreach ($this->storage->spectators as $player) {
             $this->onPlayerConnect($player->login, false);
         }
         
         $this->ServerName = $this->connection->getServerName();
         $this->connection->setServerTag('server_name', json_encode($this->ServerName), true);
-														
-														$this->connection->setServerName($this->ServerName);
-					
+                            
+                            //$this->connection->setServerName($this->ServerName);
+          
     }
-	
-	function onPluginLoaded($pluginId)
-	{
-		if($pluginId == 'ManiaLivePlugins\Standard\Menubar\Menubar')
-			$this->buildMenu();
-	}
-	
-	function buildMenu()
-	{
-		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-			'initMenu',
-			Icons128x128_1::Custom);
-		
-		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-			'addButton',
-			'Mode: Classic (3v3)',
-			array($this, 'S_Mode0'),
-			true);
-		
-		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-			'addButton',
-			'Mode: Free ',
-			array($this, 'S_Mode1'),
-			true);
-		
-		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-			'addButton',
-			'WarmUp Extend',
-			array($this, 'WarmUp_Extend'),
-			true);
-			
-		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-			'addButton',
-			'WarmUp Stop',
-			array($this, 'WarmUp_Stop'),
-			true);
+  
+  function onPluginLoaded($pluginId)
+  {
+    if($pluginId == 'ManiaLivePlugins\Standard\Menubar\Menubar')
+      $this->buildMenu();
+  }
+  
+  function buildMenu()
+  {
+    $this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
+      'initMenu',
+      Icons128x128_1::Custom);
+    
+    $this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
+      'addButton',
+      'Mode: Classic (3v3)',
+      array($this, 'S_Mode0'),
+      true);
+    
+    $this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
+      'addButton',
+      'Mode: Free ',
+      array($this, 'S_Mode1'),
+      true);
+    
+    $this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
+      'addButton',
+      'WarmUp Extend',
+      array($this, 'WarmUp_Extend'),
+      true);
+      
+    $this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
+      'addButton',
+      'WarmUp Stop',
+      array($this, 'WarmUp_Stop'),
+      true);
 
-		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-			'addButton',
-			'Pause',
-			array($this, 'pause'),
-			true);
+    $this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
+      'addButton',
+      'Pause',
+      array($this, 'pause'),
+      true);
 
-		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-			'addButton',
-			'New Match',
-			array($this, 'newmatch'),
-			true);
-			
-		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-			'addButton',
-			'BO3',
-			array($this, 'bo3'),
-			true);
-			
-		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-			'addButton',
-			'BO5',
-			array($this, 'bo5'),
-			true);
-			
-		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-			'addButton',
-			'Reset Callvotes active',
-			array($this, 'InitiateVotes'),
-			true);
-		
-		$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-			'addButton',
-			'Set Callvotes inactive',
-			array($this, 'DeactivateVotes'),
-			true);
-	}
+    $this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
+      'addButton',
+      'New Match',
+      array($this, 'newmatch'),
+      true);
+      
+    $this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
+      'addButton',
+      'BO3',
+      array($this, 'bo3'),
+      true);
+      
+    $this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
+      'addButton',
+      'BO5',
+      array($this, 'bo5'),
+      true);
+      
+    $this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
+      'addButton',
+      'Reset Callvotes active',
+      array($this, 'InitiateVotes'),
+      true);
+    
+    $this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
+      'addButton',
+      'Set Callvotes inactive',
+      array($this, 'DeactivateVotes'),
+      true);
+  }
 
     /* Chat messages */
 
@@ -474,28 +503,28 @@ PRIMARY KEY (`id`)
         $vote->cmdParam = array('Set Map to Pause', 'map_pause');
         $this->connection->callVote($vote, 0.5, 0, 1);
     }
-	
-	function S_Mode0($login) {
-	$this->connection->setModeScriptSettings(array('S_Mode' => 0));
+  
+  function S_Mode0($login) {
+  $this->connection->setModeScriptSettings(array('S_Mode' => 0));
     }
-	
-	function S_Mode1($login) {
-	$this->connection->setModeScriptSettings(array('S_Mode' => 1));
+  
+  function S_Mode1($login) {
+  $this->connection->setModeScriptSettings(array('S_Mode' => 1));
     }
-	
-	function InitiateVotes($login){
-	$this->connection->setCallVoteRatiosEx(false, array(
+  
+  function InitiateVotes($login){
+  $this->connection->setCallVoteRatiosEx(false, array(
             new Structures\VoteRatio('SetModeScriptSettingsAndCommands', 0.)
         ));
-	}
-	
-	function DeactivateVotes($login){
-	$this->connection->setCallVoteRatiosEx(false, array(
+  }
+  
+  function DeactivateVotes($login){
+  $this->connection->setCallVoteRatiosEx(false, array(
             new Structures\VoteRatio('SetModeScriptSettingsAndCommands', -1.)
         ));
-	}
-	
-	function newmatch($login) {
+  }
+  
+  function newmatch($login) {
         $match = $this->getServerCurrentMatch($this->storage->serverLogin);
         if ($match) {
             //var_dump($match);
@@ -506,12 +535,12 @@ PRIMARY KEY (`id`)
         $this->connection->executeMulticall(); // Flush calls
         $this->connection->restartMap();
     }
-	
-	function bo3($login) {
-	$this->connection->setModeScriptSettings(array('S_MapWin' => 2));
+  
+  function bo3($login) {
+  $this->connection->setModeScriptSettings(array('S_MapWin' => 2));
     }
-	
-	function bo5($login) {
+  
+  function bo5($login) {
        $this->connection->setModeScriptSettings(array('S_MapWin' => 3));
     }
 
@@ -521,8 +550,8 @@ PRIMARY KEY (`id`)
         if ($stateName == "VotePassed") {
             if ($cmdName == "SetNextMapIndex") {
                 $queryNextMap = "UPDATE `match_maps`
-	SET `NextMap` = '1'
-	 where `match_id` = " . $this->db->quote($this->MatchNumber) . " and `map_id` = " . $this->db->quote($this->getMapid()) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
+  SET `NextMap` = '1'
+   where `match_id` = " . $this->db->quote($this->MatchNumber) . " and `map_id` = " . $this->db->quote($this->getMapid()) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
                 $this->db->execute($queryNextMap);
                 $this->logger->Debug($queryNextMap);
             }
@@ -530,8 +559,8 @@ PRIMARY KEY (`id`)
     }
 
     function onEcho($internal, $public) {
-	var_dump($internal);
-	var_dump($public);
+							//var_dump($internal);
+  			//var_dump($public);
         switch ($internal) {
             case "map_pause":
                 $this->connection->sendModeScriptCommands(array("Command_ForceWarmUp" => true));
@@ -548,8 +577,8 @@ PRIMARY KEY (`id`)
                 $this->connection->triggerModeScriptEvent('WarmUp_Stop', '');
                 break;
         }
-		if ($public == "DrakoniaTest"){
-		switch ($internal) {
+    if ($public == "DrakoniaTest"){
+    switch ($internal) {
             case "map_pause":
                 $this->connection->sendModeScriptCommands(array("Command_ForceWarmUp" => true));
                 break;
@@ -564,25 +593,25 @@ PRIMARY KEY (`id`)
             case "map_warmup_end":
                 $this->connection->triggerModeScriptEvent('WarmUp_Stop', '');
                 break;
-			case "newmatch":
+      case "newmatch":
                 $this->newmatch($public);
                 break;
-			case "bo3":
+      case "bo3":
                 $this->bo3($public);
                 break;
-			case "bo5":
+      case "bo5":
                 $this->bo5($public);
                 break;
         }
-		}
+    }
     }
 
     function getServerCurrentMatch($serverLogin) {
-	 $CurrentMatchÏd = $this->db->execute(
+   $CurrentMatchÏd = $this->db->execute(
                         'SELECT id FROM matches ' .
                         'where MatchEnd = "0000-00-00 00:00:00" and `matchServerLogin` = ' . $this->db->quote($serverLogin) .
                         '')->fetchSingleValue();
-	$this->logger->Normal($CurrentMatchÏd);					
+  $this->logger->Normal($CurrentMatchÏd);         
         return $this->db->execute(
                         'SELECT id FROM matches ' .
                         'where MatchEnd = "0000-00-00 00:00:00" and `matchServerLogin` = ' . $this->db->quote($serverLogin) .
@@ -592,16 +621,16 @@ PRIMARY KEY (`id`)
     function updateMatchState($matchId) {
         $state = date('Y-m-d H:i:s');
         $matches_update = "UPDATE matches SET `MatchEnd` = " . $this->db->quote($state) . " WHERE id = " . intval($matchId) . "";
-		$this->logger->Debug($matches_update);
+    $this->logger->Debug($matches_update);
         $this->db->execute($matches_update);
         $match_maps_update = "UPDATE match_maps SET `MapEnd` = " . $this->db->quote($state) . " WHERE match_id = " . intval($matchId) . "";
-		$this->logger->Debug($match_maps_update);
+    $this->logger->Debug($match_maps_update);
         $this->db->execute($match_maps_update);
     }
 
     public function onModeScriptCallback($event, $json) {
-	$this->logger->Callbacks($event);
-	$this->logger->Callbacks($json);
+  $this->logger->Callbacks($event);
+  $this->logger->Callbacks($json);
         switch ($event) {
             case 'BeginMatch':
                 $this->onXmlRpcEliteMatchStart(new JsonCallbacks\BeginMatch($json));
@@ -620,81 +649,81 @@ PRIMARY KEY (`id`)
                 break;
             case 'OnShoot':
                 $this->onXmlRpcEliteShoot(new JsonCallbacks\OnShoot($json));
-				//var_dump($json);
+        //var_dump($json);
                 break;
             case 'OnHit':
                 $this->onXmlRpcEliteHit(new JsonCallbacks\OnHit($json));
-				//var_dump($json);
+        //var_dump($json);
                 break;
             case 'OnCapture':
                 $this->onXmlRpcEliteCapture(new JsonCallbacks\OnCapture($json));
                 break;
             case 'OnArmorEmpty':
                 $this->onXmlRpcEliteArmorEmpty(new JsonCallbacks\OnArmorEmpty($json));
-				//var_dump($json);
+        //var_dump($json);
                 break;
             case 'OnNearMiss':
                 $this->onXmlRpcEliteNearMiss(new JsonCallbacks\OnNearMiss($json));
                 break;
             case 'EndTurn':
-					if ($this->MatchNumber) {
-					$ClanMatchDataVariables = $this->connection->getModeScriptVariables();
+          if ($this->MatchNumber) {
+          $ClanMatchDataVariables = $this->connection->getModeScriptVariables();
                     $this->BlueMapScore = $ClanMatchDataVariables['Clan1MapPoints'];
                     $this->RedMapScore = $ClanMatchDataVariables['Clan2MapPoints'];
-				}
+        }
                 $this->onXmlRpcEliteEndTurn(new JsonCallbacks\EndTurn($json));
                 break;
-            case 'EndMatch':			
-					if ($this->MatchNumber) {
-					$ClanEndMatchDataVariables = $this->connection->getModeScriptVariables();
+            case 'EndMatch':      
+          if ($this->MatchNumber) {
+          $ClanEndMatchDataVariables = $this->connection->getModeScriptVariables();
                     $this->BlueScoreMatch = $ClanEndMatchDataVariables['Clan1MatchPoints'];
                     $this->RedScoreMatch = $ClanEndMatchDataVariables['Clan2MatchPoints'];
-				$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+        $qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
                     $this->logger->Debug($qmmsb);
                     $this->db->execute($qmmsb);
                  //MatchScore Red
                 $qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
                     $this->logger->Debug($qmmsr);
                     $this->db->execute($qmmsr);
-				}
+        }
                 $this->onXmlRpcEliteEndMatch(new JsonCallbacks\EndMatch($json));
                 break;
             case 'EndMap':
-					if ($this->MatchNumber) {
-					$ClanEndMapDataVariables = $this->connection->getModeScriptVariables();
+          if ($this->MatchNumber) {
+          $ClanEndMapDataVariables = $this->connection->getModeScriptVariables();
                     $this->BlueScoreMatch = $ClanEndMapDataVariables['Clan1MatchPoints'];
                     $this->RedScoreMatch = $ClanEndMapDataVariables['Clan2MatchPoints'];
-				$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+        $qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
                     $this->logger->Debug($qmmsb);
                     $this->db->execute($qmmsb);
                  //MatchScore Red
                 $qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
                     $this->logger->Debug($qmmsr);
                     $this->db->execute($qmmsr);
-				}
+        }
                 $this->onXmlRpcEliteEndMap(new JsonCallbacks\EndMap($json));
                 break;
-			case 'LibXmlRpc_Scores':
-				if($this->MatchNumber)
-				{
-					$this->BlueScoreMatch = $json[0];
-					$this->RedScoreMatch = $json[1];
-					$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+      case 'LibXmlRpc_Scores':
+        if($this->MatchNumber)
+        {
+          $this->BlueScoreMatch = $json[0];
+          $this->RedScoreMatch = $json[1];
+          $qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
                     $this->logger->Debug($qmmsb);
                     $this->db->execute($qmmsb);
                  //MatchScore Red
                 $qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
                     $this->logger->Debug($qmmsr);
                     $this->db->execute($qmmsr);
-				}
-				break;
+        }
+        break;
         }
     }
 
     function updateServerChallenges() {
         //get server challenges
         $serverChallenges = $this->storage->maps;
-	
+  
         //get database challenges
         $q = "SELECT * FROM `maps`;";
         $query = $this->db->query($q);
@@ -745,35 +774,38 @@ PRIMARY KEY (`id`)
 
         if ($execute->recordCount() == 0) {
             $q = "INSERT INTO `players` (
-					`login`,
-					`nickname`,
-					`nation`,
-					`updatedate`
-				  ) VALUES (
-					" . $this->db->quote($player->login) . ",
-					" . $this->db->quote($player->nickName) . ",
-					" . $this->db->quote($zone[2]) . ",
-					'" . date('Y-m-d H:i:s') . "'
-				  )";
+          `login`,
+          `nation`,
+          `updatedate`
+          ) VALUES (
+          " . $this->db->quote($player->login) . ",
+        			" . $this->db->quote($zone[2]) . ",
+          '" . date('Y-m-d H:i:s') . "'
+          )";
             $this->db->execute($q);
             $this->playerIDs[$player->login] = $this->db->insertID();
             $this->logger->Debug($q);
+          
+        $qnick = "INSERT INTO `player_nicknames` ( 
+        `player_id`,
+        `nickname`,
+        `competition_id`)
+        VALUES (
+        " . $this->db->quote($this->playerIDs[$player->login]) . ",
+        " . $this->db->quote($player->nickName) . ",
+        " . $this->db->quote($this->competition_id) . "
+        )";
+        $this->db->execute($qnick);
+        $this->logger->debug($qnick);    
         } else {
-            $q = "UPDATE `players` SET `nickname` = " . $this->db->quote($player->nickName) . ",
-				       `nation` = " . $this->db->quote($zone[2]) . ",
-				       `updatedate` = '" . date('Y-m-d H:i:s') . "'
-                                   WHERE `login` = " . $this->db->quote($player->login) . "";
-            $this->db->execute($q);
-            $this->logger->Debug($q);
-            $this->playerIDs[$player->login] = $execute->fetchObject()->id;
         }
     }
 
     function onXmlRpcEliteBeginWarmUp(JsonCallbacks\BeginWarmup $content) {
         if ($content->allReady === false) {
             $q = "UPDATE `match_maps`
-				  SET `AllReady` = '0'
-				  WHERE `match_id` =" . $this->db->quote($this->MatchNumber) . " and 
+          SET `AllReady` = '0'
+          WHERE `match_id` =" . $this->db->quote($this->MatchNumber) . " and 
                                         `map_id` = " . $this->db->quote($this->getMapid()) . " and 
                                         `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
             $this->logger->Debug($q);
@@ -787,17 +819,13 @@ PRIMARY KEY (`id`)
         $blue = $this->connection->getTeamInfo(1);
         $red = $this->connection->getTeamInfo(2);
 
-        $MatchName = '' . $blue->name . ' $zvs ' . $red->name . '';
-														// set servername with clublinks....
-														
-														$this->connection->setServerTag('server_name', json_encode($MatchName), true);
-														
-														$this->connection->setServerName($MatchName);
-					
+
+        
+          
         if ($content->allReady === true) {
             $q = "UPDATE `match_maps`
-				  SET `AllReady` = '1'
-				  WHERE `match_id` = " . $this->db->quote($this->MatchNumber) . " and 
+          SET `AllReady` = '1'
+          WHERE `match_id` = " . $this->db->quote($this->MatchNumber) . " and 
                                         `map_id` = " . $this->db->quote($this->getMapid()) . " and 
                                         `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
             $this->logger->Debug($q);
@@ -806,39 +834,39 @@ PRIMARY KEY (`id`)
             
         }
     }
-	
-	function onXmlRpcEliteMatchStart(JsonCallbacks\BeginMatch $content) {
+  
+  function onXmlRpcEliteMatchStart(JsonCallbacks\BeginMatch $content) {
         $blue = $this->connection->getTeamInfo(1);
         $red = $this->connection->getTeamInfo(2);
 
         $MatchName = '' . $blue->name . ' vs ' . $red->name . '';
-														// set servername with clublinks....
-																												
+                            // set servername with clublinks....
+                                                        
         $qmatch = "INSERT INTO `matches` (
-						`MatchName`,
-						`teamBlue`,
-						`teamBlue_emblem`,
-						`teamBlue_RGB`,
-						`teamRed`,
-						`teamRed_emblem`,
-						`teamRed_RGB`,
-						`Matchscore_blue`,
-						`Matchscore_red`,
-						`MatchStart`,
-						`matchServerLogin`
-					  ) VALUES (
-						" . $this->db->quote($MatchName) . ",
-						" . $this->db->quote($this->getTeamid($blue->name)) . ",
-						" . $this->db->quote($blue->emblemUrl) . ",
-						" . $this->db->quote($blue->rGB) . ",
-						" . $this->db->quote($this->getTeamid($red->name)) . ",
-						" . $this->db->quote($red->emblemUrl) . ",
-						" . $this->db->quote($red->rGB) . ",
-						'0',
-						'0',
-						'" . date('Y-m-d H:i:s') . "',
-						" . $this->db->quote($this->storage->serverLogin) . "
-					  )";
+            `MatchName`,
+            `teamBlue`,
+            `teamBlue_emblem`,
+            `teamBlue_RGB`,
+            `teamRed`,
+            `teamRed_emblem`,
+            `teamRed_RGB`,
+            `Matchscore_blue`,
+            `Matchscore_red`,
+            `MatchStart`,
+            `matchServerLogin`
+            ) VALUES (
+            " . $this->db->quote($MatchName) . ",
+            " . $this->db->quote($this->getTeamid($blue->name)) . ",
+            " . $this->db->quote($blue->emblemUrl) . ",
+            " . $this->db->quote($blue->rGB) . ",
+            " . $this->db->quote($this->getTeamid($red->name)) . ",
+            " . $this->db->quote($red->emblemUrl) . ",
+            " . $this->db->quote($red->rGB) . ",
+            '0',
+            '0',
+            '" . date('Y-m-d H:i:s') . "',
+            " . $this->db->quote($this->storage->serverLogin) . "
+            )";
         $this->logger->Debug($qmatch);
         $this->db->execute($qmatch);
         $this->MatchNumber = $this->db->insertID();
@@ -851,20 +879,20 @@ PRIMARY KEY (`id`)
         $mapmatchexecute = $this->db->execute($mapmatch);
         if ($mapmatchexecute->recordCount() == 0) {
             $qmapmatch = "INSERT INTO `match_maps` (
-						`match_id`,
-						`map_id`,
-						`Roundscore_blue`,
-						`Roundscore_red`,
-						`MapStart`,
-						`matchServerLogin`
-					  ) VALUES (
-						" . $this->db->quote($this->MatchNumber) . ",
-						" . $this->db->quote($this->getMapid()) . ",
-						'0',
-						'0',
-						'" . date('Y-m-d H:i:s') . "',
-						" . $this->db->quote($this->storage->serverLogin) . "
-					  )";
+            `match_id`,
+            `map_id`,
+            `Roundscore_blue`,
+            `Roundscore_red`,
+            `MapStart`,
+            `matchServerLogin`
+            ) VALUES (
+            " . $this->db->quote($this->MatchNumber) . ",
+            " . $this->db->quote($this->getMapid()) . ",
+            '0',
+            '0',
+            '" . date('Y-m-d H:i:s') . "',
+            " . $this->db->quote($this->storage->serverLogin) . "
+            )";
             $this->logger->Debug($qmapmatch);
             $this->db->execute($qmapmatch);
             $this->MapNumber = $this->db->insertID();
@@ -886,9 +914,40 @@ PRIMARY KEY (`id`)
         $teams = array();
         $teams[1] = $blue;
         $teams[2] = $red;
-        
+  
+          /* Clublinks */
+
+          if ($this->TurnNumber == 1)
+        {
+            if ($blue->clubLinkUrl) {
+              $this->updateClublink($blue->clubLinkUrl);
+          }
+          if ($red->clubLinkUrl) {
+              $this->updateClublink($red->clubLinkUrl);
+          }
+
+
+
+          $qcblnk = "SELECT * FROM `clublinks` WHERE `Clublink_Name` = " . $this->db->quote($blue->name) . ";";
+        $this->logger->Debug($qcblnk);
+        $bluename = $this->db->execute($qcblnk)->fetchObject();
+
+        $qcblnk = "SELECT * FROM `clublinks` WHERE `Clublink_Name` = " . $this->db->quote($red->name) . ";";
+        $this->logger->Debug($qcblnk);
+        $redname = $this->db->execute($qcblnk)->fetchObject();
+
+        $MatchName = '' . $bluename->Clublink_Name_Clean . ' vs ' . $redname->Clublink_Name_Clean . '';
+                            // set servername with clublinks....
+                            
+                            $this->connection->setServerTag('server_name', json_encode($MatchName), true);
+                            
+                            $this->connection->setServerName($MatchName);
+
+
+        }
+      
         $qmmsb = "UPDATE `matches`
-	SET teamBlue = " . $this->db->quote($this->getTeamid($blue->name)) . ",
+  SET teamBlue = " . $this->db->quote($this->getTeamid($blue->name)) . ",
             teamBlue_emblem = " . $this->db->quote($blue->emblemUrl) . ",
             teamBlue_RGB = " . $this->db->quote($blue->rGB) . " 
             WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
@@ -896,7 +955,7 @@ PRIMARY KEY (`id`)
         $this->db->execute($qmmsb);
 
         $qmmsr = "UPDATE `matches`
-	SET teamRed = " . $this->db->quote($this->getTeamid($red->name)) . ",
+  SET teamRed = " . $this->db->quote($this->getTeamid($red->name)) . ",
             teamRed_emblem = " . $this->db->quote($red->emblemUrl) . ",
             teamRed_RGB = " . $this->db->quote($red->rGB) . " 
             WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
@@ -910,24 +969,24 @@ PRIMARY KEY (`id`)
             $execute = $this->db->execute($shots_table);
             if ($execute->recordCount() == 0) {
                 $shots_insert = "INSERT INTO `shots` (
-					`match_map_id`,
-					`round_id`,
-					`player_id`,
-					`weapon_id`,
-					`shots`,
-					`hits`,
-					`eliminations`,
-					`matchServerLogin`
-				  ) VALUES (
-					" . $this->db->quote($this->MapNumber) . ",
-					" . $this->db->quote($content->turnNumber) . ",
-					" .  $this->db->quote($this->getPlayerId($login)). ",
-					'0',
-					'0',
-					'0',
-					'0',
-					" . $this->db->quote($this->storage->serverLogin) . "
-				  )";
+          `match_map_id`,
+          `round_id`,
+          `player_id`,
+          `weapon_id`,
+          `shots`,
+          `hits`,
+          `eliminations`,
+          `matchServerLogin`
+          ) VALUES (
+          " . $this->db->quote($this->MapNumber) . ",
+          " . $this->db->quote($content->turnNumber) . ",
+          " .  $this->db->quote($this->getPlayerId($login)). ",
+          '0',
+          '0',
+          '0',
+          '0',
+          " . $this->db->quote($this->storage->serverLogin) . "
+          )";
                 $this->logger->Debug($shots_insert);
                 $this->db->execute($shots_insert);
             } else {
@@ -941,18 +1000,18 @@ PRIMARY KEY (`id`)
 
             if ($pmiexecute->recordCount() == 0) {
                 $pmi = "INSERT INTO `player_maps` (
-						`match_id`,
-						`player_id`,
-						`match_map_id`,
-						`team_id`,
-						`matchServerLogin`
-					  ) VALUES (
+            `match_id`,
+            `player_id`,
+            `match_map_id`,
+            `team_id`,
+            `matchServerLogin`
+            ) VALUES (
                         " . $this->db->quote($this->MatchNumber) . ",
-						" . $this->db->quote($this->getPlayerId($login)) . ",
-						" . $this->db->quote($this->MapNumber) . ",
-						" . $this->db->quote($this->getTeamid($teams[($player->teamId + 1)]->name)) . ",
-						" . $this->db->quote($this->storage->serverLogin) . "
-					  )";
+            " . $this->db->quote($this->getPlayerId($login)) . ",
+            " . $this->db->quote($this->MapNumber) . ",
+            " . $this->db->quote($this->getTeamid($teams[($player->teamId + 1)]->name)) . ",
+            " . $this->db->quote($this->storage->serverLogin) . "
+            )";
                 //var_dump($pmi);
                 $this->logger->Debug($pmi);
                 $this->db->execute($pmi);
@@ -968,28 +1027,28 @@ PRIMARY KEY (`id`)
         $execute = $this->db->execute($q);
         if ($execute->recordCount() == 0) {
             $q = "INSERT INTO `match_details` (
-					`match_id`,
-					`team_id`,
-					`map_id`,
-					`attack`,
-					`defence`,
-					`capture`,
-					`timeOver`,
-					`attackWinEliminate`,
-					`defenceWinEliminate`,
-					`matchServerLogin`
-				  ) VALUES (
-					" . $this->db->quote($this->MatchNumber) . ",
-					" . $this->db->quote($this->getTeamid($attackingClan->name)) . ",
-					" . $this->db->quote($this->getMapid()) . ",
-					'0',
-					'0',
-					'0',
-					'0',
-					'0',
-					'0',
-					" . $this->db->quote($this->storage->serverLogin) . "
-				  )";
+          `match_id`,
+          `team_id`,
+          `map_id`,
+          `attack`,
+          `defence`,
+          `capture`,
+          `timeOver`,
+          `attackWinEliminate`,
+          `defenceWinEliminate`,
+          `matchServerLogin`
+          ) VALUES (
+          " . $this->db->quote($this->MatchNumber) . ",
+          " . $this->db->quote($this->getTeamid($attackingClan->name)) . ",
+          " . $this->db->quote($this->getMapid()) . ",
+          '0',
+          '0',
+          '0',
+          '0',
+          '0',
+          '0',
+          " . $this->db->quote($this->storage->serverLogin) . "
+          )";
             $this->logger->Debug($q);
             $this->db->execute($q);
         } else {
@@ -1008,28 +1067,28 @@ PRIMARY KEY (`id`)
 
         if ($execute->recordCount() == 0) {
             $q = "INSERT INTO `match_details` (
-					`match_id`,
-					`team_id`,
-					`map_id`,
-					`attack`,
-					`defence`,
-					`capture`,
-					`timeOver`,
-					`attackWinEliminate`,
-					`defenceWinEliminate`,
-					`matchServerLogin`
-				  ) VALUES (
-					" . $this->MatchNumber . ",
-					" . $this->db->quote($this->getTeamid($defendingClan->name)) . ",
-					" . $this->db->quote($this->getMapid()) . ",
-					'0',
-					'0',
-					'0',
-					'0',
-					'0',
-					'0',
-					" . $this->db->quote($this->storage->serverLogin) . "
-				  )";
+          `match_id`,
+          `team_id`,
+          `map_id`,
+          `attack`,
+          `defence`,
+          `capture`,
+          `timeOver`,
+          `attackWinEliminate`,
+          `defenceWinEliminate`,
+          `matchServerLogin`
+          ) VALUES (
+          " . $this->MatchNumber . ",
+          " . $this->db->quote($this->getTeamid($defendingClan->name)) . ",
+          " . $this->db->quote($this->getMapid()) . ",
+          '0',
+          '0',
+          '0',
+          '0',
+          '0',
+          '0',
+          " . $this->db->quote($this->storage->serverLogin) . "
+          )";
             $this->logger->Debug($q);
             $this->db->execute($q);
         } else {
@@ -1037,10 +1096,10 @@ PRIMARY KEY (`id`)
         }
 
         // Players and stuff
-		if ($content->attackingPlayer == NULL){
-		}
-		else
-		{
+    if ($content->attackingPlayer == NULL){
+    }
+    else
+    {
         $AtkPlayer = $this->getPlayerId($content->attackingPlayer->login);
         $mapmatchAtk = "UPDATE `match_maps` SET 
                                             `AtkId` = " . $this->db->quote($AtkPlayer) . "
@@ -1067,7 +1126,7 @@ PRIMARY KEY (`id`)
                                     `match_id` = " . $this->MatchNumber . "";
         $this->logger->Debug($q);
         $this->db->execute($q);
-		}
+    }
         /* Clublinks */
 
         if ($blue->clubLinkUrl) {
@@ -1079,38 +1138,38 @@ PRIMARY KEY (`id`)
     }
 
     function updateClublink($url) {
-        	$options = array(
-		CURLOPT_RETURNTRANSFER => true,     // return web page
-		CURLOPT_HEADER         => false,    // don't return headers
-		CURLOPT_FOLLOWLOCATION => true,     // follow redirects
-		CURLOPT_ENCODING       => "",       // handle compressed
-		CURLOPT_USERAGENT      => "ShootManiaEliteStatistics", // who am i
-		CURLOPT_AUTOREFERER    => true,     // set referer on redirect
-		CURLOPT_CONNECTTIMEOUT => 120,      // timeout on connect
-		CURLOPT_TIMEOUT        => 120,      // timeout on response
-		CURLOPT_MAXREDIRS      => 10,       // stop after 10 redirects
-	);
+          $options = array(
+    CURLOPT_RETURNTRANSFER => true,     // return web page
+    CURLOPT_HEADER         => false,    // don't return headers
+    CURLOPT_FOLLOWLOCATION => true,     // follow redirects
+    CURLOPT_ENCODING       => "",       // handle compressed
+    CURLOPT_USERAGENT      => "ShootManiaEliteStatistics", // who am i
+    CURLOPT_AUTOREFERER    => true,     // set referer on redirect
+    CURLOPT_CONNECTTIMEOUT => 120,      // timeout on connect
+    CURLOPT_TIMEOUT        => 120,      // timeout on response
+    CURLOPT_MAXREDIRS      => 10,       // stop after 10 redirects
+  );
 
-	$ch      = curl_init($url);
-	curl_setopt_array($ch, $options);
-	$content = curl_exec( $ch );
-	$err     = curl_errno( $ch );
-	$errmsg  = curl_error( $ch );
-	$header  = curl_getinfo( $ch );
-	curl_close( $ch );
+  $ch      = curl_init($url);
+  curl_setopt_array($ch, $options);
+  $content = curl_exec( $ch );
+  $err     = curl_errno( $ch );
+  $errmsg  = curl_error( $ch );
+  $header  = curl_getinfo( $ch );
+  curl_close( $ch );
 
-	$header['errno']   = $err;
-	$header['errmsg']  = $errmsg;
-	$header['content'] = $content;
+  $header['errno']   = $err;
+  $header['errmsg']  = $errmsg;
+  $header['content'] = $content;
     $xml = simplexml_load_string($content);
 
         // incase the xml is malformed, bail out
         if ($xml === false)
             return;
-		
-		if ($xml->getName() != "club")
-		return;
-		
+    
+    if ($xml->getName() != "club")
+    return;
+    
         $zone = explode("|", $xml->zone);
         if ($zone[0] == "") {
             $zone[2] = "World";
@@ -1119,23 +1178,29 @@ PRIMARY KEY (`id`)
         $qcblnk = "SELECT * FROM `clublinks` WHERE `Clublink_Name` = " . $this->db->quote($xml->name) . ";";
         $this->logger->Debug($qcblnk);
         $execute = $this->db->execute($qcblnk);
+    $this->logger->Debug("Select Clublinks");
 
         if ($execute->recordCount() == 0) {
+    $this->logger->Debug("Insert Clublinks");          
+          $name = \ManiaLib\Utils\Formatting::stripStyles($xml->name);
+          $name = preg_replace('/[^A-Za-z0-9 _\-\+\&]/','',$name);
             $qBlueClublink = "INSERT INTO `clublinks` (
-					`Clublink_Name`,
-					`Clublink_EmblemUrl`,
-					`Clublink_ZonePath`,
-					`Clublink_Primary_RGB`,
-					`Clublink_Secondary_RGB`,
-					`Clublink_URL`
-				  ) VALUES (
-					" . $this->db->quote($xml->name) . ",
-					" . $this->db->quote($xml->emblem_web) . ",
-					" . $this->db->quote($zone[2]) . ",
-					" . $this->db->quote($xml->color['primary']) . ",
-					" . $this->db->quote($xml->color['secondary']) . ",
-					" . $this->db->quote($url) . "
-				  )";
+          `Clublink_Name`,
+          `Clublink_Name_Clean`,
+          `Clublink_EmblemUrl`,
+          `Clublink_ZonePath`,
+          `Clublink_Primary_RGB`,
+          `Clublink_Secondary_RGB`,
+          `Clublink_URL`
+          ) VALUES (
+          " . $this->db->quote($xml->name) . ",
+          " . $this->db->quote($name) . ",
+          " . $this->db->quote($xml->emblem_web) . ",
+          " . $this->db->quote($zone[2]) . ",
+          " . $this->db->quote($xml->color['primary']) . ",
+          " . $this->db->quote($xml->color['secondary']) . ",
+          " . $this->db->quote($url) . "
+          )";
             $this->db->execute($qBlueClublink);
             $this->logger->Debug($qBlueClublink);
         } else {
@@ -1143,45 +1208,45 @@ PRIMARY KEY (`id`)
     }
 
     function onXmlRpcEliteEndTurn(JsonCallbacks\EndTurn $content) {
-	$message = 'Blue - Red: '.$this->BlueMapScore.' - '.$this->RedMapScore.'';	
-	$this->logger->Console($message);
+  $message = 'Blue - Red: '.$this->BlueMapScore.' - '.$this->RedMapScore.'';  
+  $this->logger->Console($message);
         $attackingClan = $this->connection->getTeamInfo($content->attackingClan);
         $defendingClan = $this->connection->getTeamInfo($content->defendingClan);
 
         $mapmatchAtk = "UPDATE `match_maps`
-				  SET `AtkId` = 0,
-				  `turnNumber` = " . $this->db->quote($content->turnNumber) . ",
-				  `Roundscore_blue` = " . $this->db->quote($this->BlueMapScore) . ",
-				  `Roundscore_red` = " . $this->db->quote($this->RedMapScore) . "
-				  WHERE `match_id` = " . $this->db->quote($this->MatchNumber) . " and 
+          SET `AtkId` = 0,
+          `turnNumber` = " . $this->db->quote($content->turnNumber) . ",
+          `Roundscore_blue` = " . $this->db->quote($this->BlueMapScore) . ",
+          `Roundscore_red` = " . $this->db->quote($this->RedMapScore) . "
+          WHERE `match_id` = " . $this->db->quote($this->MatchNumber) . " and 
                                         `map_id` = " . $this->db->quote($this->getMapid()) . " and 
                                         `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
         $this->logger->Debug($mapmatchAtk);
         $this->db->execute($mapmatchAtk);
 
         $qatk = "UPDATE `match_details`
-				  SET `attack` = attack + 1 
-				  WHERE `team_id` = " . $this->db->quote($this->getTeamid($attackingClan->name)) . " and `map_id` = " . $this->db->quote($this->getMapid()) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
+          SET `attack` = attack + 1 
+          WHERE `team_id` = " . $this->db->quote($this->getTeamid($attackingClan->name)) . " and `map_id` = " . $this->db->quote($this->getMapid()) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
         $this->logger->Debug($qatk);
         $this->db->execute($qatk);
 
         if ($content->winType == 'Capture') {
             $qcapture = "UPDATE `match_details`
-				  SET `capture` = capture + 1 WHERE `team_id` = " . $this->db->quote($this->getTeamid($attackingClan->name)) . " and `map_id` = " . $this->db->quote($this->getMapid()) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
+          SET `capture` = capture + 1 WHERE `team_id` = " . $this->db->quote($this->getTeamid($attackingClan->name)) . " and `map_id` = " . $this->db->quote($this->getMapid()) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
             $this->logger->Debug($qcapture);
             $this->db->execute($qcapture);
-			
-			$attackerId = $this->getPlayerId($content->attackingPlayer->login);
-			
-		    $q = "UPDATE `player_maps` SET `atkSucces` =  atkSucces + 1 WHERE `player_id` = " . $this->db->quote($attackerId) . "  and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . "";
+      
+      $attackerId = $this->getPlayerId($content->attackingPlayer->login);
+      
+        $q = "UPDATE `player_maps` SET `atkSucces` =  atkSucces + 1 WHERE `player_id` = " . $this->db->quote($attackerId) . "  and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . "";
             $this->db->execute($q);
             $this->logger->Debug($q);
         }
 
         if ($content->winType == 'DefenseEliminated') {
             $qawe = "UPDATE `match_details`
-				  SET `attackWinEliminate` = attackWinEliminate + 1
-				  WHERE `team_id` = " . $this->db->quote($this->getTeamid($attackingClan->name)) . " and 
+          SET `attackWinEliminate` = attackWinEliminate + 1
+          WHERE `team_id` = " . $this->db->quote($this->getTeamid($attackingClan->name)) . " and 
                                         `map_id` = " . $this->db->quote($this->getMapid()) . " and 
                                         `match_id` = " . $this->db->quote($this->MatchNumber) . " and 
                                         `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
@@ -1196,52 +1261,51 @@ PRIMARY KEY (`id`)
         }
 
         $qdef = "UPDATE `match_details`
-				  SET `defence` = defence + 1
-				  WHERE `team_id` = " . $this->db->quote($this->getTeamid($defendingClan->name)) . " and `map_id` = " . $this->db->quote($this->getMapid()) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
+          SET `defence` = defence + 1
+          WHERE `team_id` = " . $this->db->quote($this->getTeamid($defendingClan->name)) . " and `map_id` = " . $this->db->quote($this->getMapid()) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
         $this->logger->Debug($qdef);
         $this->db->execute($qdef);
 
         if ($content->winType == 'TimeLimit') {
             $qtl = "UPDATE `match_details`
-				  SET `timeOver` = timeOver + 1
-				  WHERE `team_id` = " . $this->db->quote($this->getTeamid($defendingClan->name)) . " and `map_id` = " . $this->db->quote($this->getMapid()) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
+          SET `timeOver` = timeOver + 1
+          WHERE `team_id` = " . $this->db->quote($this->getTeamid($defendingClan->name)) . " and `map_id` = " . $this->db->quote($this->getMapid()) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
             $this->logger->Debug($qtl);
             $this->db->execute($qtl);
-            
+
             $attackerId = $this->getPlayerId($content->attackingPlayer->login);
 
             $q = "UPDATE `player_maps` SET `timeOver` =  timeOver + 1 WHERE `player_id` = " . $this->db->quote($attackerId) . "  and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . "";
             $this->db->execute($q);
             $this->logger->Debug($q);
-        
         }
 
         if ($content->winType == 'AttackEliminated') {
             $qde = "UPDATE `match_details`
-				  SET `defenceWinEliminate` = defenceWinEliminate + 1 
-				  WHERE `team_id` = " . $this->db->quote($this->getTeamid($defendingClan->name)) . " and `map_id` = " . $this->db->quote($this->getMapid()) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
+          SET `defenceWinEliminate` = defenceWinEliminate + 1 
+          WHERE `team_id` = " . $this->db->quote($this->getTeamid($defendingClan->name)) . " and `map_id` = " . $this->db->quote($this->getMapid()) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
             $this->logger->Debug($qde);
             $this->db->execute($qde);
         }
-		
-		foreach($content->scoresTable as $shooters){
-		$TurnHits = $shooters->turnHits;
-		$playerlogin = $shooters->login;
-		$total = count((array)$TurnHits);
-		$PlayerIdEndTurn = $this->getPlayerId($playerlogin);
-		$currentclan = $shooters->currentClan;
-		if ($currentclan == $content->defendingClan){
-		if ($total == (int)3){
-		$qth = "UPDATE `player_maps`
-		SET `elimination_3x` = elimination_3x + 1 
-		WHERE `player_id` = " . $this->db->quote($PlayerIdEndTurn) . "  and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . "";
+    
+    foreach($content->scoresTable as $shooters){
+    $TurnHits = $shooters->turnHits;
+    $playerlogin = $shooters->login;
+    $total = count((array)$TurnHits);
+    $PlayerIdEndTurn = $this->getPlayerId($playerlogin);
+    $currentclan = $shooters->currentClan;
+    if ($currentclan == $content->defendingClan){
+    if ($total == (int)3){
+    $qth = "UPDATE `player_maps`
+    SET `elimination_3x` = elimination_3x + 1 
+    WHERE `player_id` = " . $this->db->quote($PlayerIdEndTurn) . "  and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . "";
             $this->logger->Debug($qth);
             $this->db->execute($qth);
-		}
-		}
-		
-		}
-		
+    }
+    }
+    
+    }
+    
         /*
           Store CurrentReplays for a Turn.
          */
@@ -1261,20 +1325,20 @@ PRIMARY KEY (`id`)
 
         // Insert kill into the database
         $q = "INSERT INTO `kills` (
-				`match_id`,
-				`round_id`,
-				`player_victim_id`,
-				`player_shooter_id`,
-				`map_id`,
-				`matchServerLogin`
-			  ) VALUES (
-			  " . $this->db->quote($this->MatchNumber) . ",
-			  " . $this->db->quote($this->TurnNumber) . ",
-			    " . $this->db->quote($this->getPlayerId($content->event->victim->login)) . ",
-			    " . $this->db->quote($this->getPlayerId($content->event->shooter->login)) . ",
-			    " . $this->db->quote($this->getMapid()) . ",
+        `match_id`,
+        `round_id`,
+        `player_victim_id`,
+        `player_shooter_id`,
+        `map_id`,
+        `matchServerLogin`
+        ) VALUES (
+        " . $this->db->quote($this->MatchNumber) . ",
+        " . $this->db->quote($this->TurnNumber) . ",
+          " . $this->db->quote($this->getPlayerId($content->event->victim->login)) . ",
+          " . $this->db->quote($this->getPlayerId($content->event->shooter->login)) . ",
+          " . $this->db->quote($this->getMapid()) . ",
                             " . $this->db->quote($this->storage->serverLogin) . "
-			  )";
+        )";
         $this->logger->Debug($q);
         $this->db->execute($q);
 
@@ -1299,11 +1363,11 @@ PRIMARY KEY (`id`)
     }
 
     function onXmlRpcEliteShoot(JsonCallbacks\OnShoot $content) {
-	$message = ''.$content->event->shooter->login.' shot with '.$content->event->weaponNum.'';
-	$this->logger->Normal($message);
+  $message = ''.$content->event->shooter->login.' shot with '.$content->event->weaponNum.'';
+  $this->logger->Normal($message);
         if (!isset($this->TurnNumber))
             $this->TurnNumber = 0;
-			
+      
         $shooterId = $this->getPlayerId($content->event->shooter->login);
 
         $q = "UPDATE `player_maps` SET `shots` = shots + 1  WHERE `player_id` = " . $this->db->quote($shooterId) . "  and `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . "";
@@ -1316,9 +1380,9 @@ PRIMARY KEY (`id`)
     }
 
     function onXmlRpcEliteHit(JsonCallbacks\OnHit $content) {
-	
-	$message = ''.$content->event->shooter->login.' hit '.$content->event->victim->login.' with '.$content->event->weaponNum.'';
-	$this->logger->Normal($message);
+  
+  $message = ''.$content->event->shooter->login.' hit '.$content->event->victim->login.' with '.$content->event->weaponNum.'';
+  $this->logger->Normal($message);
         if (!isset($this->TurnNumber))
             $this->TurnNumber = 0;
 
@@ -1347,48 +1411,48 @@ PRIMARY KEY (`id`)
 
 // hitdistance
         $qhitdist = "INSERT INTO `hits` (
-					`match_map_id`,
-					`round_id`,
-					`map_id`,
-					`HitDist`,
-					`shooter_player_id`,
-					`victim_player_id`,
-					`weaponid`,
-					`weaponname`,
-					`matchServerLogin`
-				  ) VALUES (
-					" . $this->db->quote($this->MapNumber) . ",
-					" . $this->db->quote($this->TurnNumber) . ",
-					" . $this->db->quote($this->getMapid()) . ",
-					" . $this->db->quote($content->event->hitDist) . ",
-					" . $this->db->quote($this->getPlayerId($content->event->shooter->login)) . ",
-					" . $this->db->quote($this->getPlayerId($content->event->victim->login)) . ",
-					" . $this->db->quote($content->event->weaponNum) . ",
-					" . $this->db->quote($this->getWeaponName($content->event->weaponNum)) . ",
-					" . $this->db->quote($this->storage->serverLogin) . "
-				  )";
+          `match_map_id`,
+          `round_id`,
+          `map_id`,
+          `HitDist`,
+          `shooter_player_id`,
+          `victim_player_id`,
+          `weaponid`,
+          `weaponname`,
+          `matchServerLogin`
+          ) VALUES (
+          " . $this->db->quote($this->MapNumber) . ",
+          " . $this->db->quote($this->TurnNumber) . ",
+          " . $this->db->quote($this->getMapid()) . ",
+          " . $this->db->quote($content->event->hitDist) . ",
+          " . $this->db->quote($this->getPlayerId($content->event->shooter->login)) . ",
+          " . $this->db->quote($this->getPlayerId($content->event->victim->login)) . ",
+          " . $this->db->quote($content->event->weaponNum) . ",
+          " . $this->db->quote($this->getWeaponName($content->event->weaponNum)) . ",
+          " . $this->db->quote($this->storage->serverLogin) . "
+          )";
         $this->logger->Debug($qhitdist);
         $this->db->execute($qhitdist);
     }
 
     function onXmlRpcEliteCapture(JsonCallbacks\OnCapture $content) {
-	$message = ''.$content->event->player->login.' captured the pole';
-	$this->logger->Normal($message);
+  $message = ''.$content->event->player->login.' captured the pole';
+  $this->logger->Normal($message);
         $map = $this->storage->currentMap;
 
         $qCap = "INSERT INTO `captures` (
-				`match_id`,
-				`round_id`,
-				`player_id`,
-				`map_id`,
-				`matchServerLogin`
+        `match_id`,
+        `round_id`,
+        `player_id`,
+        `map_id`,
+        `matchServerLogin`
                                 ) VALUES (
                                 " . $this->db->quote($this->MatchNumber) . ",
-								" . $this->db->quote($this->TurnNumber) . ",
+                " . $this->db->quote($this->TurnNumber) . ",
                                 " . $this->db->quote($this->getPlayerId($content->event->player->login)) . ",
                                 " . $this->db->quote($this->getMapid()) . ",
-				" . $this->db->quote($this->storage->serverLogin) . "
-			  )";
+        " . $this->db->quote($this->storage->serverLogin) . "
+        )";
         $this->logger->Debug($qCap);
         $this->db->execute($qCap);
 
@@ -1405,8 +1469,8 @@ PRIMARY KEY (`id`)
     }
 
     function onXmlRpcEliteNearMiss(JsonCallbacks\OnNearMiss $content) {
-	$message = ''.$content->event->shooter->login.' did a nearmissdist of '.$content->event->missDist.' cm';
-	$this->logger->Normal($message);
+  $message = ''.$content->event->shooter->login.' did a nearmissdist of '.$content->event->missDist.' cm';
+  $this->logger->Normal($message);
         $shooterId = $this->getPlayerId($content->event->shooter->login);
 
         $q = "UPDATE `player_maps` SET nearmisses = nearmisses + 1 
@@ -1418,36 +1482,36 @@ PRIMARY KEY (`id`)
         $this->db->execute($q);
 
         $qnearmiss = "INSERT INTO `nearmisses` (
-					`match_map_id`,
-					`round_id`,
-					`map_id`,
-					`nearMissDist`,
-					`player_id`,
-					`weaponid`,
-					`weaponname`,
-					`matchServerLogin`
-				  ) VALUES (
-					" . $this->db->quote($this->MapNumber) . ",
-					" . $this->db->quote($this->TurnNumber) . ",
-					" . $this->db->quote($this->getMapid()) . ",
-					" . $this->db->quote($content->event->missDist) . ",
-					" . $this->db->quote($this->getPlayerId($content->event->shooter->login)) . ",
-					" . $this->db->quote($content->event->weaponNum) . ",
-					" . $this->db->quote($this->getWeaponName($content->event->weaponNum)) . ",
-					" . $this->db->quote($this->storage->serverLogin) . "
-				  )";
+          `match_map_id`,
+          `round_id`,
+          `map_id`,
+          `nearMissDist`,
+          `player_id`,
+          `weaponid`,
+          `weaponname`,
+          `matchServerLogin`
+          ) VALUES (
+          " . $this->db->quote($this->MapNumber) . ",
+          " . $this->db->quote($this->TurnNumber) . ",
+          " . $this->db->quote($this->getMapid()) . ",
+          " . $this->db->quote($content->event->missDist) . ",
+          " . $this->db->quote($this->getPlayerId($content->event->shooter->login)) . ",
+          " . $this->db->quote($content->event->weaponNum) . ",
+          " . $this->db->quote($this->getWeaponName($content->event->weaponNum)) . ",
+          " . $this->db->quote($this->storage->serverLogin) . "
+          )";
         $this->logger->Debug($qnearmiss);
         $this->db->execute($qnearmiss);
     }
 
     function onXmlRpcEliteEndMap(JsonCallbacks\EndMap $content) {
-		$message = 'Blue: '.$content->clan1MapScore.' - Red: '.$content->clan2MapScore.'';
-	$this->logger->Normal($message);
+    $message = 'Blue: '.$content->clan1MapScore.' - Red: '.$content->clan2MapScore.'';
+  $this->logger->Normal($message);
         $querymapEnd = "UPDATE `match_maps`
-	SET `MapEnd` = '" . date('Y-m-d H:i:s') . "',
-	 `TurnNumber` = " . $this->db->quote($this->TurnNumber) . ",
-	 `AllReady` = '0'
-	 where `match_id` = " . $this->db->quote($this->MatchNumber) . " and `map_id` = " . $this->db->quote($this->getMapid()) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
+  SET `MapEnd` = '" . date('Y-m-d H:i:s') . "',
+   `TurnNumber` = " . $this->db->quote($this->TurnNumber) . ",
+   `AllReady` = '0'
+   where `match_id` = " . $this->db->quote($this->MatchNumber) . " and `map_id` = " . $this->db->quote($this->getMapid()) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
         $this->logger->Debug($querymapEnd);
         $this->db->execute($querymapEnd);
     }
@@ -1463,33 +1527,64 @@ PRIMARY KEY (`id`)
                                                     `id` = " . $this->db->quote($this->MatchNumber) . "";
         $this->logger->Debug($queryMapWinSettingsEnd);
         $this->db->execute($queryMapWinSettingsEnd);
-        	$dataDir = $this->connection->gameDataDirectory();
-        	$dataDir = str_replace('\\', '/', $dataDir);
-        	$file = $this->connection->getServername();
-        	$name = \ManiaLib\Utils\Formatting::stripColors($file);
-        	$challengeFile = $dataDir . "Replays/" . $name;
-													var_dump($challengeFile);
+          $dataDir = $this->connection->gameDataDirectory();
+          $dataDir = str_replace('\\', '/', $dataDir);
+          $file = $this->connection->getServername();
+          $name = \ManiaLib\Utils\Formatting::stripStyles($file);
+          $challengeFile = $dataDir . "Replays/" . $name;
+          var_dump($challengeFile);
+
+          $sourcefolder = "$challengefile"; // Default: "./" 
+          $zipfilename  = $dataDir. "ToUpload/'.$name.'.zip"; // Default: "myarchive.zip"
+          $timeout      = 5000; // Default: 5000
+
+          // instantate an iterator (before creating the zip archive, just
+          // in case the zip file is created inside the source folder)
+          // and traverse the directory to get the file list.
+          $dirlist = new RecursiveDirectoryIterator($sourcefolder);
+          $filelist = new RecursiveIteratorIterator($dirlist);
+
+          // set script timeout value 
+          //ini_set('max_execution_time', $timeout);
+
+          // instantate object
+          $zip = new ZipArchive();
+
+          // create and open the archive 
+          if ($zip->open("$zipfilename", ZipArchive::CREATE) !== TRUE) {
+              die ("Could not open archive");
+          }
+
+          // add each file in the file list to the archive
+          foreach ($filelist as $key=>$value) {
+              $zip->addFile(realpath($key), $key) or die ("ERROR: Could not add file: $key");
+          }
+
+          // close the archive
+          $zip->close();
+          echo "Archive ". $zipfilename . " created successfully.";
+          
 // set server back to old value.
         $this->connection->setServerName($this->ServerName);
     }
-	
-	/*
-	Self Helpers of This Fine Plugin
-	*/
-	
-	function getMapid(){
-	$q = "SELECT id FROM `maps` WHERE `uid` = " . $this->db->quote($this->storage->currentMap->uId) . "";
+  
+  /*
+  Self Helpers of This Fine Plugin
+  */
+  
+  function getMapid(){
+  $q = "SELECT id FROM `maps` WHERE `uid` = " . $this->db->quote($this->storage->currentMap->uId) . "";
             $this->logger->Debug($q);
             return $this->db->execute($q)->fetchObject()->id;
-	}
-	
-	function getTeamid($teamname){
-	$q = "SELECT id FROM `clublinks` WHERE `Clublink_Name` = " . $this->db->quote($teamname) . "";
+  }
+  
+  function getTeamid($teamname){
+  $q = "SELECT id FROM `clublinks` WHERE `Clublink_Name` = " . $this->db->quote($teamname) . "";
             $this->logger->Debug($q);
             return $this->db->execute($q)->fetchObject()->id;
-	}
-	
-	    /** get cached value of database player id */
+  }
+  
+      /** get cached value of database player id */
     function getPlayerId($login) {
         if (isset($this->playerIDs[$login])) {
             return $this->playerIDs[$login];
@@ -1499,8 +1594,8 @@ PRIMARY KEY (`id`)
             return $this->db->execute($q)->fetchObject()->id;
         }
     }
-	
-	
+  
+  
     protected function getWeaponName($num) {
         switch ($num) {
             case 1:
