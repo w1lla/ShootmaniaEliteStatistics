@@ -118,10 +118,10 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
         
         if($this->tickCounter % 3 == 0){
 		$this->MatchNumber = $this->getServerCurrentMatch($this->storage->serverLogin);
-		 if (empty($this->SpecTarget->login) || $this->SpecTarget->login == $this->storage->server)
+		 if (empty($this->SpecTarget->login) || $this->SpecTarget->login == $this->storage->serverLogin)
                 return;
 				 if($this->SpecPlayer->spectator){
-		 if (empty($this->SpecTarget->login) || $this->SpecTarget->login == $this->storage->server)
+		 if (empty($this->SpecTarget->login) || $this->SpecTarget->login == $this->storage->serverLogin)
                 return;
         $this->AtkPlayer = $this->getPlayerId($this->SpecTarget->login);
 		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
@@ -175,7 +175,7 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		{
 		$this->LaserAcc = $LaserAccRatio;
 		}
-		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_login` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1";
+		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_id` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1";
 		$this->db->execute($laserHitDist);
 		
 		$LongestLaserObject = $this->db->execute($laserHitDist)->fetchObject()->HitDist;
@@ -258,7 +258,7 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
             return;
 		 if($player->spectator == true && $player->pureSpectator == true){
 		 $SpecTarget = $this->getPlayerObjectById($player->currentTargetId);
-		 if (empty($SpecTarget->login) || $SpecTarget->login == $this->storage->server || empty($SpecTarget))
+		 if (empty($SpecTarget->login) || $SpecTarget->login == $this->storage->serverLogin || empty($SpecTarget))
                 return;
 		 $this->SpecTarget = $SpecTarget;
 		 $this->MatchNumber = $this->getServerCurrentMatch($this->storage->serverLogin);
@@ -314,7 +314,7 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		{
 		$this->LaserAcc = $LaserAccRatio;
 		}
-		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_login` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1";
+		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_id` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1";
 		$this->db->execute($laserHitDist);
 		
 		$LongestLaserObject = $this->db->execute($laserHitDist)->fetchObject()->HitDist;
@@ -464,7 +464,7 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		{
 		$this->LaserAcc = $LaserAccRatio;
 		}
-		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_login` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1";
+		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_id` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1";
 		$this->db->execute($laserHitDist);
 		
 		$LongestLaserObject = $this->db->execute($laserHitDist)->fetchObject()->HitDist;
