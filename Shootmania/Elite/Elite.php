@@ -61,8 +61,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     protected $RedMapScore;
     protected $config;
     protected $competition_id;
-    protected $ServerName;
-    protected $replaydir = 'MatchReplays';  
+    protected $ServerName; 
     /** @var Log */
     private $logger;
 
@@ -405,9 +404,8 @@ PRIMARY KEY (`id`)
         }
         
         $this->ServerName = $this->connection->getServerName();
-        $this->connection->setServerTag('server_name', json_encode($this->ServerName), true);
-                            
-                            //$this->connection->setServerName($this->ServerName);
+        $this->connection->setServerTag('server_name', $this->ServerName, true);
+        //$this->connection->setServerName($this->ServerName);
           
     }
   
@@ -1620,7 +1618,11 @@ PRIMARY KEY (`id`)
 
 
     // set server back to old value.
-        $this->connection->setServerName($this->ServerName);
+		   $data = $this->connection->getServerTags();
+	   if ($data[0]['Name'] == "server_name"){
+	    $server_name_value = $data[0]['Value'];
+        $this->connection->setServerName($server_name_value);
+	   }
     }
   
   /*
