@@ -71,7 +71,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
  
     function onInit() {
-        $this->setVersion('1.0.2');
+        $this->setVersion('1.0.3a');
 		
         $this->logger = new Log($this->storage->serverLogin);
 	}
