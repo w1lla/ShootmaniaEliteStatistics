@@ -1564,7 +1564,7 @@ PRIMARY KEY (`id`)
           $dataDir = str_replace('\\', '/', $dataDir);
           $file = $this->connection->getServername();
           $name = \ManiaLib\Utils\Formatting::stripStyles($file);
-          $challengeFile = $dataDir . "Replays/" . $name."/";
+          $challengeFile = $dataDir . "Replays/" . $this->competition_id."/" . $name."/";
           var_dump($challengeFile);
 
           $sourcefolder = "$challengeFile"; // Default: "./" 
