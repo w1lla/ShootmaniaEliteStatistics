@@ -572,7 +572,7 @@ PRIMARY KEY (`id`)
                 } catch (\Exception $e) {
                     return;
                 }
-                $this->connection->triggerModeScriptEvent('WarmUp_Extend', '6000');
+                $this->connection->triggerModeScriptEvent('WarmUp_Extend', '60000');
                 break;
             case "map_warmup_end":
                 $this->connection->triggerModeScriptEvent('WarmUp_Stop', '');
