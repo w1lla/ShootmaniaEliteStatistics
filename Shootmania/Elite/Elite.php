@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 12-3-2014
+  Date: 25-3-2014
   Version: 2 (GA2K14)
   Project Name: ESWC Elite Statistics
 
@@ -69,7 +69,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
 
     function onInit() {
-        $this->setVersion('1.0.3a');
+        $this->setVersion('1.0.4a');
     
         $this->logger = new Log($this->storage->serverLogin);
   }
