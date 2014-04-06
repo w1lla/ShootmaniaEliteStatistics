@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 25/3/2013
+  Date: 6/4/2014
   Project Name: ESWC Elite Statistics
 
   What to do:
@@ -46,7 +46,8 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 
     /** @var integer */
     protected $MatchNumber = false;
- 
+ 	protected $imagequad = 'http://tmrankings.com/mp/header2.png';
+	
     /** @var integer */
 	private $AtkPlayer;
 	private $AtkRounds;
@@ -71,7 +72,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
  
     function onInit() {
-        $this->setVersion('1.0.4a');
+        $this->setVersion('1.0.5a');
 		
         $this->logger = new Log($this->storage->serverLogin);
 	}
@@ -254,8 +255,27 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		$player = \ManiaPlanet\DedicatedServer\Structures\Player::fromArray($playerInfo);
 		//var_dump($player);
 		 $this->SpecPlayer = $player;
-		 if ($this->SpecPlayer->playerId == 0)
-            return;
+		 if ($this->SpecPlayer->currentTargetId == 0){
+		$xml = '<manialinks>';
+		$xml .= '<manialink id="AtkSpecDetails">';
+		$xml .= '</manialink>';
+		$xml .= '</manialinks>';
+        $this->connection->sendHideManialinkPage($player->login, $xml, 0, true, true);
+        }
+		foreach ($this->storage->spectators as $login => $player) {
+		$xml = '<manialinks>';
+		$xml .= '<manialink id="AtkSpecDetails">';
+		$xml .= '</manialink>';
+		$xml .= '</manialinks>';
+        $this->connection->sendHideManialinkPage($player->login, $xml, 0, true, true);
+		}
+		if ($this->SpecPlayer->currentTargetId == 255){
+		  	$xml = '<manialinks>';
+  	$xml .= '<manialink id="AtkSpecDetails">';
+	$xml .= '</manialink>';
+	$xml .= '</manialinks>';
+        $this->connection->sendHideManialinkPage($player->login, $xml, 0, true, true);
+        }
 		 if($player->spectator == true && $player->pureSpectator == true){
 		 $SpecTarget = $this->getPlayerObjectById($player->currentTargetId);
 		 if (empty($SpecTarget->login) || $SpecTarget->login == $this->storage->serverLogin || empty($SpecTarget))
@@ -541,12 +561,15 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		$xml = '<manialinks>';
                 $xml .= '<manialink version="1" background="1" navigable3d="0" id="AtkSpecDetails">';
                 $xml .= '<frame id="AtkSpecDetails">';
-                $xml .= '<quad image="file://Media/Manialinks/Common/Lobbies/header.png" posn="-82.5 -62 -1" sizen="165 32"/>'; // MainWindow
-                $xml .= '<label posn="-77 -70 -1" sizen="30.33" textsize="2.75" style="TextRaceMessage" text="Laser: '.$LongestLaser.' m"/>';
-                $xml .= '<label posn="-50 -70 -1" sizen="30.33" textsize="2.75" style="TextRaceMessage" text="Captures: '.$CaptureAtk.'"/>';
-                $xml .= '<label posn="54 -70 -1" sizen="30.33" textsize="2.75" style="TextRaceMessage" text="Rocket: '.$RocketHits.'"/>';
-                $xml .= '<label posn="27 -70 -1" sizen="30.33" textsize="2.75" style="TextRaceMessage" text="Rail: '.$LaserAcc.' %"/>';
-                $xml .= '<label posn="-15 -65 -1" sizen="30.33" textsize="2.75" style="TextRaceMessage" text="AtkWins: '.$RoundsSuccess.' / '.$RoundsAtk.'"/>';
+                $xml .= '<quad image="'.$this->imagequad.'" posn="-82.5 -62 -1" sizen="165 32"/>'; // MainWindow
+				$xml .= '<label posn="-76 -68 -1" sizen="30.33" textsize="2" style="TextValueSmall" text="Atk Ratio" />';
+				$xml .= '<label posn="-59 -68 -1" sizen="30.33" textsize="2.75" style="TextButtonBig" text="'.$RoundsSuccess.' / '.$RoundsAtk.'" />';
+				$xml .= '<label posn="-50 -68 -1" sizen="30.33" textsize="2" style="TextValueSmall" text="Captures" />';
+				$xml .= '<label posn="-32 -68 -1" sizen="30.33" textsize="2.75" style="TextButtonBig" text="'.$CaptureAtk.'" />';
+				$xml .= '<label posn="29 -68 -1" sizen="30.33" textsize="2" style="TextValueSmall" text="Laser" />';
+				$xml .= '<label posn="40 -68 -1" sizen="30.33" textsize="2.75" style="TextButtonBig" text="'.$LaserAcc.'" />';
+				$xml .= '<label posn="57 -68 -1" sizen="30.33" textsize="2" style="TextValueSmall" text="Rocket" />';
+				$xml .= '<label posn="71 -68 -1" sizen="30.33" textsize="2.75" style="TextButtonBig" text="'.$RocketHits.'" />';
 				//if ($login == 'w1lla'){
 				//$xml .= '<quad posn="-10.5 -40 0.5" sizen="7 7" style="Icons128x128_1" substyle="Default" id="Refresh_Data" action="41"/>';
 				//}

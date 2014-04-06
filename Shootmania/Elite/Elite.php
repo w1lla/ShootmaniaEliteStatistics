@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 25-3-2014
+  Date: 6-4-2014
   Version: 2 (GA2K14)
   Project Name: ESWC Elite Statistics
 
@@ -49,6 +49,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     /** @var integer */
     protected $MatchNumber = false;
 
+	public $mapdirectory;
     /** @var integer */
     protected $TurnNumber;
     protected $Mapscore_blue;
@@ -61,7 +62,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     protected $RedMapScore;
     protected $config;
     protected $competition_id;
-    protected $ServerName; 
+    protected $ServerName;
     /** @var Log */
     private $logger;
 
@@ -69,9 +70,10 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
 
     function onInit() {
-        $this->setVersion('1.0.4a');
+        $this->setVersion('1.0.5a');
     
         $this->logger = new Log($this->storage->serverLogin);
+		$this->mapdirectory = $this->connection->getMapsDirectory();
   }
   
   function onLoad() {
@@ -372,7 +374,7 @@ PRIMARY KEY (`id`)
 
         $this->connection->setModeScriptSettings(array('S_UseScriptCallbacks' => true));
 
-        $this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => false)); //Debug Way...
+        $this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => true)); //Debug Way...
         $this->connection->setModeScriptSettings(array('S_UsePlayerClublinks' => true)); //Debug Way...
     $this->connection->setModeScriptSettings(array('S_Mode' => 1));
         $this->connection->setCallVoteRatios(array(array('Command' => 'SetModeScriptSettingsAndCommands', 'Ratio' => 0.4 )));
@@ -560,7 +562,7 @@ PRIMARY KEY (`id`)
     }
 
     function onEcho($internal, $public) {
-							//var_dump($internal);
+			//var_dump($internal);
   			//var_dump($public);
         switch ($internal) {
             case "map_pause":
@@ -568,7 +570,7 @@ PRIMARY KEY (`id`)
                 break;
             case "map_warmup_extend":
                 try {
-                    Validation::int(6000, 0);
+                    Validation::int(60000, 0);
                 } catch (\Exception $e) {
                     return;
                 }
@@ -585,7 +587,7 @@ PRIMARY KEY (`id`)
                 break;
             case "map_warmup_extend":
                 try {
-                    Validation::int(6000, 0);
+                    Validation::int(60000, 0);
                 } catch (\Exception $e) {
                     return;
                 }
@@ -749,7 +751,14 @@ PRIMARY KEY (`id`)
     }
 
     public function insertMap($data) {
-        $q = "INSERT INTO `maps` (`uid`, `name`, `author` ) VALUES (" . $this->db->quote($data->uId) . "," . $this->db->quote($data->name) . "," . $this->db->quote($data->author) . ")";
+		
+		$path = $this->mapdirectory.$data->fileName;
+		$mapInfo = \ManiaLivePlugins\Shootmania\Elite\Classes\GbxReader\Map::read($path);
+		//var_dump($mapInfo->thumbnail);
+		if($mapInfo->thumbnail){
+				imagejpeg($mapInfo->thumbnail, './www/media/images/thumbnails/'.$mapInfo->uid.'.jpg', 100);
+		}
+        $q = "INSERT INTO `maps` (`uid`, `name`, `author`) VALUES (" . $this->db->quote($data->uId) . "," . $this->db->quote($data->name) . "," . $this->db->quote($data->author) . ")";
         $this->logger->Debug($q);
         $this->db->query($q);
     }
@@ -1565,7 +1574,7 @@ PRIMARY KEY (`id`)
           $file = $this->connection->getServername();
           $name = \ManiaLib\Utils\Formatting::stripStyles($file);
           $challengeFile = $dataDir . "Replays/" . $this->competition_id."/" . $name."/";
-          var_dump($challengeFile);
+          //var_dump($challengeFile);
 
           $sourcefolder = "$challengeFile"; // Default: "./" 
           $zipfilename  = $dataDir. "ToUpload/".$name."_".date('YmdHi').".zip"; // Default: "myarchive.zip"
