@@ -74,7 +74,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
  
     function onInit() {
-        $this->setVersion('1.0.5c');
+        $this->setVersion('1.0.5d');
 		
         $this->logger = new Log($this->storage->serverLogin);
 	}
@@ -179,19 +179,10 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		}
 		else 
 		{
-		$this->LaserAcc = $LaserAccRatio;
+		$this->LaserAcc = number_format($LaserAccRatio, 2, ',', '');
 		}
 		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_id` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1 AND `match_map_id` = " . $this->db->quote($this->match_map_id) . "";
 		$this->db->execute($laserHitDist);
-		
-		$LongestLaserObject = $this->db->execute($laserHitDist)->fetchObject()->HitDist;
-		if ($LongestLaserObject == NULL){
-		$this->LongestLaser = 0;
-		}
-		else 
-		{
-		$this->LongestLaser = number_format($LongestLaserObject, 2, ',', '');
-		}
 		
 		$queryCurrentMatchAtkPlayerStatsCaptures = "SELECT SUM( player_maps.captures ) AS Captures
 		FROM player_maps
@@ -249,7 +240,7 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		$this->Team = ($this->SpecTarget->teamId + 1);
 		$this->AtkPlayerLogin = $this->SpecTarget->login;
 		
-		$this->ShowWidget($this->SpecPlayer->login, $this->SpecTarget->login, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->RocketHits, $this->LaserAcc, $this->LongestLaser, $this->Team, $this->AtkPlayerLogin);
+		$this->ShowWidget($this->SpecPlayer->login, $this->SpecTarget->login, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->RocketHits, $this->LaserAcc, $this->Team, $this->AtkPlayerLogin);
             $this->tickCounter++;
 					}
         }else{
@@ -342,19 +333,10 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		}
 		else 
 		{
-		$this->LaserAcc = $LaserAccRatio;
+		$this->LaserAcc = number_format($LaserAccRatio, 2, ',', '');
 		}
 		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_id` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1 AND `match_map_id` = " . $this->db->quote($this->match_map_id) . "";
 		$this->db->execute($laserHitDist);
-		
-		$LongestLaserObject = $this->db->execute($laserHitDist)->fetchObject()->HitDist;
-		if ($LongestLaserObject == NULL){
-		$this->LongestLaser = 0;
-		}
-		else 
-		{
-		$this->LongestLaser = number_format($LongestLaserObject, 2, ',', '');
-		}
 		
 		$queryCurrentMatchAtkPlayerStatsCaptures = "SELECT SUM( player_maps.captures ) AS Captures
 		FROM player_maps
@@ -414,7 +396,7 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		$this->AtkPlayerLogin = $this->SpecTarget->login;
 		
 		
-		$this->ShowWidget($player->login, $this->SpecTarget->login, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->RocketHits, $this->LaserAcc, $this->LongestLaser, $this->Team, $this->AtkPlayerLogin);
+		$this->ShowWidget($player->login, $this->SpecTarget->login, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->RocketHits, $this->LaserAcc, $this->Team, $this->AtkPlayerLogin);
 		}
 		else
 		{
@@ -498,19 +480,10 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		}
 		else 
 		{
-		$this->LaserAcc = $LaserAccRatio;
+		$this->LaserAcc = number_format($LaserAccRatio, 2, ',', '');
 		}
 		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_id` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1 AND `match_map_id` = " . $this->db->quote($this->match_map_id) . "";
 		$this->db->execute($laserHitDist);
-		
-		$LongestLaserObject = $this->db->execute($laserHitDist)->fetchObject()->HitDist;
-		if ($LongestLaserObject == NULL){
-		$this->LongestLaser = 0;
-		}
-		else 
-		{
-		$this->LongestLaser = number_format($LongestLaserObject, 2, ',', '');
-		}
 		
 		$queryCurrentMatchAtkPlayerStatsCaptures = "SELECT SUM( player_maps.captures ) AS Captures
 		FROM player_maps
@@ -570,11 +543,11 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		$this->AtkPlayerLogin = $this->SpecTarget->login;
 		
 		
-	$this->ShowWidget($login, $this->SpecTarget->login, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->RocketHits, $this->LaserAcc, $this->LongestLaser, $this->Team, $this->AtkPlayerLogin);
+	$this->ShowWidget($login, $this->SpecTarget->login, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->RocketHits, $this->LaserAcc, $this->Team, $this->AtkPlayerLogin);
 	}
 	}
 	
-	function ShowWidget($login, $AttackPlayerNick, $RoundsAtk, $RoundsSuccess, $CaptureAtk, $RocketHits, $LaserAcc, $LongestLaser, $TeamNr, $AttackPlayerLogin){
+	function ShowWidget($login, $AttackPlayerNick, $RoundsAtk, $RoundsSuccess, $CaptureAtk, $RocketHits, $LaserAcc, $TeamNr, $AttackPlayerLogin){
 		$blue = $this->connection->getTeamInfo(1);
         $red = $this->connection->getTeamInfo(2);
 		$xml = '<manialinks>';
@@ -586,7 +559,7 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 				$xml .= '<label posn="-50 -68 -1" sizen="30.33" textsize="2" style="TextValueSmall" text="Captures" />';
 				$xml .= '<label posn="-32 -68 -1" sizen="30.33" textsize="2.75" style="TextButtonBig" text="'.$CaptureAtk.'" />';
 				$xml .= '<label posn="29 -68 -1" sizen="30.33" textsize="2" style="TextValueSmall" text="Laser" />';
-				$xml .= '<label posn="40 -68 -1" sizen="30.33" textsize="2.75" style="TextButtonBig" text="'.$LaserAcc.'" />';
+				$xml .= '<label posn="40 -68 -1" sizen="30.33" textsize="2.75" style="TextButtonBig" text="'.$LaserAcc.' %" />';
 				$xml .= '<label posn="57 -68 -1" sizen="30.33" textsize="2" style="TextValueSmall" text="Rocket" />';
 				$xml .= '<label posn="71 -68 -1" sizen="30.33" textsize="2.75" style="TextButtonBig" text="'.$RocketHits.'" />';
 				//if ($login == 'w1lla'){
