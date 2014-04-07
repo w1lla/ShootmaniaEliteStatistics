@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 6-4-2014
+  Date: 7-4-2014
   Version: 2 (GA2K14)
   Project Name: ESWC Elite Statistics
 
@@ -1573,11 +1573,11 @@ PRIMARY KEY (`id`)
           $dataDir = str_replace('\\', '/', $dataDir);
           $file = $this->connection->getServername();
           $name = \ManiaLib\Utils\Formatting::stripStyles($file);
-          $challengeFile = $dataDir . "Replays/" . $this->competition_id."/" . $name."/";
+		  $challengeFile = $dataDir . "Replays/" . $name."/";
           //var_dump($challengeFile);
 
           $sourcefolder = "$challengeFile"; // Default: "./" 
-          $zipfilename  = $dataDir. "ToUpload/".$name."_".date('YmdHi').".zip"; // Default: "myarchive.zip"
+          $zipfilename  = $dataDir. "ToUpload/" . $this->competition_id."/".$name."_".date('YmdHi').".zip"; // Default: "myarchive.zip"
           $zipfilename2  = $name."_".date('YmdHi').".zip"; // Default: "myarchive.zip"
           $timeout      = 5000; // Default: 5000
 

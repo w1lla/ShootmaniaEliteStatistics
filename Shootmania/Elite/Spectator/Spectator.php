@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 6/4/2014
+  Date: 7/4/2014
   Project Name: ESWC Elite Statistics
 
   What to do:
@@ -65,6 +65,8 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 	private $SpecTarget;
 	private $tickCounter = 0;
 	private $SpecPlayer;
+	private $match_map_id;
+	private $CurrentMapId;
     /** @var Log */
     private $logger;
  
@@ -125,11 +127,14 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		 if (empty($this->SpecTarget->login) || $this->SpecTarget->login == $this->storage->serverLogin)
                 return;
         $this->AtkPlayer = $this->getPlayerId($this->SpecTarget->login);
+		$this->CurrentMapId = $this->getMapid();
+		$this->match_map_id = $this->getMatchMapId();
 		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
 FROM player_maps
 JOIN matches ON player_maps.match_id = matches.id
 WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
-AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
+AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
+AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		//$this->logger->Debug($queryCurrentMatchAtkPlayerStats);
 		$this->db->execute($queryCurrentMatchAtkPlayerStats);
 		
@@ -151,7 +156,7 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		$this->AtkSucces = $AtkSuccesObject;
 		}
 		
-		$QueryRocketHits = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 2)) LIMIT 1";
+		$QueryRocketHits = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 2) AND (`Shot`.`match_map_id` = " . $this->db->quote($this->match_map_id) . ")) LIMIT 1";
 		//$this->logger->Debug($QueryRocketHits);
 		$this->db->execute($QueryRocketHits);
 		
@@ -164,7 +169,7 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		$this->RocketHits = $RocketHitsQuery;
 		}
 		
-		$LaserAccQuery = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 1)) LIMIT 1";
+		$LaserAccQuery = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 1) AND (`Shot`.`match_map_id` = " . $this->db->quote($this->match_map_id) . ")) LIMIT 1";
 		//$this->logger->Debug($LaserAccQuery);
 		$this->db->execute($LaserAccQuery);
 		
@@ -176,7 +181,7 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		{
 		$this->LaserAcc = $LaserAccRatio;
 		}
-		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_id` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1";
+		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_id` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1 AND `match_map_id` = " . $this->db->quote($this->match_map_id) . "";
 		$this->db->execute($laserHitDist);
 		
 		$LongestLaserObject = $this->db->execute($laserHitDist)->fetchObject()->HitDist;
@@ -185,14 +190,15 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		}
 		else 
 		{
-		$this->LongestLaser = $LongestLaserObject;
+		$this->LongestLaser = number_format($LongestLaserObject, 2, ',', '');
 		}
 		
 		$queryCurrentMatchAtkPlayerStatsCaptures = "SELECT SUM( player_maps.captures ) AS Captures
 		FROM player_maps
 		JOIN matches ON player_maps.match_id = matches.id
 		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
-		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
+		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
+		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		//$this->logger->Debug($queryCurrentMatchAtkPlayerStatsCaptures);
 		$this->db->execute($queryCurrentMatchAtkPlayerStatsCaptures);
 		
@@ -209,8 +215,8 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		FROM player_maps
 		JOIN matches ON player_maps.match_id = matches.id
 		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
-		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
-
+		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
+		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		//$this->logger->Debug($QueryShots_HitsAtkPlayer);
 		$this->db->execute($QueryShots_HitsAtkPlayer);
 		
@@ -221,12 +227,13 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		$this->AtkHits = $AtkHitsObject;
 		
 		$queryAtkHitRatio = "SELECT (
-SUM( player_maps.hits ) / SUM( player_maps.shots ) * 100
-) AS HitRatio
-FROM player_maps
-JOIN matches ON player_maps.match_id = matches.id
-WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
-AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
+		SUM( player_maps.hits ) / SUM( player_maps.shots ) * 100
+		) AS HitRatio
+		FROM player_maps
+		JOIN matches ON player_maps.match_id = matches.id
+		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
+		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
+		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		//$this->logger->Debug($queryAtkHitRatio);
 		$this->db->execute($queryAtkHitRatio);
 		
@@ -283,11 +290,14 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		 $this->SpecTarget = $SpecTarget;
 		 $this->MatchNumber = $this->getServerCurrentMatch($this->storage->serverLogin);
         $this->AtkPlayer = $this->getPlayerId($this->SpecTarget->login);
+		$this->CurrentMapId = $this->getMapid();
+		$this->match_map_id = $this->getMatchMapId();
 		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
-FROM player_maps
-JOIN matches ON player_maps.match_id = matches.id
-WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
-AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
+		FROM player_maps
+		JOIN matches ON player_maps.match_id = matches.id
+		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
+		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
+		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		//$this->logger->Debug($queryCurrentMatchAtkPlayerStats);
 		$this->db->execute($queryCurrentMatchAtkPlayerStats);
 		
@@ -309,7 +319,7 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		$this->AtkSucces = $AtkSuccesObject;
 		}
 		
-		$QueryRocketHits = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 2)) LIMIT 1";
+		$QueryRocketHits = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 2) AND (`Shot`.`match_map_id` = " . $this->db->quote($this->match_map_id) . ")) LIMIT 1";
 		//$this->logger->Debug($QueryRocketHits);
 		$this->db->execute($QueryRocketHits);
 		
@@ -322,7 +332,7 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		$this->RocketHits = $RocketHitsQuery;
 		}
 		
-		$LaserAccQuery = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 1)) LIMIT 1";
+		$LaserAccQuery = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 1) AND (`Shot`.`match_map_id` = " . $this->db->quote($this->match_map_id) . ")) LIMIT 1";
 		//$this->logger->Debug($LaserAccQuery);
 		$this->db->execute($LaserAccQuery);
 		
@@ -334,7 +344,7 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		{
 		$this->LaserAcc = $LaserAccRatio;
 		}
-		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_id` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1";
+		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_id` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1 AND `match_map_id` = " . $this->db->quote($this->match_map_id) . "";
 		$this->db->execute($laserHitDist);
 		
 		$LongestLaserObject = $this->db->execute($laserHitDist)->fetchObject()->HitDist;
@@ -343,14 +353,15 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		}
 		else 
 		{
-		$this->LongestLaser = $LongestLaserObject;
+		$this->LongestLaser = number_format($LongestLaserObject, 2, ',', '');
 		}
 		
 		$queryCurrentMatchAtkPlayerStatsCaptures = "SELECT SUM( player_maps.captures ) AS Captures
 		FROM player_maps
 		JOIN matches ON player_maps.match_id = matches.id
 		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
-		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
+		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
+		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		//$this->logger->Debug($queryCurrentMatchAtkPlayerStatsCaptures);
 		$this->db->execute($queryCurrentMatchAtkPlayerStatsCaptures);
 		
@@ -367,7 +378,8 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		FROM player_maps
 		JOIN matches ON player_maps.match_id = matches.id
 		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
-		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
+		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
+		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 
 		//$this->logger->Debug($QueryShots_HitsAtkPlayer);
 		$this->db->execute($QueryShots_HitsAtkPlayer);
@@ -379,12 +391,13 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		$this->AtkHits = $AtkHitsObject;
 		
 		$queryAtkHitRatio = "SELECT (
-SUM( player_maps.hits ) / SUM( player_maps.shots ) * 100
-) AS HitRatio
-FROM player_maps
-JOIN matches ON player_maps.match_id = matches.id
-WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
-AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
+		SUM( player_maps.hits ) / SUM( player_maps.shots ) * 100
+		) AS HitRatio
+		FROM player_maps
+		JOIN matches ON player_maps.match_id = matches.id
+		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
+		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
+		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		//$this->logger->Debug($queryAtkHitRatio);
 		$this->db->execute($queryAtkHitRatio);
 		
@@ -433,11 +446,14 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 	{
 	 $this->MatchNumber = $this->getServerCurrentMatch($this->storage->serverLogin);
         $this->AtkPlayer = $this->getPlayerId($this->SpecTarget->login);
+		$this->CurrentMapId = $this->getMapid();
+		$this->match_map_id = $this->getMatchMapId();
 		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
-FROM player_maps
-JOIN matches ON player_maps.match_id = matches.id
-WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
-AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
+		FROM player_maps
+		JOIN matches ON player_maps.match_id = matches.id
+		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
+		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
+		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		//$this->logger->Debug($queryCurrentMatchAtkPlayerStats);
 		$this->db->execute($queryCurrentMatchAtkPlayerStats);
 		
@@ -459,7 +475,7 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		$this->AtkSucces = $AtkSuccesObject;
 		}
 		
-		$QueryRocketHits = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 2)) LIMIT 1";
+		$QueryRocketHits = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 2) AND (`Shot`.`match_map_id` = " . $this->db->quote($this->match_map_id) . ")) LIMIT 1";
 		//$this->logger->Debug($QueryRocketHits);
 		$this->db->execute($QueryRocketHits);
 		
@@ -472,7 +488,7 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		$this->RocketHits = $RocketHitsQuery;
 		}
 		
-		$LaserAccQuery = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 1)) LIMIT 1";
+		$LaserAccQuery = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 1) AND (`Shot`.`match_map_id` = " . $this->db->quote($this->match_map_id) . ")) LIMIT 1";
 		//$this->logger->Debug($LaserAccQuery);
 		$this->db->execute($LaserAccQuery);
 		
@@ -484,7 +500,7 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		{
 		$this->LaserAcc = $LaserAccRatio;
 		}
-		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_id` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1";
+		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_id` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1 AND `match_map_id` = " . $this->db->quote($this->match_map_id) . "";
 		$this->db->execute($laserHitDist);
 		
 		$LongestLaserObject = $this->db->execute($laserHitDist)->fetchObject()->HitDist;
@@ -493,14 +509,15 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		}
 		else 
 		{
-		$this->LongestLaser = $LongestLaserObject;
+		$this->LongestLaser = number_format($LongestLaserObject, 2, ',', '');
 		}
 		
 		$queryCurrentMatchAtkPlayerStatsCaptures = "SELECT SUM( player_maps.captures ) AS Captures
 		FROM player_maps
 		JOIN matches ON player_maps.match_id = matches.id
 		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
-		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
+		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
+		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		//$this->logger->Debug($queryCurrentMatchAtkPlayerStatsCaptures);
 		$this->db->execute($queryCurrentMatchAtkPlayerStatsCaptures);
 		
@@ -517,7 +534,8 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		FROM player_maps
 		JOIN matches ON player_maps.match_id = matches.id
 		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
-		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
+		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
+		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 
 		//$this->logger->Debug($QueryShots_HitsAtkPlayer);
 		$this->db->execute($QueryShots_HitsAtkPlayer);
@@ -529,12 +547,13 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
 		$this->AtkHits = $AtkHitsObject;
 		
 		$queryAtkHitRatio = "SELECT (
-SUM( player_maps.hits ) / SUM( player_maps.shots ) * 100
-) AS HitRatio
-FROM player_maps
-JOIN matches ON player_maps.match_id = matches.id
-WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
-AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
+		SUM( player_maps.hits ) / SUM( player_maps.shots ) * 100
+		) AS HitRatio
+		FROM player_maps
+		JOIN matches ON player_maps.match_id = matches.id
+		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
+		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
+		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		//$this->logger->Debug($queryAtkHitRatio);
 		$this->db->execute($queryAtkHitRatio);
 		
@@ -687,6 +706,17 @@ AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "";
             return $this->db->execute($q)->fetchObject()->id;
         }
     }
+	
+	function getMapid(){
+		$q = "SELECT id FROM `maps` WHERE `uid` = " . $this->db->quote($this->storage->currentMap->uId) . "";
+            $this->logger->Debug($q);
+            return $this->db->execute($q)->fetchObject()->id;
+  }
+  
+  function getMatchMapId(){
+  $q = "SELECT map_id FROM `match_maps` WHERE match_id = " . $this->db->quote($this->MatchNumber) . " ORDER BY map_id DESC LIMIT 1";
+  return $this->db->execute($q)->fetchObject()->map_id;
+  }
 	
  }
 ?>
