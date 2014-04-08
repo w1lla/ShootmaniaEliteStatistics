@@ -36,6 +36,31 @@ class Log {
 	}	
 	}
     }
+	
+	public function Spectator($message) {
+	if ($this->config->Spectator == true)
+	{
+	try
+	{
+        \ManiaLive\Utilities\Logger::log($message, true, "ElitePlugin_Spectator_Log-'" . $this->serverLogin . "'");
+	}
+	catch(\Exception $e)
+	{
+	    \ManiaLive\Utilities\Logger::log($message, true, "ElitePlugin_Spectator_Log-'" . $this->serverLogin . "'");
+	}	
+	}
+	else 
+	{
+	try
+	{
+        \ManiaLive\Utilities\Logger::log($message, true, "ElitePlugin_Spectator_Log-'" . $this->serverLogin . "'");
+	}
+	catch(\Exception $e)
+	{
+	    \ManiaLive\Utilities\Logger::log($message, true, "ElitePlugin_Spectator_Log-'" . $this->serverLogin . "'");
+	}	
+	}
+    }
 
     public function Console($message) {
 	if ($this->config->Console == true)
