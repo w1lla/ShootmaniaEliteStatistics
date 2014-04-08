@@ -687,8 +687,8 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
   }
   
   function getMatchMapId(){
-  $q = "SELECT map_id FROM `match_maps` WHERE match_id = " . $this->db->quote($this->MatchNumber) . " ORDER BY map_id DESC LIMIT 1";
-  return $this->db->execute($q)->fetchObject()->map_id;
+  $q = "SELECT id FROM `match_maps` WHERE match_id = " . $this->db->quote($this->MatchNumber) . " ORDER BY id DESC LIMIT 1";
+  return $this->db->execute($q)->fetchObject()->id;
   }
 	
  }

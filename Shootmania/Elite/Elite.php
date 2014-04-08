@@ -407,7 +407,7 @@ PRIMARY KEY (`id`)
         
         $this->ServerName = $this->connection->getServerName();
         $this->connection->setServerTag('server_name', $this->ServerName, true);
-        //$this->connection->setServerName($this->ServerName);
+        $this->connection->setServerName($this->ServerName);
           
     }
   
