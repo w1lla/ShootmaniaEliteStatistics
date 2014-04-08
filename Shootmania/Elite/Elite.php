@@ -70,7 +70,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
 
     function onInit() {
-        $this->setVersion('1.0.5d');
+        $this->setVersion('1.0.5e');
     
         $this->logger = new Log($this->storage->serverLogin);
 		$this->mapdirectory = $this->connection->getMapsDirectory();
@@ -756,7 +756,7 @@ PRIMARY KEY (`id`)
 		$mapInfo = \ManiaLivePlugins\Shootmania\Elite\Classes\GbxReader\Map::read($path);
 		//var_dump($mapInfo->thumbnail);
 		if($mapInfo->thumbnail){
-				imagejpeg($mapInfo->thumbnail, './www/media/images/thumbnails/'.$mapInfo->uid.'.jpg', 100);
+				//imagejpeg($mapInfo->thumbnail, './www/media/images/thumbnails/'.$mapInfo->uid.'.jpg', 100);
 		}
         $q = "INSERT INTO `maps` (`uid`, `name`, `author`) VALUES (" . $this->db->quote($data->uId) . "," . $this->db->quote($data->name) . "," . $this->db->quote($data->author) . ")";
         $this->logger->Debug($q);
