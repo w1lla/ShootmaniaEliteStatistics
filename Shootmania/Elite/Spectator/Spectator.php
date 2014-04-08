@@ -179,7 +179,7 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		}
 		else 
 		{
-		$this->LaserAcc = number_format($LaserAccRatio, 2, ',', '');
+		$this->LaserAcc = $LaserAccRatio;
 		}
 		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_id` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1 AND `match_map_id` = " . $this->db->quote($this->match_map_id) . "";
 		$this->db->execute($laserHitDist);
@@ -235,7 +235,7 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		}
 		else 
 		{
-		$this->HitRatio =  number_format($HitRatioObject, 2, ',', '');
+		$this->HitRatio =  $HitRatioObject;
 		}
 		$this->Team = ($this->SpecTarget->teamId + 1);
 		$this->AtkPlayerLogin = $this->SpecTarget->login;
@@ -333,7 +333,7 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		}
 		else 
 		{
-		$this->LaserAcc = number_format($LaserAccRatio, 2, ',', '');
+		$this->LaserAcc = $LaserAccRatio;
 		}
 		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_id` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1 AND `match_map_id` = " . $this->db->quote($this->match_map_id) . "";
 		$this->db->execute($laserHitDist);
@@ -390,7 +390,7 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		}
 		else 
 		{
-		$this->HitRatio =  number_format($HitRatioObject, 2, ',', '');
+		$this->HitRatio =  $HitRatioObject;
 		}
 		$this->Team = ($this->SpecTarget->teamId + 1);
 		$this->AtkPlayerLogin = $this->SpecTarget->login;
@@ -480,7 +480,7 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		}
 		else 
 		{
-		$this->LaserAcc = number_format($LaserAccRatio, 2, ',', '');
+		$this->LaserAcc = $LaserAccRatio;
 		}
 		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_id` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1 AND `match_map_id` = " . $this->db->quote($this->match_map_id) . "";
 		$this->db->execute($laserHitDist);
@@ -537,7 +537,7 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		}
 		else 
 		{
-		$this->HitRatio =  number_format($HitRatioObject, 2, ',', '');
+		$this->HitRatio = $HitRatioObject;
 		}
 		$this->Team = ($this->SpecTarget->teamId + 1);
 		$this->AtkPlayerLogin = $this->SpecTarget->login;
