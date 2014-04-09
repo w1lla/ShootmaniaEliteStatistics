@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 7-4-2014
+  Date: 9-4-2014
   Version: 2 (GA2K14)
   Project Name: ESWC Elite Statistics
 
@@ -70,7 +70,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
 
     function onInit() {
-        $this->setVersion('1.0.5e');
+        $this->setVersion('1.0.5f');
     
         $this->logger = new Log($this->storage->serverLogin);
 		$this->mapdirectory = $this->connection->getMapsDirectory();
@@ -724,6 +724,13 @@ PRIMARY KEY (`id`)
     }
 
     function updateServerChallenges() {
+		$mapImagestructure = './www/media/images/thumbnails/';
+		if (!file_exists($mapImagestructure)) {
+		$oldumask = umask(0);
+		mkdir($mapImagestructure, 0777, true);
+		chmod($mapImagestructure, 0777);
+		umask($oldumask);
+		}
         //get server challenges
         $serverChallenges = $this->storage->maps;
   
@@ -756,7 +763,7 @@ PRIMARY KEY (`id`)
 		$mapInfo = \ManiaLivePlugins\Shootmania\Elite\Classes\GbxReader\Map::read($path);
 		//var_dump($mapInfo->thumbnail);
 		if($mapInfo->thumbnail){
-				//imagejpeg($mapInfo->thumbnail, './www/media/images/thumbnails/'.$mapInfo->uid.'.jpg', 100);
+		imagejpeg($mapInfo->thumbnail, './www/media/images/thumbnails/'.$mapInfo->uid.'.jpg', 100);
 		}
         $q = "INSERT INTO `maps` (`uid`, `name`, `author`) VALUES (" . $this->db->quote($data->uId) . "," . $this->db->quote($data->name) . "," . $this->db->quote($data->author) . ")";
         $this->logger->Debug($q);
@@ -1160,7 +1167,7 @@ PRIMARY KEY (`id`)
         $Atker = $this->db->execute($q)->fetchObject();
 
         $q = "UPDATE `player_maps` 
-                                     SET `atkrounds` = " . $this->db->quote($Atker->atkrounds + 1) . " 
+                                     SET `atkrounds` = atkrounds + 1 
                                      WHERE 
                                     `player_id` = " . $this->db->quote($AtkPlayer) . " AND
                                     `match_map_id` = " . $this->db->quote($this->MapNumber) . " AND 
@@ -1574,7 +1581,14 @@ PRIMARY KEY (`id`)
           $file = $this->connection->getServername();
           $name = \ManiaLib\Utils\Formatting::stripStyles($file);
 		  $challengeFile = $dataDir . "Replays/" . $name."/";
-          //var_dump($challengeFile);
+		  
+		$mapReplaysStructure = $challengeFile;
+		if (!file_exists($mapReplaysStructure)) {
+		$oldumask = umask(0);
+		mkdir($mapReplaysStructure, 0777, true);
+		chmod($mapReplaysStructure, 0777);
+		umask($oldumask);
+		}
 
           $sourcefolder = "$challengeFile"; // Default: "./" 
           $zipfilename  = $dataDir. "ToUpload/" . $this->competition_id."/".$name."_".date('YmdHi').".zip"; // Default: "myarchive.zip"

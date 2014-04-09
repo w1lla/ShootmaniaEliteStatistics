@@ -8,6 +8,7 @@ class Config extends \ManiaLib\Utils\Singleton
 	public $Debug = false;
 	public $Normal = false;
 	public $Callbacks = false;
+	public $Spectator = false;
 }
 
 ?>

@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 7/4/2014
+  Date: 9/4/2014
   Project Name: ESWC Elite Statistics
 
   What to do:
@@ -74,7 +74,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
  
     function onInit() {
-        $this->setVersion('1.0.5e');
+        $this->setVersion('1.0.5f');
 		
         $this->logger = new Log($this->storage->serverLogin);
 	}
