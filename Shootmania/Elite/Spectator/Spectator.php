@@ -74,7 +74,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
  
 		function onInit() {
-        $this->setVersion('1.0.5g');
+        $this->setVersion('1.0.5h');
 		
         $this->logger = new Log($this->storage->serverLogin);
 }
@@ -555,13 +555,13 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
                 $xml .= '<frame id="AtkSpecDetails">';
                 $xml .= '<quad image="'.$this->imagequad.'" posn="-82.5 -62 -1" sizen="165 32"/>'; // MainWindow
 				$xml .= '<label posn="-76 -68 -1" sizen="30.33" textsize="2" style="TextValueSmall" text="Atk Ratio" />';
-				$xml .= '<label posn="-59 -68 -1" sizen="30.33" textsize="2.75" style="TextButtonBig" text="'.$RoundsSuccess.' / '.$RoundsAtk.'" />';
+				$xml .= '<label posn="-59 -68 -1" sizen="30.33" textsize="2" style="TextButtonBig" text="'.$RoundsSuccess.' / '.$RoundsAtk.'" />';
 				$xml .= '<label posn="-50 -68 -1" sizen="30.33" textsize="2" style="TextValueSmall" text="Captures" />';
-				$xml .= '<label posn="-32 -68 -1" sizen="30.33" textsize="2.75" style="TextButtonBig" text="'.$CaptureAtk.'" />';
+				$xml .= '<label posn="-32 -68 -1" sizen="30.33" textsize="2" style="TextButtonBig" text="'.$CaptureAtk.'" />';
 				$xml .= '<label posn="29 -68 -1" sizen="30.33" textsize="2" style="TextValueSmall" text="Laser" />';
-				$xml .= '<label posn="40 -68 -1" sizen="30.33" textsize="2.75" style="TextButtonBig" text="'.$LaserAcc.' %" />';
+				$xml .= '<label posn="40 -68 -1" sizen="30.33" textsize="2" style="TextButtonBig" text="'.$LaserAcc.' %" />';
 				$xml .= '<label posn="57 -68 -1" sizen="30.33" textsize="2" style="TextValueSmall" text="Rocket" />';
-				$xml .= '<label posn="71 -68 -1" sizen="30.33" textsize="2.75" style="TextButtonBig" text="'.$RocketHits.'" />';
+				$xml .= '<label posn="71 -68 -1" sizen="30.33" textsize="2" style="TextButtonBig" text="'.$RocketHits.'" />';
 				//if ($login == 'w1lla'){
 				//$xml .= '<quad posn="-10.5 -40 0.5" sizen="7 7" style="Icons128x128_1" substyle="Default" id="Refresh_Data" action="41"/>';
 				//}
@@ -687,8 +687,8 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 }
   
 		function getMatchMapId(){
-		$q = "SELECT id FROM `match_maps` WHERE match_id = " . $this->db->quote($this->MatchNumber) . " ORDER BY id DESC LIMIT 1";
-		return $this->db->execute($q)->fetchObject()->id;
+		$q = "SELECT id FROM `match_maps` WHERE `match_id` = " . $this->db->quote($this->MatchNumber) . " ORDER BY id DESC LIMIT 1";
+		return $this->db->execute($q)->fetchSingleValue();
 }
 	
 }
