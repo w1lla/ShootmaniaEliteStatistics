@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 9/4/2014
+  Date: 10/4/2014
   Project Name: ESWC Elite Statistics
 
   What to do:
@@ -73,51 +73,51 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
     /** @var $playerIDs[$login] = number */
     private $playerIDs = array();
  
-    function onInit() {
-        $this->setVersion('1.0.5f');
+		function onInit() {
+        $this->setVersion('1.0.5g');
 		
         $this->logger = new Log($this->storage->serverLogin);
-	}
+}
 	
-	function onLoad() {
+		function onLoad() {
 	    $this->enableDatabase();
         $this->enableDedicatedEvents();
 		$this->enablePluginEvents();
 		$this->enableStorageEvents(PlayerEvent::ON_PLAYER_CHANGE_SIDE);
-	}
+}
 	
-	function onReady() {
-	Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Spectator Core v' . $this->getVersion());
+		function onReady() {
+		Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Spectator Core v' . $this->getVersion());
 		foreach ($this->storage->spectators as $player) {
         $this->connection->chatSendServerMessage('$fff» $fa0Welcome, this server uses $fff [Shootmania] Elite Spectator Stats$fa0!', $player->login);
 		}
 		$this->enableTickerEvent();
 		$this->enableDedicatedEvents(ServerEvent::ON_MODE_SCRIPT_CALLBACK);
-	}
+}
 	
-	 function getServerCurrentMatch($serverLogin) {
-	 $CurrentMatchid = $this->db->execute(
+		function getServerCurrentMatch($serverLogin) {
+		$CurrentMatchid = $this->db->execute(
                         'SELECT id FROM matches ' .
                         'where MatchEnd = "0000-00-00 00:00:00" and `matchServerLogin` = ' . $this->db->quote($serverLogin) .
                         'order by id desc')->fetchSingleValue();
-	$this->logger->Normal($CurrentMatchid);					
+		$this->logger->Normal($CurrentMatchid);					
         return $this->db->execute(
                         'SELECT id FROM matches ' .
                         'where MatchEnd = "0000-00-00 00:00:00" and `matchServerLogin` = ' . $this->db->quote($serverLogin) .
                         'order by id desc')->fetchSingleValue();
-    }
+}
 	
-	public function onModeScriptCallback($event, $json) {
-	$this->logger->Callbacks($event);
-	$this->logger->Callbacks($json);
+		public function onModeScriptCallback($event, $json) {
+		$this->logger->Callbacks($event);
+		$this->logger->Callbacks($json);
         switch ($event) {
 			case 'EndTurn':
                 $this->onXmlRpcEliteSpectatorEndTurn(new JsonCallbacks\EndTurn($json));
                 break;
     }	
-    }
+}
 	
-	function onTick() {
+		function onTick() {
         
         if($this->tickCounter % 3 == 0){
 		$this->MatchNumber = $this->getServerCurrentMatch($this->storage->serverLogin);
@@ -129,12 +129,12 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
         $this->AtkPlayer = $this->getPlayerId($this->SpecTarget->login);
 		$this->CurrentMapId = $this->getMapid();
 		$this->match_map_id = $this->getMatchMapId();
-		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
-FROM player_maps
-JOIN matches ON player_maps.match_id = matches.id
-WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
-AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
-AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
+		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds - 1 ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
+		FROM player_maps
+		JOIN matches ON player_maps.match_id = matches.id
+		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
+		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
+		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		$this->logger->Spectator($queryCurrentMatchAtkPlayerStats);
 		$this->db->execute($queryCurrentMatchAtkPlayerStats);
 		
@@ -179,7 +179,7 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		}
 		else 
 		{
-		$this->LaserAcc = $LaserAccRatio;
+		$this->LaserAcc = number_format($LaserAccRatio, 2, ',', '');
 		}
 		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_id` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1 AND `match_map_id` = " . $this->db->quote($this->match_map_id) . "";
 		$this->db->execute($laserHitDist);
@@ -245,8 +245,8 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 					}
         }else{
             $this->tickCounter = 0;
-		}
-            }
+	}
+}
 	
 		
 		public function onPlayerInfoChanged($playerInfo){
@@ -269,9 +269,9 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		}
 		if ($this->SpecPlayer->currentTargetId == 255){
 		  	$xml = '<manialinks>';
-  	$xml .= '<manialink id="AtkSpecDetails">';
-	$xml .= '</manialink>';
-	$xml .= '</manialinks>';
+		$xml .= '<manialink id="AtkSpecDetails">';
+		$xml .= '</manialink>';
+		$xml .= '</manialinks>';
         $this->connection->sendHideManialinkPage($player->login, $xml, 0, true, true);
         }
 		 if($player->spectator == true && $player->pureSpectator == true){
@@ -283,7 +283,7 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
         $this->AtkPlayer = $this->getPlayerId($this->SpecTarget->login);
 		$this->CurrentMapId = $this->getMapid();
 		$this->match_map_id = $this->getMatchMapId();
-		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
+		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds - 1 ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
 		FROM player_maps
 		JOIN matches ON player_maps.match_id = matches.id
 		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
@@ -333,7 +333,7 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		}
 		else 
 		{
-		$this->LaserAcc = $LaserAccRatio;
+		$this->LaserAcc = number_format($LaserAccRatio, 2, ',', '');
 		}
 		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_id` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1 AND `match_map_id` = " . $this->db->quote($this->match_map_id) . "";
 		$this->db->execute($laserHitDist);
@@ -400,15 +400,15 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		}
 		else
 		{
-  	$xml = '<manialinks>';
-  	$xml .= '<manialink id="AtkSpecDetails">';
-	$xml .= '</manialink>';
-	$xml .= '</manialinks>';
+		$xml = '<manialinks>';
+		$xml .= '<manialink id="AtkSpecDetails">';
+		$xml .= '</manialink>';
+		$xml .= '</manialinks>';
         $this->connection->sendHideManialinkPage($player->login, $xml, 0, true, true);
-        }
 	}
+}
 	
-	public function getPlayerObjectById($id) {
+		public function getPlayerObjectById($id) {
             if (!is_numeric($id))
                 throw new Exception("player id is not numeric");
             foreach ($this->storage->players as $login => $player) {
@@ -430,7 +430,7 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
         $this->AtkPlayer = $this->getPlayerId($this->SpecTarget->login);
 		$this->CurrentMapId = $this->getMapid();
 		$this->match_map_id = $this->getMatchMapId();
-		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
+		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds - 1 ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
 		FROM player_maps
 		JOIN matches ON player_maps.match_id = matches.id
 		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
@@ -480,7 +480,7 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		}
 		else 
 		{
-		$this->LaserAcc = $LaserAccRatio;
+		$this->LaserAcc = number_format($LaserAccRatio, 2, ',', '');
 		}
 		$laserHitDist = "SELECT MAX(HitDist) as HitDist FROM `hits` AS `Hit` WHERE `shooter_player_id` = " . $this->db->quote($this->AtkPlayer) . " AND `weaponid` = 1 AND `match_map_id` = " . $this->db->quote($this->match_map_id) . "";
 		$this->db->execute($laserHitDist);
@@ -543,11 +543,11 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		$this->AtkPlayerLogin = $this->SpecTarget->login;
 		
 		
-	$this->ShowWidget($login, $this->SpecTarget->login, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->RocketHits, $this->LaserAcc, $this->Team, $this->AtkPlayerLogin);
+		$this->ShowWidget($login, $this->SpecTarget->login, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->RocketHits, $this->LaserAcc, $this->Team, $this->AtkPlayerLogin);
 	}
-	}
+}
 	
-	function ShowWidget($login, $AttackPlayerNick, $RoundsAtk, $RoundsSuccess, $CaptureAtk, $RocketHits, $LaserAcc, $TeamNr, $AttackPlayerLogin){
+		function ShowWidget($login, $AttackPlayerNick, $RoundsAtk, $RoundsSuccess, $CaptureAtk, $RocketHits, $LaserAcc, $TeamNr, $AttackPlayerLogin){
 		$blue = $this->connection->getTeamInfo(1);
         $red = $this->connection->getTeamInfo(2);
 		$xml = '<manialinks>';
@@ -626,20 +626,20 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		CURLOPT_CONNECTTIMEOUT => 120,      // timeout on connect
 		CURLOPT_TIMEOUT        => 120,      // timeout on response
 		CURLOPT_MAXREDIRS      => 10,       // stop after 10 redirects
-	);
+		);
 
-	$ch      = curl_init($URL);
-	curl_setopt_array($ch, $options);
-	$content = curl_exec( $ch );
-	$err     = curl_errno( $ch );
-	$errmsg  = curl_error( $ch );
-	$header  = curl_getinfo( $ch );
-	curl_close( $ch );
+		$ch      = curl_init($URL);
+		curl_setopt_array($ch, $options);
+		$content = curl_exec( $ch );
+		$err     = curl_errno( $ch );
+		$errmsg  = curl_error( $ch );
+		$header  = curl_getinfo( $ch );
+		curl_close( $ch );
 
-	$header['errno']   = $err;
-	$header['errmsg']  = $errmsg;
-	$header['content'] = $content;
-    $xml = simplexml_load_string($content);
+		$header['errno']   = $err;
+		$header['errmsg']  = $errmsg;
+		$header['content'] = $content;
+		$xml = simplexml_load_string($content);
 	
 	// incase the xml is malformed, bail out
         if ($xml === false)
@@ -649,16 +649,16 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Spectator: Clublink name != club!');
 		
 	return $xml->emblem;
-	}
+}
 	
-	function onXmlRpcEliteSpectatorEndTurn(JsonCallbacks\EndTurn $content) {
+		function onXmlRpcEliteSpectatorEndTurn(JsonCallbacks\EndTurn $content) {
 	
-	$xml = '<manialinks>';
-  	$xml .= '<manialink id="AtkSpecDetails">';
-	$xml .= '</manialink>';
-	$xml .= '</manialinks>';
-	foreach ($this->storage->spectators as $login => $player) { // get players
-	 if($player->spectator == true && $player->pureSpectator == true){
+		$xml = '<manialinks>';
+		$xml .= '<manialink id="AtkSpecDetails">';
+		$xml .= '</manialink>';
+		$xml .= '</manialinks>';
+		foreach ($this->storage->spectators as $login => $player) { // get players
+		if($player->spectator == true && $player->pureSpectator == true){
         $this->connection->sendHideManialinkPage($player->login, $xml, 0, true, true);
         }
 		else
@@ -666,30 +666,30 @@ AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
 		 $this->connection->sendHideManialinkPage($player->login, $xml, 0, true, true);
 		}
 		}
-	}
+}
 		
 	
 	    /** get cached value of database player id */
-    function getPlayerId($login) {
+		function getPlayerId($login) {
         if (isset($this->playerIDs[$login])) {
             return $this->playerIDs[$login];
         } else {
             $q = "SELECT id FROM `players` WHERE `login` = " . $this->db->quote($login) . "";
             $this->logger->Spectator($q);
             return $this->db->execute($q)->fetchObject()->id;
-        }
     }
+}
 	
-	function getMapid(){
+		function getMapid(){
 		$q = "SELECT id FROM `maps` WHERE `uid` = " . $this->db->quote($this->storage->currentMap->uId) . "";
             $this->logger->Spectator($q);
             return $this->db->execute($q)->fetchObject()->id;
-  }
+}
   
-  function getMatchMapId(){
-  $q = "SELECT id FROM `match_maps` WHERE match_id = " . $this->db->quote($this->MatchNumber) . " ORDER BY id DESC LIMIT 1";
-  return $this->db->execute($q)->fetchObject()->id;
-  }
+		function getMatchMapId(){
+		$q = "SELECT id FROM `match_maps` WHERE match_id = " . $this->db->quote($this->MatchNumber) . " ORDER BY id DESC LIMIT 1";
+		return $this->db->execute($q)->fetchObject()->id;
+}
 	
- }
+}
 ?>
