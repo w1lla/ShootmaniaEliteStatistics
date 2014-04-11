@@ -70,7 +70,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
 
     function onInit() {
-        $this->setVersion('1.0.5h');
+        $this->setVersion('1.0.5i');
     
         $this->logger = new Log($this->storage->serverLogin);
 		$this->mapdirectory = $this->connection->getMapsDirectory();

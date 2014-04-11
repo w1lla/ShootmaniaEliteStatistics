@@ -67,6 +67,10 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 	private $SpecPlayer;
 	private $match_map_id;
 	private $CurrentMapId;
+	private $lastUpdate;
+    private $forceUpdate = false;
+    private $needUpdate = false;
+	private $BeginTurnAtkPlayer;
     /** @var Log */
     private $logger;
  
@@ -74,7 +78,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
  
 		function onInit() {
-        $this->setVersion('1.0.5h');
+        $this->setVersion('1.0.5i');
 		
         $this->logger = new Log($this->storage->serverLogin);
 }
@@ -93,6 +97,9 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		}
 		$this->enableTickerEvent();
 		$this->enableDedicatedEvents(ServerEvent::ON_MODE_SCRIPT_CALLBACK);
+		$this->lastUpdate = time();
+		$this->enableTickerEvent();
+		$this->forceUpdate = true;
 }
 	
 		function getServerCurrentMatch($serverLogin) {
@@ -111,25 +118,72 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		$this->logger->Callbacks($event);
 		$this->logger->Callbacks($json);
         switch ($event) {
+		    case 'BeginTurn':
+                $this->onXmlRpcEliteBeginTurn(new JsonCallbacks\BeginTurn($json));
+                break;
 			case 'EndTurn':
                 $this->onXmlRpcEliteSpectatorEndTurn(new JsonCallbacks\EndTurn($json));
                 break;
     }	
 }
+
+    function onXmlRpcEliteBeginTurn(JsonCallbacks\BeginTurn $content) {
+
+	        // Players and stuff
+    if ($content->attackingPlayer == NULL){
+    }
+    else
+    {
+        $this->BeginTurnAtkPlayer = $this->getPlayerId($content->attackingPlayer->login);
+	}
+}
 	
 		function onTick() {
-        
-        if($this->tickCounter % 3 == 0){
+        if ((time() - $this->lastUpdate) > 3 && $this->needUpdate || $this->forceUpdate == true) {
+	    $this->lastUpdate = time();
+	    $this->forceUpdate = false;
+	    $this->needUpdate = false;
 		$this->MatchNumber = $this->getServerCurrentMatch($this->storage->serverLogin);
-		 if (empty($this->SpecTarget->login) || $this->SpecTarget->login == $this->storage->serverLogin)
+		//var_dump($this->BeginTurnAtkPlayer);
+		//var_dump($this->AtkPlayer);
+		 if (empty($this->SpecTarget->login) || $this->SpecTarget->login == $this->storage->serverLogin || empty($this->BeginTurnAtkPlayer) || empty($this->AtkPlayer))
                 return;
-				 if($this->SpecPlayer->spectator){
-		 if (empty($this->SpecTarget->login) || $this->SpecTarget->login == $this->storage->serverLogin)
-                return;
+		if($this->SpecPlayer->spectator){
         $this->AtkPlayer = $this->getPlayerId($this->SpecTarget->login);
 		$this->CurrentMapId = $this->getMapid();
 		$this->match_map_id = $this->getMatchMapId();
+		if ($this->AtkPlayer == $this->BeginTurnAtkPlayer){
 		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds - 1 ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
+		FROM player_maps
+		JOIN matches ON player_maps.match_id = matches.id
+		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
+		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
+		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
+		$this->logger->Spectator($queryCurrentMatchAtkPlayerStats);
+		$this->db->execute($queryCurrentMatchAtkPlayerStats);
+		
+		$AtkRoundsObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkrounds;
+		var_dump($AtkRoundsObject);
+		if ($AtkRoundsObject == NULL){
+		$this->AtkRounds = 0;
+		}
+		else 
+		{
+		$this->AtkRounds = $AtkRoundsObject;
+		}
+		
+		$AtkSuccesObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkSucces;
+		if ($AtkSuccesObject == NULL){
+		$this->AtkSucces = 0;
+		}
+		else 
+		{
+		$this->AtkSucces = $AtkSuccesObject;
+		}
+		}
+		else
+		{
+		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
 		FROM player_maps
 		JOIN matches ON player_maps.match_id = matches.id
 		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
@@ -154,6 +208,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		else 
 		{
 		$this->AtkSucces = $AtkSuccesObject;
+		}
 		}
 		
 		$QueryRocketHits = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 2) AND (`Shot`.`match_map_id` = " . $this->db->quote($this->match_map_id) . ")) LIMIT 1";
@@ -241,10 +296,9 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		$this->AtkPlayerLogin = $this->SpecTarget->login;
 		
 		$this->ShowWidget($this->SpecPlayer->login, $this->SpecTarget->login, $this->AtkRounds, $this->AtkSucces, $this->AtkCapture, $this->RocketHits, $this->LaserAcc, $this->Team, $this->AtkPlayerLogin);
-            $this->tickCounter++;
-					}
-        }else{
-            $this->tickCounter = 0;
+		}
+        else{
+	}
 	}
 }
 	
@@ -275,6 +329,8 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
         $this->connection->sendHideManialinkPage($player->login, $xml, 0, true, true);
         }
 		 if($player->spectator == true && $player->pureSpectator == true){
+		 $this->needUpdate = true;
+		 $this->forceUpdate = true;
 		 $SpecTarget = $this->getPlayerObjectById($player->currentTargetId);
 		 if (empty($SpecTarget->login) || $SpecTarget->login == $this->storage->serverLogin || empty($SpecTarget))
                 return;
@@ -283,6 +339,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
         $this->AtkPlayer = $this->getPlayerId($this->SpecTarget->login);
 		$this->CurrentMapId = $this->getMapid();
 		$this->match_map_id = $this->getMatchMapId();
+		if ($this->AtkPlayer == $this->BeginTurnAtkPlayer ){
 		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds - 1 ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
 		FROM player_maps
 		JOIN matches ON player_maps.match_id = matches.id
@@ -308,6 +365,36 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		else 
 		{
 		$this->AtkSucces = $AtkSuccesObject;
+		}
+		}
+		else
+		{
+		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
+		FROM player_maps
+		JOIN matches ON player_maps.match_id = matches.id
+		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
+		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
+		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
+		$this->logger->Spectator($queryCurrentMatchAtkPlayerStats);
+		$this->db->execute($queryCurrentMatchAtkPlayerStats);
+		
+		$AtkRoundsObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkrounds;
+		if ($AtkRoundsObject == NULL){
+		$this->AtkRounds = 0;
+		}
+		else 
+		{
+		$this->AtkRounds = $AtkRoundsObject;
+		}
+		
+		$AtkSuccesObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkSucces;
+		if ($AtkSuccesObject == NULL){
+		$this->AtkSucces = 0;
+		}
+		else 
+		{
+		$this->AtkSucces = $AtkSuccesObject;
+		}
 		}
 		
 		$QueryRocketHits = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 2) AND (`Shot`.`match_map_id` = " . $this->db->quote($this->match_map_id) . ")) LIMIT 1";
@@ -426,10 +513,13 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 	{
 	if ($answer == "41")
 	{
+	$this->forceUpdate = true;
+	$this->needUpdate = true;
 	 $this->MatchNumber = $this->getServerCurrentMatch($this->storage->serverLogin);
         $this->AtkPlayer = $this->getPlayerId($this->SpecTarget->login);
 		$this->CurrentMapId = $this->getMapid();
 		$this->match_map_id = $this->getMatchMapId();
+		if ($this->AtkPlayer == $this->BeginTurnAtkPlayer ){
 		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds - 1 ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
 		FROM player_maps
 		JOIN matches ON player_maps.match_id = matches.id
@@ -455,6 +545,36 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		else 
 		{
 		$this->AtkSucces = $AtkSuccesObject;
+		}
+		}
+		else
+		{
+		$queryCurrentMatchAtkPlayerStats = "SELECT SUM( player_maps.atkrounds ) AS atkrounds, SUM( player_maps.atkSucces ) AS atkSucces
+		FROM player_maps
+		JOIN matches ON player_maps.match_id = matches.id
+		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
+		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
+		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
+		$this->logger->Spectator($queryCurrentMatchAtkPlayerStats);
+		$this->db->execute($queryCurrentMatchAtkPlayerStats);
+		
+		$AtkRoundsObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkrounds;
+		if ($AtkRoundsObject == NULL){
+		$this->AtkRounds = 0;
+		}
+		else 
+		{
+		$this->AtkRounds = $AtkRoundsObject;
+		}
+		
+		$AtkSuccesObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkSucces;
+		if ($AtkSuccesObject == NULL){
+		$this->AtkSucces = 0;
+		}
+		else 
+		{
+		$this->AtkSucces = $AtkSuccesObject;
+		}
 		}
 		
 		$QueryRocketHits = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 2) AND (`Shot`.`match_map_id` = " . $this->db->quote($this->match_map_id) . ")) LIMIT 1";
