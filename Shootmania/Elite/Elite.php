@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 15-4-2014
+  Date: 21-4-2014
   Version: 2 (GA2K14)
   Project Name: ESWC Elite Statistics
 
@@ -70,7 +70,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
 
     function onInit() {
-        $this->setVersion('1.0.5j');
+        $this->setVersion('1.0.5k');
     
         $this->logger = new Log($this->storage->serverLogin);
 		$this->mapdirectory = $this->connection->getMapsDirectory();
@@ -406,8 +406,9 @@ PRIMARY KEY (`id`)
         }
         
         $this->ServerName = $this->connection->getServerName();
-        $this->connection->setServerTag('server_name', $this->ServerName, true);
+        $this->connection->setServerTag('server_name', json_encode($this->ServerName), true);
         $this->connection->setServerName($this->ServerName);
+		$this->connection->executeMulticall();
           
     }
   
@@ -988,10 +989,13 @@ PRIMARY KEY (`id`)
         $MatchName = '' . $bluename->Clublink_Name_Clean . ' vs ' . $redname->Clublink_Name_Clean . '';
                             // set servername with clublinks....
                             
-                            $this->connection->setServerTag('server_name', json_encode($MatchName), true);
-                            
+							try
+							{
                             $this->connection->setServerName($MatchName);
-
+							$this->connection->executeMulticall();
+							} catch (\Exception $e) {
+                    echo $e;
+                }
 
         }
       
@@ -1231,8 +1235,9 @@ PRIMARY KEY (`id`)
 
         if ($execute->recordCount() == 0) {
     $this->logger->Debug("Insert Clublinks");          
-          $name = \ManiaLib\Utils\Formatting::stripStyles($xml->name);
-          $name = preg_replace('/[^A-Za-z0-9 _\-\+\&]/','',$name);
+         $string = preg_replace('/(?<!\$)((?:\$\$)*)\$[^$0-9a-hlpton]/iu', '$1', $xml->name);
+		$string = preg_replace('/(?<!\$)((?:\$\$)*)\$(?:g|[0-9a-fton][^\$]{0,2})/iu', '$1', $xml->name);
+		$name = $string;
             $qBlueClublink = "INSERT INTO `clublinks` (
           `Clublink_Name`,
           `Clublink_Name_Clean`,
@@ -1580,7 +1585,7 @@ PRIMARY KEY (`id`)
           $dataDir = str_replace('\\', '/', $dataDir);
           $file = $this->connection->getServername();
           $name = \ManiaLib\Utils\Formatting::stripStyles($file);
-		  $challengeFile = $dataDir . "Replays/" . $name."/";
+		  $challengeFile = $dataDir."Replays/".$name."/";
 		  
 		$mapReplaysStructure = $challengeFile;
 		if (!file_exists($mapReplaysStructure)) {
@@ -1591,7 +1596,7 @@ PRIMARY KEY (`id`)
 		}
 
           $sourcefolder = "$challengeFile"; // Default: "./" 
-          $zipfilename  = $dataDir. "ToUpload/" . $this->competition_id."/".$name."_".date('YmdHi').".zip"; // Default: "myarchive.zip"
+          $zipfilename  = $dataDir."ToUpload/".$this->competition_id."/".$name."_".date('YmdHi').".zip"; // Default: "myarchive.zip"
           $zipfilename2  = $name."_".date('YmdHi').".zip"; // Default: "myarchive.zip"
           $timeout      = 5000; // Default: 5000
 
@@ -1626,7 +1631,7 @@ PRIMARY KEY (`id`)
           $zip->close();
           echo "Archive ". $zipfilename2 . " created successfully.";
           
-          $challengeFile = $dataDir . "Replays/" . $name;
+          $challengeFile = $dataDir."Replays/".$name;
           //Rename folder
           $newfolder = "$challengeFile"."_".date('YmdHi');
           rename($challengeFile,$newfolder);
@@ -1643,8 +1648,15 @@ PRIMARY KEY (`id`)
     // set server back to old value.
 		   $data = $this->connection->getServerTags();
 	   if ($data[0]['Name'] == "server_name"){
-	    $server_name_value = $data[0]['Value'];
-        $this->connection->setServerName($server_name_value);
+	    $server_name_value = json_decode($data[0]['Value']);
+		
+		try
+							{
+                            $this->connection->setServerName($server_name_value);
+							$this->connection->executeMulticall();
+							} catch (\Exception $e) {
+                    echo $e;
+                }
 	   }
     }
   
