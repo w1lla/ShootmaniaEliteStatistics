@@ -70,7 +70,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
 
     function onInit() {
-        $this->setVersion('1.0.5m');
+        $this->setVersion('1.0.5n');
     
         $this->logger = new Log($this->storage->serverLogin);
 		$this->mapdirectory = $this->connection->getMapsDirectory();
@@ -1180,14 +1180,6 @@ PRIMARY KEY (`id`)
         $this->logger->Debug($q);
         $this->db->execute($q);
     }
-        /* Clublinks */
-
-        if ($blue->clubLinkUrl) {
-            $this->updateClublink($blue->clubLinkUrl);
-        }
-        if ($red->clubLinkUrl) {
-            $this->updateClublink($red->clubLinkUrl);
-        }
     }
 
     function updateClublink($url) {
