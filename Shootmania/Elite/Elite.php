@@ -70,7 +70,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
 
     function onInit() {
-        $this->setVersion('1.0.5l');
+        $this->setVersion('1.0.5m');
     
         $this->logger = new Log($this->storage->serverLogin);
 		$this->mapdirectory = $this->connection->getMapsDirectory();
@@ -1235,9 +1235,9 @@ PRIMARY KEY (`id`)
 
         if ($execute->recordCount() == 0) {
     $this->logger->Debug("Insert Clublinks");          
-	$name = \ManiaLib\Utils\Formatting::stripCodes($xml->name, 'wosn');
+	$name = \ManiaLib\Utils\Formatting::stripColors(\ManiaLib\Utils\Formatting::stripStyles($xml->name));
 	$name = preg_replace('/[^A-Za-z0-9 _\-\+\&]/','',$name);
-            $qBlueClublink = "INSERT INTO `clublinks` (
+            $qClublink = "INSERT INTO `clublinks` (
           `Clublink_Name`,
           `Clublink_Name_Clean`,
           `Clublink_EmblemUrl`,
@@ -1254,9 +1254,21 @@ PRIMARY KEY (`id`)
           " . $this->db->quote($xml->color['secondary']) . ",
           " . $this->db->quote($url) . "
           )";
-            $this->db->execute($qBlueClublink);
-            $this->logger->Debug($qBlueClublink);
+            $this->db->execute($qClublink);
+            $this->logger->Debug($qClublink);
         } else {
+		$name = \ManiaLib\Utils\Formatting::stripColors(\ManiaLib\Utils\Formatting::stripStyles($xml->name));
+		$name = preg_replace('/[^A-Za-z0-9 _\-\+\&]/','',$name);
+		 $UClublink = "UPDATE `clublinks`
+          SET `Clublink_Name` = " . $this->db->quote($xml->name) . ",
+          `Clublink_Name_Clean` = " . $this->db->quote($name) . ",
+          `Clublink_EmblemUrl` = " . $this->db->quote($xml->emblem_web) . ",
+          `Clublink_ZonePath` = " . $this->db->quote($zone[2]) . ",
+          `Clublink_Primary_RGB` = " . $this->db->quote($xml->color['primary']) . ",
+          `Clublink_Secondary_RGB` = " . $this->db->quote($xml->color['secondary']) . "
+          WHERE `Clublink_URL` = " . $this->db->quote($url) . "";
+            $this->db->execute($UClublink);
+            $this->logger->Debug($UClublink);
         }
     }
 
