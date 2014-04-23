@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 22-4-2014
+  Date: 23-4-2014
   Version: 2 (GA2K14)
   Project Name: ESWC Elite Statistics
 
@@ -70,7 +70,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
 
     function onInit() {
-        $this->setVersion('1.0.5n');
+        $this->setVersion('1.0.5o');
     
         $this->logger = new Log($this->storage->serverLogin);
 		$this->mapdirectory = $this->connection->getMapsDirectory();
@@ -907,10 +907,10 @@ PRIMARY KEY (`id`)
             " . $this->db->quote($MatchName) . ",
             " . $this->db->quote($this->getTeamid($blue->clubLinkUrl)) . ",
             " . $this->db->quote($blue->emblemUrl) . ",
-            " . $this->db->quote($blue->rGB) . ",
+            " . $this->db->quote($blue->huePrimary) . ",
             " . $this->db->quote($this->getTeamid($red->clubLinkUrl)) . ",
             " . $this->db->quote($red->emblemUrl) . ",
-            " . $this->db->quote($red->rGB) . ",
+            " . $this->db->quote($red->huePrimary) . ",
             '0',
             '0',
             '" . date('Y-m-d H:i:s') . "',
@@ -1002,7 +1002,7 @@ PRIMARY KEY (`id`)
         $qmmsb = "UPDATE `matches`
   SET teamBlue = " . $this->db->quote($this->getTeamid($blue->clubLinkUrl)) . ",
             teamBlue_emblem = " . $this->db->quote($blue->emblemUrl) . ",
-            teamBlue_RGB = " . $this->db->quote($blue->rGB) . " 
+            teamBlue_RGB = " . $this->db->quote($blue->huePrimary) . " 
             WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
         $this->logger->Debug($qmmsb);
         $this->db->execute($qmmsb);
@@ -1010,7 +1010,7 @@ PRIMARY KEY (`id`)
         $qmmsr = "UPDATE `matches`
   SET teamRed = " . $this->db->quote($this->getTeamid($red->clubLinkUrl)) . ",
             teamRed_emblem = " . $this->db->quote($red->emblemUrl) . ",
-            teamRed_RGB = " . $this->db->quote($red->rGB) . " 
+            teamRed_RGB = " . $this->db->quote($red->huePrimary) . " 
             WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
         $this->logger->Debug($qmmsr);
         $this->db->execute($qmmsr);
