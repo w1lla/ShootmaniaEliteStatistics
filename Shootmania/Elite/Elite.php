@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 23-4-2014
+  Date: 24-4-2014
   Version: 2 (GA2K14)
   Project Name: ESWC Elite Statistics
 
@@ -70,7 +70,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
 
     function onInit() {
-        $this->setVersion('1.0.5o');
+        $this->setVersion('1.0.5p');
     
         $this->logger = new Log($this->storage->serverLogin);
 		$this->mapdirectory = $this->connection->getMapsDirectory();
@@ -189,6 +189,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
       $q = "CREATE TABLE IF NOT EXISTS `player_nicknames` (
  `player_id` mediumint(9) NOT NULL,  
  `nickname` varchar(100) DEFAULT NULL,
+ `player_nickname_Clean` varchar(255) NOT NULL,
  `competition_id` INT(10) NOT NULL DEFAULT '1',
  INDEX id (player_id, competition_id)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8;";
@@ -344,6 +345,7 @@ PRIMARY KEY (`id`)
   `player_id` int(9) NOT NULL,
   `player_login` varchar(50) NOT NULL,
   `player_nickname` varchar(255) NOT NULL,
+  `player_nickname_Clean` varchar(255) NOT NULL,
   `player_nation` varchar(100) NOT NULL,
   `team_id` mediumint(9) NOT NULL,
   `shots_laser` int(9) NOT NULL DEFAULT '0',
@@ -804,14 +806,16 @@ PRIMARY KEY (`id`)
           $this->db->execute($q);
           $this->playerIDs[$player->login] = $this->db->insertID();
           $this->logger->Debug($q);
-          
+          $name = \ManiaLib\Utils\Formatting::stripColors(\ManiaLib\Utils\Formatting::stripStyles($player->nickName));
           $qnick = "INSERT INTO `player_nicknames` ( 
           `player_id`,
           `nickname`,
+		  `player_nickname_Clean`,
           `competition_id`)
           VALUES (
           " . $this->db->quote($this->playerIDs[$player->login]) . ",
           " . $this->db->quote($player->nickName) . ",
+		  " . $this->db->quote($name) . ",
           " . $this->db->quote($this->competition_id) . "
           )";
           $this->db->execute($qnick);
@@ -826,21 +830,24 @@ PRIMARY KEY (`id`)
           $executeids = $this->db->execute($q);
 
           if ($executeids->recordCount() == 0) {
-
+		$name = \ManiaLib\Utils\Formatting::stripColors(\ManiaLib\Utils\Formatting::stripStyles($player->nickName));
             $qnick = "INSERT INTO `player_nicknames` ( 
             `player_id`,
             `nickname`,
+			`player_nickname_Clean`,
             `competition_id`)
             VALUES (
             " . $this->db->quote($getplayerid->id) . ",
             " . $this->db->quote($player->nickName) . ",
+			" . $this->db->quote($name) . ",
             " . $this->db->quote($this->competition_id) . ");";
             $this->logger->debug($qnick);   
             $this->db->execute($qnick);
 
           }else{
-
-            $qnick = "UPDATE `player_nicknames` SET `nickname` = " . $this->db->quote($player->nickName) . "
+			$name = \ManiaLib\Utils\Formatting::stripColors(\ManiaLib\Utils\Formatting::stripStyles($player->nickName));
+            $qnick = "UPDATE `player_nicknames` SET `nickname` = " . $this->db->quote($player->nickName) . ",
+			`player_nickname_Clean` = " . $this->db->quote($name) . "
             WHERE `player_id` = " . $this->db->quote($getplayerid->id) . "
             AND `competition_id` = " . $this->db->quote($this->competition_id) . ";";
             $this->logger->debug($qnick);  
@@ -960,7 +967,7 @@ PRIMARY KEY (`id`)
 
         $blue = $this->connection->getTeamInfo(1);
         $red = $this->connection->getTeamInfo(2);
-        
+		
         $teams = array();
         $teams[1] = $blue;
         $teams[2] = $red;
