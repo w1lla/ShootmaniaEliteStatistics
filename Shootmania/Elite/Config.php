@@ -16,6 +16,8 @@ class Config extends \ManiaLib\Utils\Singleton
 	 * @var int
 	 */
 	public $competition_id = 0;
-
+	
+	/** boolean */
+	public $ReplayLocalSave = true;
 }
 ?>
