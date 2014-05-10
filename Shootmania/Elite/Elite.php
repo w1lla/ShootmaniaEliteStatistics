@@ -1706,7 +1706,9 @@ PRIMARY KEY (`id`)
   }
   
   function getTeamid($clubLinkUrl, $teamname){
-  $q = "SELECT id FROM `clublinks` WHERE `Clublink_URL` = " . $this->db->quote($clubLinkUrl) . " and Clublink_Name = " . $this->db->quote($teamname) . "";
+	$name = \ManiaLib\Utils\Formatting::stripColors(\ManiaLib\Utils\Formatting::stripStyles($teamname));
+	$tname = preg_replace('/[^A-Za-z0-9 _\-\+\&]/','',$name);
+  $q = "SELECT id FROM `clublinks` WHERE `Clublink_URL` = " . $this->db->quote($clubLinkUrl) . " and Clublink_Name_Clean = " . $this->db->quote($tname) . "";
             $this->logger->logDebug($q);
             return $this->db->execute($q)->fetchObject()->id;
   }
