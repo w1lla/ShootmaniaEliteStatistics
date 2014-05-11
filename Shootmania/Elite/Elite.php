@@ -2,7 +2,7 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 3-5-2014
+  Date: 11-5-2014
   Version: 2 (GA2K14)
   Project Name: ESWC Elite Statistics
 
@@ -70,7 +70,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
 
     function onInit() {
-        $this->setVersion('1.0.5r');
+        $this->setVersion('1.0.5s');
     
         $this->logger = new Log('./logs/', Log::DEBUG, $this->storage->serverLogin);
 		$this->mapdirectory = $this->connection->getMapsDirectory();
@@ -378,7 +378,7 @@ PRIMARY KEY (`id`)
 
         $this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => true)); //logDebug Way...
         $this->connection->setModeScriptSettings(array('S_UsePlayerClublinks' => true)); //logDebug Way...
-    $this->connection->setModeScriptSettings(array('S_Mode' => 1));
+		$this->connection->setModeScriptSettings(array('S_Mode' => 1));
         $this->connection->setCallVoteRatios(array(array('Command' => 'SetModeScriptSettingsAndCommands', 'Ratio' => 0.4 )));
     
     Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Core v' . $this->getVersion());
@@ -542,20 +542,39 @@ PRIMARY KEY (`id`)
         if ($match) {
             $this->updateMatchState($match);
         }
+		
+				// set server back to old value.
+		   $data = $this->connection->getServerTags();
+	   if ($data[0]['Name'] == "server_name"){
+	    $server_name_value = json_decode($data[0]['Value']);
+		
+		try
+							{
+                            $this->connection->setServerName($server_name_value);
+							$this->connection->executeMulticall();
+							} catch (\Exception $e) {
+                    echo $e;
+                }
+	   }
 
         //Restart map to initialize script
         $this->connection->executeMulticall(); // Flush calls
         $this->connection->restartMap();
+		
     }
   
   function bo3($login) {
-  $this->connection->setModeScriptSettings(array('S_MapWin' => 2));
-  $this->logger->logInfo("Set S_MapWin to: 2");
+	$this->connection->setModeScriptSettings(array('S_MapWin' => 2));
+	$this->connection->setModeScriptSettings(array('S_DraftBanNb' => 6));
+	$this->connection->setModeScriptSettings(array('S_DraftPickNb' => 3));
+	$this->logger->logInfo("Set S_MapWin to: 2, S_DraftPick: 3, S_DraftBanNb: 6");
     }
   
   function bo5($login) {
-       $this->connection->setModeScriptSettings(array('S_MapWin' => 3));
-	  $this->logger->logInfo("Set S_MapWin to: 3");
+    $this->connection->setModeScriptSettings(array('S_MapWin' => 3));
+	$this->connection->setModeScriptSettings(array('S_DraftBanNb' => 4));
+  	$this->connection->setModeScriptSettings(array('S_DraftPickNb' => 5));
+	  $this->logger->logInfo("Set S_MapWin to: 3, S_DraftPick: 4, S_DraftBanNb: 5");
     }
 
     /* Callbacks and Methods  */
@@ -1146,7 +1165,7 @@ PRIMARY KEY (`id`)
           `defenceWinEliminate`,
           `matchServerLogin`
           ) VALUES (
-          " . $this->MatchNumber . ",
+          " .  $this->db->quote($this->MatchNumber) . ",
           " . $this->db->quote($this->getTeamid($defendingClan->clubLinkUrl, $defendingClan->name)) . ",
           " . $this->db->quote($this->getMapid()) . ",
           '0',
@@ -1191,7 +1210,7 @@ PRIMARY KEY (`id`)
                                     `player_id` = " . $this->db->quote($AtkPlayer) . " AND
                                     `match_map_id` = " . $this->db->quote($this->MapNumber) . " AND 
                                     `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND
-                                    `match_id` = " . $this->MatchNumber . "";
+                                    `match_id` = " .  $this->db->quote($this->MatchNumber) . "";
         $this->logger->logDebug($q);
         $this->db->execute($q);
     }
