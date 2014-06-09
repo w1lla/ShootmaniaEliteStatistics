@@ -70,7 +70,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
 
     function onInit() {
-        $this->setVersion('1.0.5s');
+        $this->setVersion('1.0.6a');
     
         $this->logger = new Log('./logs/', Log::DEBUG, $this->storage->serverLogin);
 		$this->mapdirectory = $this->connection->getMapsDirectory();
@@ -107,131 +107,63 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
         $this->enableDedicatedEvents();
     $this->enablePluginEvents();
 
-        if(!$this->db->tableExists('captures')) {
-      $q = "CREATE TABLE IF NOT EXISTS `captures` (
+	if(!$this->db->tableExists('competitions')) {
+      $q = "CREATE TABLE IF NOT EXISTS `competitions` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `description` text,
+  `logo` varchar(255) DEFAULT NULL,
+  `embed` text,
+  `background` varchar(255) NOT NULL DEFAULT '/img/fond_eswc.png',
+  `date_begin` datetime DEFAULT NULL,
+  `date_end` datetime DEFAULT NULL,
+  `show` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) COLLATE='utf8_general_ci'
+ENGINE=InnoDB AUTO_INCREMENT=1 ;";
+      $this->db->execute($q);
+	  
+
+$q = "INSERT INTO `competitions` (`id`, `name`, `description`, `logo`, `embed`, `background`, `date_begin`, `date_end`, `show`) VALUES
+(1, 'ESWC France 2013', 'French finals ESWC France 2013', 'http://www.eswc.com/public/images/logo_2013.png', '', '/img/fond_eswc.png', '2013-10-30 09:00:00', '2013-10-30 20:00:00', 1),
+(2, 'ESWC World 2013', 'World finals ESWC 2013', 'http://www.eswc.com/public/images/logo_2013.png', '', '/img/fond_eswc.png', '2013-10-31 09:00:00', '2013-11-02 20:00:00', 1),
+(3, 'Gamers Assembly 2014', 'ShootMania tournament at the Gamers Assembly 2014', 'http://live.drakonia.eu/img/logos/gamers_assembly_o.png', '', '/img/fond_ga2.png', '2014-04-19 13:00:00', '2014-04-21 15:00:00', 1),
+(4, 'Cap''Arena #3', 'Antec Trophy ShootMania', './img/logos/cap-arena.png', '', '/img/fond_eswc.png', '2014-05-10 12:00:00', '2014-05-11 17:00:00', 1);
+";
+$this->db->execute($q);
+	}
+	
+	if(!$this->db->tableExists('clublinks')) {
+      $q = "CREATE TABLE IF NOT EXISTS `clublinks` (
   `id` mediumint(9) NOT NULL AUTO_INCREMENT,
-  `match_id` mediumint(9) NOT NULL DEFAULT '0',
-  `round_id` int(3) NOT NULL,
-  `player_id` mediumint(9) NOT NULL DEFAULT '0',
-  `map_id` mediumint(9) NOT NULL DEFAULT '0',
-  `matchServerLogin` VARCHAR(250) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY(matchServerLogin)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
-      $this->db->execute($q);
+  `Clublink_Name` varchar(255) NOT NULL DEFAULT '',
+  `Clublink_Name_Clean` varchar(255) NOT NULL DEFAULT '',
+  `Clublink_EmblemUrl` varchar(255) DEFAULT NULL,
+  `Clublink_ZonePath` varchar(50) NOT NULL,
+  `Clublink_Primary_RGB` varchar(6) NOT NULL,
+  `Clublink_Secondary_RGB` varchar(6) NOT NULL,
+  `Clublink_URL` VARCHAR(250) NOT NULL,
+PRIMARY KEY (`id`)
+) COLLATE='utf8_general_ci'
+ENGINE=InnoDB AUTO_INCREMENT=1 ;";
+    $this->db->execute($q);
+    
+
+  $q = "INSERT INTO `clublinks` (
+  `id`, 
+  `Clublink_Name`, 
+  `Clublink_Name_Clean`, 
+  `Clublink_EmblemUrl`, 
+  `Clublink_ZonePath`, 
+  `Clublink_Primary_RGB`, 
+  `Clublink_Secondary_RGB`, 
+  `Clublink_URL`) VALUES
+  (1, 'Blue', 'Blue', NULL, 'France', '00F', 'F00', ''),
+  (2, 'Red', 'Red', NULL, 'France', 'F00', '00F', '');";
+  $this->db->execute($q);
     }
-    
-        if(!$this->db->tableExists('shots')) {
-      $q = "CREATE TABLE IF NOT EXISTS `shots` (
-  `id` mediumint(9) NOT NULL AUTO_INCREMENT,
-  `match_map_id` mediumint(9) NOT NULL DEFAULT '0',
-  `round_id` int(3) NOT NULL,
-  `player_id` mediumint(9) NOT NULL DEFAULT '0',
-  `weapon_id` int(11) NOT NULL,
-  `shots` int(11) NOT NULL DEFAULT '0',
-  `hits` int(11) NOT NULL DEFAULT '0',
-  `counterhits` mediumint(9) NOT NULL DEFAULT '0',
-  `eliminations` int(11) NOT NULL DEFAULT '0',
-  `matchServerLogin` VARCHAR(250) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY(matchServerLogin)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
-      $this->db->execute($q);
-    }
-    
-    if(!$this->db->tableExists('kills')) {
-      $q = "CREATE TABLE IF NOT EXISTS `kills` (
-  `id` mediumint(9) NOT NULL AUTO_INCREMENT,
-  `match_id` mediumint(9) NOT NULL DEFAULT '0',
-  `round_id` int(3) NOT NULL,
-  `player_victim_id` mediumint(9) NOT NULL DEFAULT '0',
-  `player_shooter_id` mediumint(9) NOT NULL DEFAULT '0',
-  `map_id` mediumint(9) NOT NULL DEFAULT '0',
-  `matchServerLogin` VARCHAR(250) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY(matchServerLogin)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
-      $this->db->execute($q);
-    }
-    
-        if(!$this->db->tableExists('match_details')) {
-      $q = "CREATE TABLE IF NOT EXISTS `match_details` (
-  `id` mediumint(9) NOT NULL AUTO_INCREMENT,
-  `match_id` mediumint(9) NOT NULL DEFAULT '0',
-  `team_id` mediumint(9) NOT NULL DEFAULT '0',
-  `map_id` mediumint(9) NOT NULL DEFAULT '0',
-  `attack` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
-  `defence` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
-  `capture` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
-  `timeOver` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
-  `attackWinEliminate` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
-  `defenceWinEliminate` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
-   `matchServerLogin` VARCHAR(250) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY(matchServerLogin)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
-      $this->db->execute($q);
-    }
-    
-        if(!$this->db->tableExists('players')) {
-      $q = "CREATE TABLE IF NOT EXISTS `players` (
-   `id` mediumint(9) NOT NULL AUTO_INCREMENT,
-  `login` varchar(50) NOT NULL,
-  `nation` varchar(50) NOT NULL,
-  `updatedate` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `login` (`login`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
-      $this->db->execute($q);
-    }   
-    
-       if(!$this->db->tableExists('player_nicknames')) {
-      $q = "CREATE TABLE IF NOT EXISTS `player_nicknames` (
- `player_id` mediumint(9) NOT NULL,  
- `nickname` varchar(100) DEFAULT NULL,
- `player_nickname_Clean` varchar(255) NOT NULL,
- `competition_id` INT(10) NOT NULL DEFAULT '1',
- INDEX id (player_id, competition_id)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8;";
-      $this->db->execute($q);
-    }
-    
-    if(!$this->db->tableExists('player_maps')) {
-      $q = "CREATE TABLE IF NOT EXISTS `player_maps` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `match_id` mediumint(9) NOT NULL DEFAULT '0',
-  `player_id` mediumint(9) NOT NULL DEFAULT '0',
-  `match_map_id` mediumint(9) NOT NULL DEFAULT '0',
-  `team_id` mediumint(9) NOT NULL DEFAULT '0',
-  `kills` mediumint(9) NOT NULL DEFAULT '0',
-  `shots` mediumint(9) NOT NULL DEFAULT '0',
-  `nearmisses` mediumint(9) NOT NULL DEFAULT '0',
-  `hits` mediumint(9) NOT NULL DEFAULT '0',
-  `counterhits` mediumint(9) NOT NULL DEFAULT '0',
-  `deaths` mediumint(9) NOT NULL DEFAULT '0',
-  `captures` mediumint(9) NOT NULL DEFAULT '0',
-  `atkrounds` mediumint(9) NOT NULL DEFAULT '0',
-  `atkSucces` mediumint(9) NOT NULL DEFAULT '0',
-  `timeOver` mediumint(9) NOT NULL DEFAULT '0',
-  `elimination_3x` mediumint(9) NOT NULL DEFAULT '0',
-   `matchServerLogin` VARCHAR(250) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY(matchServerLogin)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
-      $this->db->execute($q);
-    }
-    
-        if(!$this->db->tableExists('maps')) {
-      $q = "CREATE TABLE IF NOT EXISTS `maps` (
-  `id` MEDIUMINT( 5 ) NOT NULL AUTO_INCREMENT PRIMARY KEY ,
-                                    `uid` VARCHAR( 27 ) NOT NULL ,
-                                    `name` VARCHAR( 100 ) NOT NULL ,
-                  `author` VARCHAR( 30 ) NOT NULL
-) CHARACTER SET utf8 COLLATE utf8_general_ci ENGINE = MYISAM ;";
-      $this->db->execute($q);
-    }
-    
-        if(!$this->db->tableExists('matches')) {
+	
+	if(!$this->db->tableExists('matches')) {
       $q = "CREATE TABLE IF NOT EXISTS `matches` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `MatchName` varchar(50) NOT NULL DEFAULT '',
@@ -250,15 +182,55 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `show` tinyint (1),
   `Replay` VARCHAR(100) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY(matchServerLogin)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
+  Index (`matchServerLogin`),
+  CONSTRAINT `FK_Matches_teamBlue` FOREIGN KEY (`teamBlue`) REFERENCES `Clublinks` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_Matches_teamRed` FOREIGN KEY (`teamRed`) REFERENCES `Clublinks` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_Matches_competition_id` FOREIGN KEY (`competition_id`) REFERENCES `competitions` (`id`) ON DELETE CASCADE
+) COLLATE='utf8_general_ci'
+ENGINE=InnoDB AUTO_INCREMENT=1 ;";
       $this->db->execute($q);
     }
-
-    if(!$this->db->tableExists('match_maps')) {
+	
+	if(!$this->db->tableExists('players')) {
+      $q = "CREATE TABLE IF NOT EXISTS `players` (
+   `id` mediumint(9) NOT NULL AUTO_INCREMENT,
+  `login` varchar(50) NOT NULL,
+  `nation` varchar(50) NOT NULL,
+  `updatedate` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `login` (`login`)
+) COLLATE='utf8_general_ci'
+ENGINE=InnoDB AUTO_INCREMENT=1 ;";
+      $this->db->execute($q);
+    }   
+    
+    if(!$this->db->tableExists('player_nicknames')) {
+      $q = "CREATE TABLE IF NOT EXISTS `player_nicknames` (
+ `player_id` mediumint(9) NOT NULL,  
+ `nickname` varchar(100) DEFAULT NULL,
+ `player_nickname_Clean` varchar(255) NOT NULL,
+ `competition_id` INT(10) NOT NULL DEFAULT '1',
+ INDEX id (player_id, competition_id)
+) COLLATE='utf8_general_ci'
+ENGINE=InnoDB  AUTO_INCREMENT=1 ;";
+      $this->db->execute($q);
+    }
+	
+	if(!$this->db->tableExists('maps')) {
+      $q = "CREATE TABLE IF NOT EXISTS `maps` (
+  `id` MEDIUMINT( 9 ) NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+                                    `uid` VARCHAR( 27 ) NOT NULL ,
+                                    `name` VARCHAR( 100 ) NOT NULL ,
+                  `author` VARCHAR( 30 ) NOT NULL
+) COLLATE='utf8_general_ci'
+ENGINE=InnoDB AUTO_INCREMENT=1 ;";
+      $this->db->execute($q);
+    }
+	
+	    if(!$this->db->tableExists('match_maps')) {
       $q = "CREATE TABLE IF NOT EXISTS `match_maps` (
   `id` INT NOT NULL AUTO_INCREMENT,
-  `match_id` mediumint(9) NOT NULL DEFAULT '0',
+  `match_id` INT NOT NULL DEFAULT '0',
   `map_id` mediumint(9) NOT NULL DEFAULT '0',
   `turnNumber` mediumint(9) NOT NULL DEFAULT '0',
   `Roundscore_blue` INT(10) NOT NULL DEFAULT '0',
@@ -270,15 +242,131 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `NextMap` boolean default '0',
   `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`),
-  KEY(matchServerLogin)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
+  Index (`matchServerLogin`),
+  CONSTRAINT `FK_Match_maps_match_id` FOREIGN KEY (`match_id`) REFERENCES `Matches` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_Match_maps_map_id` FOREIGN KEY (`map_id`) REFERENCES `maps` (`id`) ON DELETE CASCADE
+) COLLATE='utf8_general_ci'
+ENGINE=InnoDB AUTO_INCREMENT=1 ;";
+      $this->db->execute($q);
+    }
+	
+    if(!$this->db->tableExists('player_maps')) {
+      $q = "CREATE TABLE IF NOT EXISTS `player_maps` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `match_id` INT NOT NULL DEFAULT '0',
+  `player_id` mediumint(9) NOT NULL DEFAULT '0',
+  `match_map_id` INT NOT NULL DEFAULT '0',
+  `team_id` mediumint(9) NOT NULL DEFAULT '0',
+  `kills` mediumint(9) NOT NULL DEFAULT '0',
+  `shots` mediumint(9) NOT NULL DEFAULT '0',
+  `nearmisses` mediumint(9) NOT NULL DEFAULT '0',
+  `hits` mediumint(9) NOT NULL DEFAULT '0',
+  `counterhits` mediumint(9) NOT NULL DEFAULT '0',
+  `deaths` mediumint(9) NOT NULL DEFAULT '0',
+  `captures` mediumint(9) NOT NULL DEFAULT '0',
+  `atkrounds` mediumint(9) NOT NULL DEFAULT '0',
+  `atkSucces` mediumint(9) NOT NULL DEFAULT '0',
+  `timeOver` mediumint(9) NOT NULL DEFAULT '0',
+  `elimination_3x` mediumint(9) NOT NULL DEFAULT '0',
+   `matchServerLogin` VARCHAR(250) NOT NULL,
+  PRIMARY KEY (`id`),
+  Index (`matchServerLogin`),
+  CONSTRAINT `FK_player_maps_match_id` FOREIGN KEY (`match_id`) REFERENCES `Matches` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_player_maps_player_id` FOREIGN KEY (`player_id`) REFERENCES `Players` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_player_maps_match_map_id` FOREIGN KEY (`match_map_id`) REFERENCES `match_maps` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_player_maps_team_id` FOREIGN KEY (`team_id`) REFERENCES `Clublinks` (`id`) ON DELETE CASCADE
+) COLLATE='utf8_general_ci'
+ENGINE=InnoDB AUTO_INCREMENT=1 ;";
+      $this->db->execute($q);
+    }
+    
+	   if(!$this->db->tableExists('match_details')) {
+      $q = "CREATE TABLE IF NOT EXISTS `match_details` (
+  `id` mediumint(9) NOT NULL AUTO_INCREMENT,
+  `match_id` INT NOT NULL DEFAULT '0',
+  `team_id` mediumint(9) NOT NULL DEFAULT '0',
+  `map_id` mediumint(9) NOT NULL DEFAULT '0',
+  `attack` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
+  `defence` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
+  `capture` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
+  `timeOver` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
+  `attackWinEliminate` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
+  `defenceWinEliminate` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
+   `matchServerLogin` VARCHAR(250) NOT NULL,
+  PRIMARY KEY (`id`),
+  Index (`matchServerLogin`),
+  CONSTRAINT `FK_Match_details_match_id` FOREIGN KEY (`match_id`) REFERENCES `Matches` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_Match_details_team_id` FOREIGN KEY (`team_id`) REFERENCES `Clublinks` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_Match_details_map_id` FOREIGN KEY (`map_id`) REFERENCES `maps` (`id`) ON DELETE CASCADE
+) COLLATE='utf8_general_ci'
+ENGINE=InnoDB AUTO_INCREMENT=1 ;";
+      $this->db->execute($q);
+    }
+    
+	
+        if(!$this->db->tableExists('captures')) {
+      $q = "CREATE TABLE IF NOT EXISTS `captures` (
+  `id` mediumint(9) NOT NULL AUTO_INCREMENT,
+  `match_id` INT NOT NULL DEFAULT '0',
+  `round_id` int(3) NOT NULL,
+  `player_id` mediumint(9) NOT NULL DEFAULT '0',
+  `map_id` mediumint(9) NOT NULL DEFAULT '0',
+  `matchServerLogin` VARCHAR(250) NOT NULL,
+  PRIMARY KEY (`id`),
+  Index (`matchServerLogin`),
+  CONSTRAINT `FK_captures_match_id` FOREIGN KEY (`match_id`) REFERENCES `matches` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_captures_player_id` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_captures_map_id` FOREIGN KEY (`map_id`) REFERENCES `maps` (`id`) ON DELETE CASCADE
+) COLLATE='utf8_general_ci'
+ENGINE=InnoDB AUTO_INCREMENT=1 ;";
+      $this->db->execute($q);
+    }
+    
+        if(!$this->db->tableExists('shots')) {
+      $q = "CREATE TABLE IF NOT EXISTS `shots` (
+  `id` mediumint(9) NOT NULL AUTO_INCREMENT,
+  `match_map_id` INT NOT NULL DEFAULT '0',
+  `round_id` int(3) NOT NULL,
+  `player_id` mediumint(9) NOT NULL DEFAULT '0',
+  `weapon_id` int(11) NOT NULL,
+  `shots` int(11) NOT NULL DEFAULT '0',
+  `hits` int(11) NOT NULL DEFAULT '0',
+  `counterhits` mediumint(9) NOT NULL DEFAULT '0',
+  `eliminations` int(11) NOT NULL DEFAULT '0',
+  `matchServerLogin` VARCHAR(250) NOT NULL,
+  PRIMARY KEY (`id`),
+  Index (`matchServerLogin`),
+  CONSTRAINT `FK_shots_match_map_id` FOREIGN KEY (`match_map_id`) REFERENCES `match_maps` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_shots_player_id` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE
+) COLLATE='utf8_general_ci'
+ENGINE=InnoDB AUTO_INCREMENT=1 ;";
+      $this->db->execute($q);
+    }
+    
+    if(!$this->db->tableExists('kills')) {
+      $q = "CREATE TABLE IF NOT EXISTS `kills` (
+  `id` mediumint(9) NOT NULL AUTO_INCREMENT,
+  `match_id` INT NOT NULL DEFAULT '0',
+  `round_id` int(3) NOT NULL,
+  `player_victim_id` mediumint(9) NOT NULL DEFAULT '0',
+  `player_shooter_id` mediumint(9) NOT NULL DEFAULT '0',
+  `map_id` mediumint(9) NOT NULL DEFAULT '0',
+  `matchServerLogin` VARCHAR(250) NOT NULL,
+  PRIMARY KEY (`id`),
+  Index (`matchServerLogin`),
+  CONSTRAINT `FK_kills_match_id` FOREIGN KEY (`match_id`) REFERENCES `matches` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_kills_player_victim_id` FOREIGN KEY (`player_victim_id`) REFERENCES `players` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_kills_player_shooter_id` FOREIGN KEY (`player_shooter_id`) REFERENCES `players` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_kills_map_id` FOREIGN KEY (`map_id`) REFERENCES `maps` (`id`) ON DELETE CASCADE
+) COLLATE='utf8_general_ci'
+ENGINE=InnoDB AUTO_INCREMENT=1 ;";
       $this->db->execute($q);
     }
     
         if(!$this->db->tableExists('nearmisses')) {
       $q = "CREATE TABLE IF NOT EXISTS `nearmisses` (
   `id` INT NOT NULL AUTO_INCREMENT,
-  `match_map_id` mediumint(9) NOT NULL DEFAULT '0',
+  `match_map_id` INT NOT NULL DEFAULT '0',
   `round_id` int(3) NOT NULL,
   `map_id` mediumint(9) NOT NULL DEFAULT '0',
   `nearMissDist` REAL default '0',
@@ -287,15 +375,19 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `weaponname` varchar(45) DEFAULT NULL,
   `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`),
-  KEY(matchServerLogin)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
+  KEY(matchServerLogin),
+  CONSTRAINT `FK_nearmisses_match_map_id` FOREIGN KEY (`match_map_id`) REFERENCES `match_maps` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_nearmisses_map_id` FOREIGN KEY (`map_id`) REFERENCES `maps` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_nearmisses_player_id` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE
+) COLLATE='utf8_general_ci'
+ENGINE=InnoDB AUTO_INCREMENT=1 ;";
       $this->db->execute($q);
     }
     
       if(!$this->db->tableExists('hits')) {
       $q = "CREATE TABLE IF NOT EXISTS `hits` (
   `id` INT NOT NULL AUTO_INCREMENT,
-  `match_map_id` mediumint(9) NOT NULL DEFAULT '0',
+  `match_map_id` INT NOT NULL DEFAULT '0',
   `round_id` int(3) NOT NULL,
   `map_id` mediumint(9) NOT NULL DEFAULT '0',
   `HitDist` REAL default '0',
@@ -305,38 +397,14 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
   `weaponname` varchar(45) DEFAULT NULL,
   `matchServerLogin` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`),
-  KEY(matchServerLogin)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
+  KEY(matchServerLogin),
+  CONSTRAINT `FK_hits_match_map_id` FOREIGN KEY (`match_map_id`) REFERENCES `match_maps` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_hits_map_id` FOREIGN KEY (`map_id`) REFERENCES `maps` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_hits_shooter_player_id` FOREIGN KEY (`shooter_player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_hits_victim_player_id` FOREIGN KEY (`victim_player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE
+) COLLATE='utf8_general_ci'
+ENGINE=InnoDB AUTO_INCREMENT=1 ;";
       $this->db->execute($q);
-    }
-    
-        if(!$this->db->tableExists('clublinks')) {
-      $q = "CREATE TABLE IF NOT EXISTS `clublinks` (
-  `id` mediumint(9) NOT NULL AUTO_INCREMENT,
-  `Clublink_Name` varchar(255) NOT NULL DEFAULT '',
-  `Clublink_Name_Clean` varchar(255) NOT NULL DEFAULT '',
-  `Clublink_EmblemUrl` varchar(255) DEFAULT NULL,
-  `Clublink_ZonePath` varchar(50) NOT NULL,
-  `Clublink_Primary_RGB` varchar(6) NOT NULL,
-  `Clublink_Secondary_RGB` varchar(6) NOT NULL,
-  `Clublink_URL` VARCHAR(250) NOT NULL,
-PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
-    $this->db->execute($q);
-    
-
-  $q = "INSERT INTO `clublinks` (
-  `id`, 
-  `Clublink_Name`, 
-  `Clublink_Name_Clean`, 
-  `Clublink_EmblemUrl`, 
-  `Clublink_ZonePath`, 
-  `Clublink_Primary_RGB`, 
-  `Clublink_Secondary_RGB`, 
-  `Clublink_URL`) VALUES
-  (1, 'Blue', 'Blue', NULL, 'France', '00F', 'F00', ''),
-  (2, 'Red', 'Red', NULL, 'France', 'F00', '00F', '');";
-  $this->db->execute($q);
     }
     
     if(!$this->db->tableExists('player_stats')) {
@@ -364,7 +432,8 @@ PRIMARY KEY (`id`)
   `hits_received` mediumint(9) NOT NULL DEFAULT '0',
   `ratio_hits` decimal(5,2) NOT NULL,
   `elimination_3x` int(9) NOT NULL DEFAULT '0'
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
+) COLLATE='utf8_general_ci'
+ENGINE=InnoDB;";
     $this->db->execute($q);
     }
     
@@ -378,8 +447,10 @@ PRIMARY KEY (`id`)
 
         $this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => true)); //logDebug Way...
         $this->connection->setModeScriptSettings(array('S_UsePlayerClublinks' => true)); //logDebug Way...
+		$this->connection->setModeScriptSettings(array('S_DraftPickNb' => 3));
 		$this->connection->setModeScriptSettings(array('S_Mode' => 1));
-        $this->connection->setCallVoteRatios(array(array('Command' => 'SetModeScriptSettingsAndCommands', 'Ratio' => 0.4 )));
+		$this->connection->sendModeScriptCommands(array("Command_ForceClublinkReload" => true));
+        //$this->connection->setCallVoteRatios(array(array('Command' => 'SetModeScriptSettingsAndCommands', 'Ratio' => 0.4 )));
     
     Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Core v' . $this->getVersion());
     foreach ($this->storage->players as $player) {
