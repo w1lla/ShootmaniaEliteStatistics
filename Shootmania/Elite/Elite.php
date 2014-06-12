@@ -2,8 +2,8 @@
 
 /**
   Name: Willem 'W1lla' van den Munckhof
-  Date: 11-5-2014
-  Version: 2 (GA2K14)
+  Date: 12-6-2014
+  Version: 3 (ESWC2K14)
   Project Name: ESWC Elite Statistics
 
   What to do:
@@ -175,8 +175,8 @@ ENGINE=InnoDB AUTO_INCREMENT=1 ;";
   `teamRed_RGB` varchar(50) NOT NULL DEFAULT '',
   `Matchscore_blue` INT(10) NOT NULL DEFAULT '0',
   `Matchscore_red` INT(10) NOT NULL DEFAULT '0',
-  `MatchStart` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `MatchEnd` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `MatchStart` datetime DEFAULT '0000-00-00 00:00:00',
+  `MatchEnd` datetime DEFAULT '0000-00-00 00:00:00',
   `matchServerLogin` VARCHAR(250) NOT NULL,
   `competition_id` INT(10) NOT NULL DEFAULT '1',
   `show` tinyint (1),
@@ -235,8 +235,8 @@ ENGINE=InnoDB AUTO_INCREMENT=1 ;";
   `turnNumber` mediumint(9) NOT NULL DEFAULT '0',
   `Roundscore_blue` INT(10) NOT NULL DEFAULT '0',
   `Roundscore_red` INT(10) NOT NULL DEFAULT '0',
-  `MapStart` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `MapEnd` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `MapStart` datetime DEFAULT '0000-00-00 00:00:00',
+  `MapEnd` datetime DEFAULT '0000-00-00 00:00:00',
   `AtkId` mediumint(9) DEFAULT '0',
   `AllReady` boolean default '0',
   `NextMap` boolean default '0',
@@ -273,7 +273,7 @@ ENGINE=InnoDB AUTO_INCREMENT=1 ;";
   Index (`matchServerLogin`),
   CONSTRAINT `FK_player_maps_match_id` FOREIGN KEY (`match_id`) REFERENCES `Matches` (`id`) ON DELETE CASCADE,
   CONSTRAINT `FK_player_maps_player_id` FOREIGN KEY (`player_id`) REFERENCES `Players` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `FK_player_maps_match_map_id` FOREIGN KEY (`match_map_id`) REFERENCES `match_maps` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_player_maps_MM_id` FOREIGN KEY (`match_map_id`) REFERENCES `match_maps` (`id`) ON DELETE CASCADE,
   CONSTRAINT `FK_player_maps_team_id` FOREIGN KEY (`team_id`) REFERENCES `Clublinks` (`id`) ON DELETE CASCADE
 ) COLLATE='utf8_general_ci'
 ENGINE=InnoDB AUTO_INCREMENT=1 ;";
@@ -429,13 +429,40 @@ ENGINE=InnoDB AUTO_INCREMENT=1 ;";
   `success_atk` int(9) NOT NULL DEFAULT '0',
   `ratio_atk` decimal(5,2) NOT NULL,
   `captures` int(9) NOT NULL DEFAULT '0',
+  `timeOver` mediumint(9) NOT NULL DEFAULT '0',
   `hits_received` mediumint(9) NOT NULL DEFAULT '0',
   `ratio_hits` decimal(5,2) NOT NULL,
-  `elimination_3x` int(9) NOT NULL DEFAULT '0'
+  `elimination_3x` int(9) NOT NULL DEFAULT '0',
+  `nearmiss` mediumint(9) NOT NULL
 ) COLLATE='utf8_general_ci'
 ENGINE=InnoDB;";
     $this->db->execute($q);
-    }
+	
+	}
+	
+	if(!$this->db->tableExists()){
+	
+	$q = "CREATE TABLE IF NOT EXISTS `team_stats` (
+  `team_id` mediumint(9) NOT NULL,
+  `competition_id` mediumint(9) NOT NULL,
+  `shots_laser` mediumint(9) NOT NULL,
+  `hits_laser` mediumint(9) NOT NULL,
+  `ratio_laser` decimal(5,2) NOT NULL,
+  `shots_rockets` mediumint(9) NOT NULL,
+  `hits_rockets` mediumint(9) NOT NULL,
+  `ratio_rockets` decimal(5,2) NOT NULL,
+  `success_atk` mediumint(9) NOT NULL,
+  `nb_atk` mediumint(9) NOT NULL,
+  `ratio_atk` decimal(5,2) NOT NULL,
+  `hits_received` mediumint(9) NOT NULL,
+  `ratio_hits` decimal(5,2) NOT NULL,
+  PRIMARY KEY (`team_id`,`competition_id`)
+  ) COLLATE='utf8_general_ci'
+ENGINE=InnoDB;";
+	
+	$this->db->execute($q);
+	}
+  
     
         if($this->isPluginLoaded('ManiaLivePlugins\Standard\Menubar\Menubar'))
       $this->onPluginLoaded('ManiaLivePlugins\Standard\Menubar\Menubar');
