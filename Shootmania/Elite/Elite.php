@@ -70,7 +70,7 @@ class Elite extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
 
     function onInit() {
-        $this->setVersion('1.0.6a');
+        $this->setVersion('1.0.6.b');
     
         $this->logger = new Log('./logs/', Log::DEBUG, $this->storage->serverLogin);
 		$this->mapdirectory = $this->connection->getMapsDirectory();
@@ -440,8 +440,7 @@ ENGINE=InnoDB;";
 	
 	}
 	
-	if(!$this->db->tableExists()){
-	
+	if(!$this->db->tableExists('team_stats')){
 	$q = "CREATE TABLE IF NOT EXISTS `team_stats` (
   `team_id` mediumint(9) NOT NULL,
   `competition_id` mediumint(9) NOT NULL,

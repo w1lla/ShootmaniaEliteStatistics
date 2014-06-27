@@ -45,7 +45,6 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
  
     /** @var integer */
     protected $MatchNumber = false;
-    protected $imagequad = 'http://tmrankings.com/mp/header2.png';
  
     /** @var integer */
     private $AtkPlayer;
@@ -79,9 +78,9 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
  
     function onInit() {
-	$this->setVersion('1.0.5j');
+	$this->setVersion('1.0.6.b');
  
-	$this->logger = new Log($this->storage->serverLogin);
+	$this->logger = new Log('./logs/', Log::DEBUG, $this->storage->serverLogin);
     }
  
     function onLoad() {
@@ -114,7 +113,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 			'SELECT id FROM matches ' .
 			'where MatchEnd = "0000-00-00 00:00:00" and `matchServerLogin` = ' . $this->db->quote($serverLogin) .
 			'order by id desc')->fetchSingleValue();
-	$this->logger->Normal($CurrentMatchid);
+	$this->logger->logDebug($CurrentMatchid);
 	return $this->db->execute(
 			'SELECT id FROM matches ' .
 			'where MatchEnd = "0000-00-00 00:00:00" and `matchServerLogin` = ' . $this->db->quote($serverLogin) .
@@ -122,8 +121,8 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
     }
  
     public function onModeScriptCallback($event, $json) {
-	$this->logger->Callbacks($event);
-	$this->logger->Callbacks($json);
+	$this->logger->logInfo($event);
+	$this->logger->logInfo($json);
 	switch ($event) {
 	    case 'BeginTurn':
 		$this->onXmlRpcEliteBeginTurn(new JsonCallbacks\BeginTurn($json));
@@ -159,14 +158,14 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
     }
  
     function onTick() {
-	if ((time() - $this->lastUpdate) > 3 && $this->needUpdate || $this->forceUpdate == true) {
+	if ((time() - $this->lastUpdate) > 0.5 && $this->needUpdate || $this->forceUpdate == true) {
 	    $this->lastUpdate = time();
 	    $this->forceUpdate = false;
 	    $this->needUpdate = false;
 	    $this->MatchNumber = $this->getServerCurrentMatch($this->storage->serverLogin);
 	    //var_dump($this->BeginTurnAtkPlayer);
 	    //var_dump($this->AtkPlayer);
-	    if (empty($this->SpecTarget->login) || $this->SpecTarget->login == $this->storage->serverLogin || empty($this->BeginTurnAtkPlayer) || empty($this->AtkPlayer))
+	    if (empty($this->SpecTarget->login) || $this->SpecTarget->login === $this->storage->serverLogin || empty($this->BeginTurnAtkPlayer) || empty($this->AtkPlayer) || $this->SpecPlayer->currentTargetId === 255)
 		return;
  
 	    if ($this->SpecPlayer->spectator) {
@@ -180,7 +179,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
 		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
 		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
-		    $this->logger->Spectator($queryCurrentMatchAtkPlayerStats);
+		    $this->logger->logDebug($queryCurrentMatchAtkPlayerStats);
 		    $this->db->execute($queryCurrentMatchAtkPlayerStats);
  
 		    $AtkRoundsObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkrounds;
@@ -203,7 +202,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
 		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
 		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
-		    $this->logger->Spectator($queryCurrentMatchAtkPlayerStats);
+		    $this->logger->logDebug($queryCurrentMatchAtkPlayerStats);
 		    $this->db->execute($queryCurrentMatchAtkPlayerStats);
  
 		    $AtkRoundsObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkrounds;
@@ -222,7 +221,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		}
  
 		$QueryRocketHits = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 2) AND (`Shot`.`match_map_id` = " . $this->db->quote($this->match_map_id) . ")) LIMIT 1";
-		$this->logger->Spectator($QueryRocketHits);
+		$this->logger->logDebug($QueryRocketHits);
 		$this->db->execute($QueryRocketHits);
  
 		$RocketHitsQuery = $this->db->execute($QueryRocketHits)->fetchObject()->hits;
@@ -233,7 +232,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		}
  
 		$LaserAccQuery = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 1) AND (`Shot`.`match_map_id` = " . $this->db->quote($this->match_map_id) . ")) LIMIT 1";
-		$this->logger->Spectator($LaserAccQuery);
+		$this->logger->logDebug($LaserAccQuery);
 		$this->db->execute($LaserAccQuery);
  
 		$LaserAccRatio = $this->db->execute($LaserAccQuery)->fetchObject()->ratio;
@@ -251,7 +250,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
 		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
 		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
-		$this->logger->Spectator($queryCurrentMatchAtkPlayerStatsCaptures);
+		$this->logger->logDebug($queryCurrentMatchAtkPlayerStatsCaptures);
 		$this->db->execute($queryCurrentMatchAtkPlayerStatsCaptures);
  
 		$AtkCaptureObject = $this->db->execute($queryCurrentMatchAtkPlayerStatsCaptures)->fetchObject()->Captures;
@@ -267,7 +266,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
 		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
 		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
-		$this->logger->Spectator($QueryShots_HitsAtkPlayer);
+		$this->logger->logDebug($QueryShots_HitsAtkPlayer);
 		$this->db->execute($QueryShots_HitsAtkPlayer);
  
 		$AtkShotsObject = $this->db->execute($QueryShots_HitsAtkPlayer)->fetchObject()->shots;
@@ -284,7 +283,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
 		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
 		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
-		$this->logger->Spectator($queryAtkHitRatio);
+		$this->logger->logDebug($queryAtkHitRatio);
 		$this->db->execute($queryAtkHitRatio);
  
  
@@ -318,8 +317,8 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
     }
  
     public function onPlayerInfoChanged($playerInfo) {
-	$player = \ManiaPlanet\DedicatedServer\Structures\Player::fromArray($playerInfo);
- 
+	$player = \ManiaPlanet\DedicatedServer\Structures\PlayerInfo::fromArray($playerInfo);
+	echo $player->currentTargetId;
 	
 	if (!array_key_exists($player->login, $this->widgetVisible)) {
 	    $this->widgetVisible[$player->login] = True;
@@ -346,25 +345,13 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 	//var_dump($player);
 	$this->SpecPlayer = $player;
 	if ($this->SpecPlayer->currentTargetId == 0) {
-	    $xml = '<manialinks>';
-	    $xml .= '<manialink id="AtkSpecDetails">';
-	    $xml .= '</manialink>';
-	    $xml .= '</manialinks>';
-	    $this->connection->sendHideManialinkPage($player->login, $xml, 0, true, true);
+	    $this->connection->sendHideManialinkPage();
 	}
 	foreach ($this->storage->spectators as $login => $player) {
-	    $xml = '<manialinks>';
-	    $xml .= '<manialink id="AtkSpecDetails">';
-	    $xml .= '</manialink>';
-	    $xml .= '</manialinks>';
-	    $this->connection->sendHideManialinkPage($player->login, $xml, 0, true, true);
+	   $this->connection->sendHideManialinkPage();
 	}
-	if ($this->SpecPlayer->currentTargetId == 255) {
-	    $xml = '<manialinks>';
-	    $xml .= '<manialink id="AtkSpecDetails">';
-	    $xml .= '</manialink>';
-	    $xml .= '</manialinks>';
-	    $this->connection->sendHideManialinkPage($player->login, $xml, 0, true, true);
+	if ($this->SpecPlayer->currentTargetId === 255) {
+	   $this->connection->sendHideManialinkPage();
 	}
 	if ($player->spectator == true && $player->pureSpectator == true && $this->widgetVisible[$player->login]) {
 	    $this->needUpdate = true;
@@ -384,7 +371,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
 		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
 		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
-		$this->logger->Spectator($queryCurrentMatchAtkPlayerStats);
+		$this->logger->logDebug($queryCurrentMatchAtkPlayerStats);
 		$this->db->execute($queryCurrentMatchAtkPlayerStats);
  
 		$AtkRoundsObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkrounds;
@@ -407,7 +394,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
 		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
 		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
-		$this->logger->Spectator($queryCurrentMatchAtkPlayerStats);
+		$this->logger->logDebug($queryCurrentMatchAtkPlayerStats);
 		$this->db->execute($queryCurrentMatchAtkPlayerStats);
  
 		$AtkRoundsObject = $this->db->execute($queryCurrentMatchAtkPlayerStats)->fetchObject()->atkrounds;
@@ -426,7 +413,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 	    }
  
 	    $QueryRocketHits = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 2) AND (`Shot`.`match_map_id` = " . $this->db->quote($this->match_map_id) . ")) LIMIT 1";
-	    $this->logger->Spectator($QueryRocketHits);
+	    $this->logger->logDebug($QueryRocketHits);
 	    $this->db->execute($QueryRocketHits);
  
 	    $RocketHitsQuery = $this->db->execute($QueryRocketHits)->fetchObject()->hits;
@@ -437,7 +424,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 	    }
  
 	    $LaserAccQuery = "SELECT (SUM(hits)/SUM(shots)*100) as ratio, SUM(shots) as shots, SUM(hits) as hits FROM `shots` AS `Shot` WHERE ((`Shot`.`player_id` = " . $this->db->quote($this->AtkPlayer) . ") AND (`Shot`.`weapon_id` = 1) AND (`Shot`.`match_map_id` = " . $this->db->quote($this->match_map_id) . ")) LIMIT 1";
-	    $this->logger->Spectator($LaserAccQuery);
+	    $this->logger->logDebug($LaserAccQuery);
 	    $this->db->execute($LaserAccQuery);
  
 	    $LaserAccRatio = $this->db->execute($LaserAccQuery)->fetchObject()->ratio;
@@ -455,7 +442,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
 		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
 		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
-	    $this->logger->Spectator($queryCurrentMatchAtkPlayerStatsCaptures);
+	    $this->logger->logDebug($queryCurrentMatchAtkPlayerStatsCaptures);
 	    $this->db->execute($queryCurrentMatchAtkPlayerStatsCaptures);
  
 	    $AtkCaptureObject = $this->db->execute($queryCurrentMatchAtkPlayerStatsCaptures)->fetchObject()->Captures;
@@ -472,7 +459,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
 		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
  
-	    $this->logger->Spectator($QueryShots_HitsAtkPlayer);
+	    $this->logger->logDebug($QueryShots_HitsAtkPlayer);
 	    $this->db->execute($QueryShots_HitsAtkPlayer);
  
 	    $AtkShotsObject = $this->db->execute($QueryShots_HitsAtkPlayer)->fetchObject()->shots;
@@ -489,7 +476,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 		WHERE player_maps.player_id = " . $this->db->quote($this->AtkPlayer) . "
 		AND player_maps.match_id = " . $this->db->quote($this->MatchNumber) . "
 		AND player_maps.match_map_id = " . $this->db->quote($this->match_map_id) . "";
-	    $this->logger->Spectator($queryAtkHitRatio);
+	    $this->logger->logDebug($queryAtkHitRatio);
 	    $this->db->execute($queryAtkHitRatio);
  
  
@@ -536,16 +523,21 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 	$red = $this->connection->getTeamInfo(2);
 	$xml = '<manialinks>';
 	$xml .= '<manialink version="1" background="1" navigable3d="0" id="AtkSpecDetails">';
-	$xml .= '<frame id="AtkSpecDetails">';
-	$xml .= '<quad image="' . $this->imagequad . '" posn="-82.5 -62 -1" sizen="165 32"/>'; // MainWindow
-	$xml .= '<label posn="-76 -68 -1" sizen="30.33" textsize="2" style="TextValueSmall" text="Atk Ratio" />';
-	$xml .= '<label posn="-59 -68 -1" sizen="30.33" textsize="2" style="TextButtonBig" text="' . $RoundsSuccess . ' / ' . $RoundsAtk . '" />';
-	$xml .= '<label posn="-50 -68 -1" sizen="30.33" textsize="2" style="TextValueSmall" text="Captures" />';
-	$xml .= '<label posn="-32 -68 -1" sizen="30.33" textsize="2" style="TextButtonBig" text="' . $CaptureAtk . '" />';
-	$xml .= '<label posn="29 -68 -1" sizen="30.33" textsize="2" style="TextValueSmall" text="Laser" />';
-	$xml .= '<label posn="40 -68 -1" sizen="30.33" textsize="2" style="TextButtonBig" text="' . $LaserAcc . ' %" />';
-	$xml .= '<label posn="57 -68 -1" sizen="30.33" textsize="2" style="TextValueSmall" text="Rocket" />';
-	$xml .= '<label posn="71 -68 -1" sizen="30.33" textsize="2" style="TextButtonBig" text="' . $RocketHits . '" />';
+	$xml .= '<frame id="AtkSpecDetails" posn="5 1.5 1">';
+	$xml .= '<quad posn="-83.5 -66.9 -0.1" sizen="4.04 49"  style="EnergyBar" substyle="BgText"  rot="270"/>';
+	$xml .= '<quad posn="74 -63.1 -0.1" sizen="4.04 50"  style="EnergyBar" substyle="BgText"  rot="90"/>';
+	$xml .= '<quad posn="70.8 -63.9 -0.5" sizen="4.04 28"  style="EnergyBar" substyle="BgText"  rot="1"/>';
+	$xml .= '<quad posn="-83.8 -63.9 -0.5" sizen="4.04 28"  style="EnergyBar" substyle="BgText"  rot="1"/>';
+	$xml .= '<quad style="EnergyBar" substyle="EnergyBar"  posn="-81.3 -69" sizen="50 7.6"/>';
+	$xml .= '<quad style="EnergyBar" substyle="EnergyBar"  posn="21.3 -69" sizen="50 7.6"/>';
+	$xml .= '<label posn="-76 -71 0" sizen="30 5" textsize="2" style="TextValueBig" text="Atk:" />';
+	$xml .= '<label posn="-65 -71 0" sizen="30 5" textsize="2" style="TextButtonBig" text="' . $RoundsSuccess . ' / ' . $RoundsAtk . '" />';
+	$xml .= '<label posn="-50 -71 0" sizen="30 5" textsize="2" style="TextValueBig" text="Cap:" />';
+	$xml .= '<label posn="-39 -71 0" sizen="30 5" textsize="2" style="TextButtonBig" text="' . $CaptureAtk . '" />';
+	$xml .= '<quad posn="24.3 -68.6 0" sizen="8 8" style="Icons64x64_2" substyle="LaserHit" />';
+	$xml .= '<label posn="34.3 -70.7 0" sizen="13.2 5" textsize="2" style="TextButtonBig" text="' . $LaserAcc . ' %" />';
+	$xml .= '<quad posn="47.3 -68.6 0" sizen="8 8" style="Icons64x64_2" substyle="RocketHit" />';
+	$xml .= '<label posn="60 -70.7 0" sizen="13.2 5" textsize="2" style="TextButtonBig" text="' . $RocketHits . '" />';
 	if ($TeamNr == 1) {
 	    if ($blue->clubLinkUrl) {
 		//$xml .= '<quad image="'.$this->Clublink($blue->clubLinkUrl).'" posn="50 -20 0.5" sizen="15 15" />';   
@@ -625,14 +617,14 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 	    return $this->playerIDs[$login];
 	} else {
 	    $q = "SELECT id FROM `players` WHERE `login` = " . $this->db->quote($login) . "";
-	    $this->logger->Spectator($q);
+	    $this->logger->logDebug($q);
 	    return $this->db->execute($q)->fetchObject()->id;
 	}
     }
  
     function getMapid() {
 	$q = "SELECT id FROM `maps` WHERE `uid` = " . $this->db->quote($this->storage->currentMap->uId) . "";
-	$this->logger->Spectator($q);
+	$this->logger->logDebug($q);
 	return $this->db->execute($q)->fetchObject()->id;
     }
  
