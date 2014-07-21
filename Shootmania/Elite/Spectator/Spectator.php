@@ -318,7 +318,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
  
     public function onPlayerInfoChanged($playerInfo) {
 	$player = \ManiaPlanet\DedicatedServer\Structures\PlayerInfo::fromArray($playerInfo);
-	echo $player->currentTargetId;
+	//echo $player->currentTargetId;
 	
 	if (!array_key_exists($player->login, $this->widgetVisible)) {
 	    $this->widgetVisible[$player->login] = True;
