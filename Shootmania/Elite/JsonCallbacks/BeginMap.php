@@ -11,6 +11,8 @@ class BeginMap extends RpcObject {
 
     /** var integer */
     public $mapNumber;
-
+	
+	/** var boolean */
+    public $mapRestart = false;
 }
 

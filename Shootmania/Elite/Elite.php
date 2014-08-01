@@ -70,7 +70,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	private $playerIDs = array();
 
 	function onInit() {
-		$this->setVersion('1.0.6.c');
+		$this->setVersion('1.0.6.d');
 
 		$this->logger = new Log('./logs/', Log::DEBUG, $this->storage->serverLogin);
 		$this->mapdirectory = $this->connection->getMapsDirectory();
@@ -143,6 +143,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	`Clublink_Primary_RGB` varchar(6) NOT NULL,
 	`Clublink_Secondary_RGB` varchar(6) NOT NULL,
 	`Clublink_URL` VARCHAR(250) NOT NULL,
+	`Clublink_Twitter` VARCHAR(250) NOT NULL,
 	PRIMARY KEY (`id`)
 	) COLLATE='utf8_general_ci'
 	ENGINE=InnoDB AUTO_INCREMENT=1 ;";
@@ -157,9 +158,10 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	`Clublink_ZonePath`, 
 	`Clublink_Primary_RGB`, 
 	`Clublink_Secondary_RGB`, 
-	`Clublink_URL`) VALUES
-	(1, 'Blue', 'Blue', NULL, 'France', '00F', 'F00', ''),
-	(2, 'Red', 'Red', NULL, 'France', 'F00', '00F', '');";
+	`Clublink_URL`,
+	Clublink_Twitter) VALUES
+	(1, 'Blue', 'Blue', NULL, 'France', '00F', 'F00', '', ''),
+	(2, 'Red', 'Red', NULL, 'France', 'F00', '00F', '', '');";
 	$this->db->execute($q);
 	}
 
@@ -181,6 +183,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	`competition_id` INT(10) NOT NULL DEFAULT '1',
 	`show` tinyint (1),
 	`Replay` VARCHAR(100) DEFAULT NULL,
+	`Restarted` tinyint (1),
 	PRIMARY KEY (`id`),
 	Index (`matchServerLogin`),
 	CONSTRAINT `FK_Matches_teamBlue` FOREIGN KEY (`teamBlue`) REFERENCES `Clublinks` (`id`) ON DELETE CASCADE,
@@ -293,6 +296,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	`attackWinEliminate` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
 	`defenceWinEliminate` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
 	`matchServerLogin` VARCHAR(250) NOT NULL,
+	`mapbonus` tinyint (1),
 	PRIMARY KEY (`id`),
 	Index (`matchServerLogin`),
 	CONSTRAINT `FK_Match_details_match_id` FOREIGN KEY (`match_id`) REFERENCES `Matches` (`id`) ON DELETE CASCADE,
@@ -681,12 +685,38 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	if ($teamnumber == 1 && $S_MapWin['S_MapWin'] == 3){
 	$this->connection->sendModeScriptCommands(array('Command_MatchPointsClan1' => 1));
 	$this->connection->chatSendServerMessage('Set mapbonus for team '.$teamnumber.' to 1', $login);
+	try
+	{
+	$blue = $this->connection->getTeamInfo(1);
+	$BlueteamId = $this->getTeamid($blue->clubLinkUrl, $blue->name);
+	$MapBonusBlue = "UPDATE `match_details`
+	SET `mapbonus` = '1'
+	where `match_id` = " . $this->db->quote($this->MatchNumber) . " and `team_id` = " . $this->db->quote($BlueteamId) . " and `map_id` = " . $this->db->quote($this->getMapid()) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
+	$this->db->execute($MapBonusBlue);
+	$this->logger->logDebug($MapBonusBlue);
+	}
+	catch (\Exception $e) {
+	return;
+	}
 	$this->logger->logInfo("Set mapbonus for team ".$teamnumber." to 1");
 	}
 	if ($teamnumber == 2 && $S_MapWin['S_MapWin'] == 3){
 	$this->connection->sendModeScriptCommands(array('Command_MatchPointsClan2' => 1));
 	$this->connection->chatSendServerMessage('Set mapbonus for team '.$teamnumber.' to 1', $login);
+	try
+	{
+	$red = $this->connection->getTeamInfo(2);
+	$RedteamId = $this->getTeamid($red->clubLinkUrl, $red->name);
+	$MapBonusRed = "UPDATE `match_details`
+	SET `mapbonus` = '1'
+	where `match_id` = " . $this->db->quote($this->MatchNumber) . " and `team_id` = " . $this->db->quote($RedteamId) . " and `map_id` = " . $this->db->quote($this->getMapid()) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
+	$this->db->execute($MapBonusRed);
+	$this->logger->logDebug($MapBonusRed);
 	$this->logger->logInfo("Set mapbonus for team ".$teamnumber." to 1");
+	}
+	catch (\Exception $e) {
+	return;
+	}
 	}
 	}
 
@@ -1031,6 +1061,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	}
 
 	function onXmlRpcEliteMatchStart(JsonCallbacks\BeginMatch $content) {
+	if ($content->mapRestart == true){
 		$blue = $this->connection->getTeamInfo(1);
 		$red = $this->connection->getTeamInfo(2);
 
@@ -1049,7 +1080,10 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 			`Matchscore_red`,
 			`MatchStart`,
 			`matchServerLogin`,
-			`competition_id`
+			`competition_id`,
+			`show`,
+			`Replay`,
+			`Restarted`
 			) VALUES (
 			" . $this->db->quote($MatchName) . ",
 			" . $this->db->quote($this->getTeamid($blue->clubLinkUrl, $blue->name)) . ",
@@ -1062,11 +1096,59 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 			'0',
 			'" . date('Y-m-d H:i:s') . "',
 			" . $this->db->quote($this->storage->serverLogin) . ",
-			" . $this->db->quote($this->competition_id) . "
+			" . $this->db->quote($this->competition_id) . ",
+			'',
+			'',
+			'1'
 			)";
 		$this->logger->logDebug($qmatch);
 		$this->db->execute($qmatch);
 		$this->MatchNumber = $this->db->insertID();
+		}
+		else{
+		$blue = $this->connection->getTeamInfo(1);
+		$red = $this->connection->getTeamInfo(2);
+
+		$MatchName = '' . $blue->name . ' vs ' . $red->name . '';
+							// set servername with clublinks....
+														
+		$qmatch = "INSERT INTO `matches` (
+			`MatchName`,
+			`teamBlue`,
+			`teamBlue_emblem`,
+			`teamBlue_RGB`,
+			`teamRed`,
+			`teamRed_emblem`,
+			`teamRed_RGB`,
+			`Matchscore_blue`,
+			`Matchscore_red`,
+			`MatchStart`,
+			`matchServerLogin`,
+			`competition_id`,
+			`show`,
+			`Replay`,
+			`Restarted`
+			) VALUES (
+			" . $this->db->quote($MatchName) . ",
+			" . $this->db->quote($this->getTeamid($blue->clubLinkUrl, $blue->name)) . ",
+			" . $this->db->quote($blue->emblemUrl) . ",
+			" . $this->db->quote($blue->rGB) . ",
+			" . $this->db->quote($this->getTeamid($red->clubLinkUrl, $red->name)) . ",
+			" . $this->db->quote($red->emblemUrl) . ",
+			" . $this->db->quote($red->rGB) . ",
+			'0',
+			'0',
+			'" . date('Y-m-d H:i:s') . "',
+			" . $this->db->quote($this->storage->serverLogin) . ",
+			" . $this->db->quote($this->competition_id) . ",
+			'',
+			'',
+			''
+			)";
+		$this->logger->logDebug($qmatch);
+		$this->db->execute($qmatch);
+		$this->MatchNumber = $this->db->insertID();
+		}
 	}
 
 	function onXmlRpcEliteMapStart(JsonCallbacks\BeginMap $content) {
@@ -1236,7 +1318,8 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		  `timeOver`,
 		  `attackWinEliminate`,
 		  `defenceWinEliminate`,
-		  `matchServerLogin`
+		  `matchServerLogin`,
+		  `mapbonus`
 		  ) VALUES (
 		  " . $this->db->quote($this->MatchNumber) . ",
 		  " . $this->db->quote($this->getTeamid($attackingClan->clubLinkUrl, $attackingClan->name)) . ",
@@ -1247,7 +1330,8 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		  '0',
 		  '0',
 		  '0',
-		  " . $this->db->quote($this->storage->serverLogin) . "
+		  " . $this->db->quote($this->storage->serverLogin) . ",
+		  '0'
 		  )";
 			$this->logger->logDebug($q);
 			$this->db->execute($q);
@@ -1276,7 +1360,8 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		  `timeOver`,
 		  `attackWinEliminate`,
 		  `defenceWinEliminate`,
-		  `matchServerLogin`
+		  `matchServerLogin`,
+		  `mapbonus`
 		  ) VALUES (
 		  " .  $this->db->quote($this->MatchNumber) . ",
 		  " . $this->db->quote($this->getTeamid($defendingClan->clubLinkUrl, $defendingClan->name)) . ",
@@ -1287,7 +1372,8 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		  '0',
 		  '0',
 		  '0',
-		  " . $this->db->quote($this->storage->serverLogin) . "
+		  " . $this->db->quote($this->storage->serverLogin) . ",
+		  '0'
 		  )";
 			$this->logger->logDebug($q);
 			$this->db->execute($q);
@@ -1388,7 +1474,8 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		  `Clublink_ZonePath`,
 		  `Clublink_Primary_RGB`,
 		  `Clublink_Secondary_RGB`,
-		  `Clublink_URL`
+		  `Clublink_URL`,
+		  `Clublink_Twitter`
 		  ) VALUES (
 		  " . $this->db->quote($xml->name) . ",
 		  " . $this->db->quote($name) . ",
@@ -1396,7 +1483,8 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		  " . $this->db->quote($zone[2]) . ",
 		  " . $this->db->quote($xml->color['primary']) . ",
 		  " . $this->db->quote($xml->color['secondary']) . ",
-		  " . $this->db->quote($url) . "
+		  " . $this->db->quote($url) . ",
+		  ''
 		  )";
 			$this->db->execute($qClublink);
 			$this->logger->logDebug($qClublink);
