@@ -118,17 +118,18 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	`date_begin` datetime DEFAULT NULL,
 	`date_end` datetime DEFAULT NULL,
 	`show` tinyint(1) NOT NULL DEFAULT '0',
+	`type` varchar(50) NOT NULL DEFAULT '',
 	PRIMARY KEY (`id`)
 	) COLLATE='utf8_general_ci'
 	ENGINE=InnoDB AUTO_INCREMENT=1 ;";
 	  $this->db->execute($q);
 	  
 
-	$q = "INSERT INTO `competitions` (`id`, `name`, `description`, `logo`, `embed`, `background`, `date_begin`, `date_end`, `show`) VALUES
-	(1, 'ESWC France 2013', 'French finals ESWC France 2013', 'http://www.eswc.com/public/images/logo_2013.png', '', '/img/fond_eswc.png', '2013-10-30 09:00:00', '2013-10-30 20:00:00', 1),
-	(2, 'ESWC World 2013', 'World finals ESWC 2013', 'http://www.eswc.com/public/images/logo_2013.png', '', '/img/fond_eswc.png', '2013-10-31 09:00:00', '2013-11-02 20:00:00', 1),
-	(3, 'Gamers Assembly 2014', 'ShootMania tournament at the Gamers Assembly 2014', 'http://live.drakonia.eu/img/logos/gamers_assembly_o.png', '', '/img/fond_ga2.png', '2014-04-19 13:00:00', '2014-04-21 15:00:00', 1),
-	(4, 'Cap''Arena #3', 'Antec Trophy ShootMania', './img/logos/cap-arena.png', '', '/img/fond_eswc.png', '2014-05-10 12:00:00', '2014-05-11 17:00:00', 1);
+	$q = "INSERT INTO `competitions` (`id`, `name`, `description`, `logo`, `embed`, `background`, `date_begin`, `date_end`, `show`, `type`) VALUES
+	(1, 'ESWC France 2013', 'French finals ESWC France 2013', 'http://www.eswc.com/public/images/logo_2013.png', '', '/img/fond_eswc.png', '2013-10-30 09:00:00', '2013-10-30 20:00:00', 1, 'Elite'),
+	(2, 'ESWC World 2013', 'World finals ESWC 2013', 'http://www.eswc.com/public/images/logo_2013.png', '', '/img/fond_eswc.png', '2013-10-31 09:00:00', '2013-11-02 20:00:00', 1, 'Elite'),
+	(3, 'Gamers Assembly 2014', 'ShootMania tournament at the Gamers Assembly 2014', 'http://live.drakonia.eu/img/logos/gamers_assembly_o.png', '', '/img/fond_ga2.png', '2014-04-19 13:00:00', '2014-04-21 15:00:00', 1, 'Elite'),
+	(4, 'Cap''Arena #3', 'Antec Trophy ShootMania', './img/logos/cap-arena.png', '', '/img/fond_eswc.png', '2014-05-10 12:00:00', '2014-05-11 17:00:00', 1, 'Elite');
 	";
 	$this->db->execute($q);
 	}
