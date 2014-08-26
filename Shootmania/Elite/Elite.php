@@ -1062,7 +1062,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	}
 
 	function onXmlRpcEliteMatchStart(JsonCallbacks\BeginMatch $content) {
-	if ($content->mapRestart == true){
+	if ($content->Restart == true){
 		$blue = $this->connection->getTeamInfo(1);
 		$red = $this->connection->getTeamInfo(2);
 

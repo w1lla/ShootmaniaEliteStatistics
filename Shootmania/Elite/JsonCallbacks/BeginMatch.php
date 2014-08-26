@@ -13,6 +13,6 @@ class BeginMatch extends RpcObject {
     public $matchNumber = 0;
 	
 	/** var boolean */
-    public $matchRestart = false;
+    public $Restart = false;
 }
 
