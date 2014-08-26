@@ -163,8 +163,6 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 	    $this->forceUpdate = false;
 	    $this->needUpdate = false;
 	    $this->MatchNumber = $this->getServerCurrentMatch($this->storage->serverLogin);
-	    //var_dump($this->BeginTurnAtkPlayer);
-	    //var_dump($this->AtkPlayer);
 	    if (empty($this->SpecTarget->login) || $this->SpecTarget->login === $this->storage->serverLogin || empty($this->BeginTurnAtkPlayer) || empty($this->AtkPlayer) || $this->SpecPlayer->currentTargetId === 255)
 		return;
  
@@ -318,7 +316,6 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
  
     public function onPlayerInfoChanged($playerInfo) {
 	$player = \ManiaPlanet\DedicatedServer\Structures\PlayerInfo::fromArray($playerInfo);
-	//echo $player->currentTargetId;
 	
 	if (!array_key_exists($player->login, $this->widgetVisible)) {
 	    $this->widgetVisible[$player->login] = True;
@@ -342,7 +339,6 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 	
 	
 	
-	//var_dump($player);
 	$this->SpecPlayer = $player;
 	if ($this->SpecPlayer->currentTargetId == 0) {
 	    $this->connection->sendHideManialinkPage();
@@ -538,20 +534,6 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
 	$xml .= '<label posn="34.3 -70.7 0" sizen="13.2 5" textsize="2" style="TextButtonBig" text="' . $LaserAcc . ' %" />';
 	$xml .= '<quad posn="47.3 -68.6 0" sizen="8 8" style="Icons64x64_2" substyle="RocketHit" />';
 	$xml .= '<label posn="60 -70.7 0" sizen="13.2 5" textsize="2" style="TextButtonBig" text="' . $RocketHits . '" />';
-	if ($TeamNr == 1) {
-	    if ($blue->clubLinkUrl) {
-		//$xml .= '<quad image="'.$this->Clublink($blue->clubLinkUrl).'" posn="50 -20 0.5" sizen="15 15" />';   
-	    } else {
-		//$xml .= '<quad posn="50 -20 0.5" sizen="15 15" style="Emblems" substyle="#1" />';
-	    }
-	}
-	if ($TeamNr == 2) {
-	    if ($red->clubLinkUrl) {
-		//$xml .= '<quad image="'.$this->Clublink($red->clubLinkUrl).'" posn="50 -20 0.5" sizen="15 15" />';   
-	    } else {
-		//$xml .= '<quad posn="50 -20 0.5" sizen="15 15" style="Emblems" substyle="#2" />';
-	    }
-	}
  
  
 	$xml .= '</frame>';
