@@ -1,11 +1,11 @@
 <?php
  
 /**
-  Name: Willem 'W1lla' van den Munckhof
-  Date: 15/4/2014
-  Project Name: ESWC Elite Statistics
-  Fix from Reaby (F7 Callbacks)
-  What to do:
+	Name: Willem 'W1lla' van den Munckhof
+	Date: 29-10-2014
+	Version: 3 (ESWC2K14)
+	Fix from Reaby (F7 Callbacks)
+	What to do:
  
   /**
  * ---------------------------------------------------------------------
@@ -78,7 +78,7 @@ class Spectator extends \ManiaLive\PluginHandler\Plugin {
     private $playerIDs = array();
  
     function onInit() {
-	$this->setVersion('1.0.6.d');
+	$this->setVersion('1.0.6.e');
  
 	$this->logger = new Log('./logs/', Log::DEBUG, $this->storage->serverLogin);
     }

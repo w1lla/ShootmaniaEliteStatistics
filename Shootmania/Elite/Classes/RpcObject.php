@@ -13,7 +13,6 @@ class RpcObject extends \Maniaplanet\DedicatedServer\Structures\AbstractStructur
     }
 
     public function set($data) {
-	//var_dump($data);
         foreach ($data AS $key => $value) {
             if (is_array($value)) {
                 $sub = new RpcObject();

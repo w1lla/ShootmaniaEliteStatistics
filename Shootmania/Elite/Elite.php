@@ -2,7 +2,7 @@
 
 /**
 Name: Willem 'W1lla' van den Munckhof
-Date: 12-6-2014
+Date: 29-10-2014
 Version: 3 (ESWC2K14)
 Project Name: ESWC Elite Statistics
 
@@ -70,14 +70,13 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	private $playerIDs = array();
 
 	function onInit() {
-		$this->setVersion('1.0.6.d');
+		$this->setVersion('1.0.6.e');
 
 		$this->logger = new Log('./logs/', Log::DEBUG, $this->storage->serverLogin);
 		$this->mapdirectory = $this->connection->getMapsDirectory();
 	}
 
 	function onLoad() {
-		$admins = AdminGroup::get();
 		$cmd = $this->registerChatCommand('extendWu', 'WarmUp_Extend', 0, true);
 		$cmd->help = 'Extends WarmUp In Elite by Callvote.';
 
@@ -287,9 +286,9 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	   if(!$this->db->tableExists('match_details')) {
 	  $q = "CREATE TABLE IF NOT EXISTS `match_details` (
 	`id` mediumint(9) NOT NULL AUTO_INCREMENT,
-	`match_id` INT NOT NULL DEFAULT '0',
-	`team_id` mediumint(9) NOT NULL DEFAULT '0',
-	`map_id` mediumint(9) NOT NULL DEFAULT '0',
+	`match_id` INT (11) NOT NULL,
+	`team_id` mediumint(9) NOT NULL,
+	`map_id` mediumint(9) NOT NULL,
 	`attack` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
 	`defence` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
 	`capture` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
@@ -476,12 +475,13 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 
 		$this->connection->setModeScriptSettings(array('S_UseScriptCallbacks' => true));
 
-		$this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => true)); //logDebug Way...
+		//$this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => true)); //logDebug Way...
 		$this->connection->setModeScriptSettings(array('S_UsePlayerClublinks' => true)); //logDebug Way...
-		$this->connection->setModeScriptSettings(array('S_DraftPickNb' => 3));
-		$this->connection->setModeScriptSettings(array('S_Mode' => 1));
+		//$this->connection->setModeScriptSettings(array('S_DraftPickNb' => 3));
+		//$this->connection->setModeScriptSettings(array('S_DraftBanNb' => 6));
+		//$this->connection->setModeScriptSettings(array('S_UseDraft' => true));		
+		//$this->connection->setModeScriptSettings(array('S_Mode' => 0));
 		$this->connection->sendModeScriptCommands(array("Command_ForceClublinkReload" => true));
-		//$this->connection->setCallVoteRatios(array(array('Command' => 'SetModeScriptSettingsAndCommands', 'Ratio' => 0.4 )));
 
 	Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Core v' . $this->getVersion());
 	foreach ($this->storage->players as $player) {
@@ -490,7 +490,6 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 
 		$match = $this->getServerCurrentMatch($this->storage->serverLogin);
 		if ($match) {
-			//var_dump($match);
 			$this->updateMatchState($match);
 		}
 
@@ -736,8 +735,6 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	}
 
 	function onEcho($internal, $public) {
-			//var_dump($internal);
-			//var_dump($public);
 		switch ($internal) {
 			case "map_pause":
 				$this->connection->sendModeScriptCommands(array("Command_ForceWarmUp" => true));
@@ -826,18 +823,15 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 				break;
 			case 'OnShoot':
 				$this->onXmlRpcEliteShoot(new JsonCallbacks\OnShoot($json));
-		//var_dump($json);
 				break;
 			case 'OnHit':
 				$this->onXmlRpcEliteHit(new JsonCallbacks\OnHit($json));
-		//var_dump($json);
 				break;
 			case 'OnCapture':
 				$this->onXmlRpcEliteCapture(new JsonCallbacks\OnCapture($json));
 				break;
 			case 'OnArmorEmpty':
 				$this->onXmlRpcEliteArmorEmpty(new JsonCallbacks\OnArmorEmpty($json));
-		//var_dump($json);
 				break;
 			case 'OnNearMiss':
 				$this->onXmlRpcEliteNearMiss(new JsonCallbacks\OnNearMiss($json));
@@ -935,7 +929,6 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		
 		$path = $this->mapdirectory.$data->fileName;
 		$mapInfo = \ManiaLivePlugins\Shootmania\Elite\Classes\GbxReader\Map::read($path);
-		//var_dump($mapInfo->thumbnail);
 		if($mapInfo->thumbnail){
 		imagejpeg($mapInfo->thumbnail, './www/media/images/thumbnails/'.$mapInfo->uid.'.jpg', 100);
 		}
@@ -1042,12 +1035,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	}
 
 	function onXmlRpcEliteEndWarmUp(JsonCallbacks\EndWarmup $content) {
-		$blue = $this->connection->getTeamInfo(1);
-		$red = $this->connection->getTeamInfo(2);
 
-
-		
-		  
 		if ($content->allReady === true) {
 			$q = "UPDATE `match_maps`
 		  SET `AllReady` = '1'
@@ -1295,7 +1283,6 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 			" . $this->db->quote($this->getTeamid($teams[($player->teamId + 1)]->clubLinkUrl, $teams[($player->teamId + 1)]->name)) . ",
 			" . $this->db->quote($this->storage->serverLogin) . "
 			)";
-				//var_dump($pmi);
 				$this->logger->logDebug($pmi);
 				$this->db->execute($pmi);
 			}
@@ -1402,7 +1389,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 												`match_map_id` = " . $this->db->quote($this->MapNumber) . " AND 
 												`matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
 		$this->logger->logDebug($q);
-		$Atker = $this->db->execute($q)->fetchObject();
+		$this->db->execute($q);
 
 		$q = "UPDATE `player_maps` 
 									 SET `atkrounds` = atkrounds + 1 
@@ -1746,7 +1733,6 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	function onXmlRpcEliteCapture(JsonCallbacks\OnCapture $content) {
 	$message = ''.$content->event->player->login.' captured the pole';
 	$this->logger->logNotice($message);
-		$map = $this->storage->currentMap;
 
 		$qCap = "INSERT INTO `captures` (
 		`match_id`,
@@ -1825,8 +1811,6 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	}
 
 	function onXmlRpcEliteEndMatch(JsonCallbacks\EndMatch $content) {
-		//$MapWin = $this->connection->getModeScriptSettings();
-		//print_r("Nb Map to win: ") . var_dump($MapWin['S_MapWin']);
 
 		$queryMapWinSettingsEnd = "UPDATE `matches` SET 
 													`MatchEnd` = '" . date('Y-m-d H:i:s') . "'
@@ -1853,20 +1837,16 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		  $sourcefolder = "$challengeFile"; // Default: "./" 
 		  $zipfilename  = $dataDir."ToUpload/".$this->competition_id."/".$name."_".date('YmdHi').".zip"; // Default: "myarchive.zip"
 		  $zipfilename2  = $name."_".date('YmdHi').".zip"; // Default: "myarchive.zip"
-		  $timeout      = 5000; // Default: 5000
 
 		  // instantate an iterator (before creating the zip archive, just
 		  // in case the zip file is created inside the source folder)
 		  // and traverse the directory to get the file list.
-		  //$dirlist = new \RecursiveDirectoryIterator($sourcefolder);
-		 // $filelist = new \RecursiveIteratorIterator($dirlist);
 		  $filelist = new \RecursiveIteratorIterator(
 			  new \RecursiveDirectoryIterator($sourcefolder),
 			  \RecursiveIteratorIterator::LEAVES_ONLY
 		  );
 
 		  // set script timeout value 
-		  //ini_set('max_execution_time', $timeout);
 
 		  // instantate object
 		  $zip = new \ZipArchive();
@@ -1879,7 +1859,15 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		  // add each file in the file list to the archive
 		  foreach ($filelist as $key=>$value) {
 			  $new_filename = substr($key,strrpos($key,'/') + 1);
-			  $zip->addFile(realpath($key), $new_filename) or die ("ERROR: Could not add file: $key");
+			  try
+			{
+			$zip->addFile(realpath($key), $new_filename);
+							} catch (\Exception $e) {
+					echo $e;
+					echo "ERROR: Could not add file: $key";
+				}
+	   }
+			  
 			  
 		  }
 
@@ -1899,7 +1887,6 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 								  `id` = " . $this->db->quote($this->MatchNumber) . "";
 		$this->logger->logDebug($queryMapWinSettingsEnd);
 		$this->db->execute($queryMapWinSettingsEnd);
-	}
 
 	// set server back to old value.
 		   $data = $this->connection->getServerTags();
