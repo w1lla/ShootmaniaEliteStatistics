@@ -70,7 +70,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	private $playerIDs = array();
 
 	function onInit() {
-		$this->setVersion('1.0.6.e');
+		$this->setVersion('1.0.6.f');
 
 		$this->logger = new Log('./logs/', Log::DEBUG, $this->storage->serverLogin);
 		$this->mapdirectory = $this->connection->getMapsDirectory();
@@ -478,10 +478,10 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 
 		$this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => true)); //logDebug Way...
 		$this->connection->setModeScriptSettings(array('S_UsePlayerClublinks' => true)); //logDebug Way...
-		$this->connection->setModeScriptSettings(array('S_DraftPickNb' => 3));
-		$this->connection->setModeScriptSettings(array('S_DraftBanNb' => 6));
-		$this->connection->setModeScriptSettings(array('S_UseDraft' => true));		
-		$this->connection->setModeScriptSettings(array('S_Mode' => 0));
+		//$this->connection->setModeScriptSettings(array('S_DraftPickNb' => 3));
+		//$this->connection->setModeScriptSettings(array('S_DraftBanNb' => 6));
+		$this->connection->setModeScriptSettings(array('S_UseDraft' => false));		
+		$this->connection->setModeScriptSettings(array('S_Mode' => 1));
 		$this->connection->sendModeScriptCommands(array("Command_ForceClublinkReload" => true));
 
 	Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Core v' . $this->getVersion());
@@ -850,13 +850,13 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		  $ClanEndMatchDataVariables = $this->connection->getModeScriptVariables();
 					$this->BlueScoreMatch = $ClanEndMatchDataVariables['Clan1MatchPoints'];
 					$this->RedScoreMatch = $ClanEndMatchDataVariables['Clan2MatchPoints'];
-		$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
-					$this->logger->logDebug($qmmsb);
-					$this->db->execute($qmmsb);
+		$qmmsbEndMatch = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+					$this->logger->logDebug($qmmsbEndMatch);
+					$this->db->execute($qmmsbEndMatch);
 				 //MatchScore Red
-				$qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
-					$this->logger->logDebug($qmmsr);
-					$this->db->execute($qmmsr);
+				$qmmsrEndMatch = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+					$this->logger->logDebug($qmmsrEndMatch);
+					$this->db->execute($qmmsrEndMatch);
 		}
 				$this->onXmlRpcEliteEndMatch(new JsonCallbacks\EndMatch($json));
 				break;
@@ -865,13 +865,13 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		  $ClanEndMapDataVariables = $this->connection->getModeScriptVariables();
 					$this->BlueScoreMatch = $ClanEndMapDataVariables['Clan1MatchPoints'];
 					$this->RedScoreMatch = $ClanEndMapDataVariables['Clan2MatchPoints'];
-		$qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
-					$this->logger->logDebug($qmmsb);
-					$this->db->execute($qmmsb);
+		$qmmsbEndMap = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+					$this->logger->logDebug($qmmsbEndMap);
+					$this->db->execute($qmmsbEndMap);
 				 //MatchScore Red
-				$qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
-					$this->logger->logDebug($qmmsr);
-					$this->db->execute($qmmsr);
+				$qmmsrEndMap = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+					$this->logger->logDebug($qmmsrEndMap);
+					$this->db->execute($qmmsrEndMap);
 		}
 				$this->onXmlRpcEliteEndMap(new JsonCallbacks\EndMap($json));
 				break;
@@ -880,13 +880,13 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		{
 		  $this->BlueScoreMatch = $json[0];
 		  $this->RedScoreMatch = $json[1];
-		  $qmmsb = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
-					$this->logger->logDebug($qmmsb);
-					$this->db->execute($qmmsb);
+		  $qmmsbScores = "UPDATE `matches` SET `Matchscore_blue` = " . $this->db->quote($this->BlueScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+					$this->logger->logDebug($qmmsbScores);
+					$this->db->execute($qmmsbScores);
 				 //MatchScore Red
-				$qmmsr = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
-					$this->logger->logDebug($qmmsr);
-					$this->db->execute($qmmsr);
+				$qmmsrScores = "UPDATE `matches` SET Matchscore_red = " . $this->db->quote($this->RedScoreMatch) . " WHERE `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " AND `id` = " . $this->db->quote($this->MatchNumber) . "";
+					$this->logger->logDebug($qmmsrScores);
+					$this->db->execute($qmmsrScores);
 		}
 		break;
 		}
