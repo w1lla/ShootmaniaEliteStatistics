@@ -1054,7 +1054,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	if ($content->Restart == true){
 		$blue = $this->connection->getTeamInfo(1);
 		$red = $this->connection->getTeamInfo(2);
-
+		
 		$MatchName = '' . $blue->name . ' vs ' . $red->name . '';
 							// set servername with clublinks....
 														
@@ -1915,6 +1915,17 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	}
 
 	function getTeamid($clubLinkUrl, $teamname){
+	$blue = $this->connection->getTeamInfo(1);
+	$red = $this->connection->getTeamInfo(2);
+	
+		if ($blue->clubLinkUrl) {
+			  $this->updateClublink($blue->clubLinkUrl);
+		  }
+		  
+		if ($red->clubLinkUrl) {
+			  $this->updateClublink($red->clubLinkUrl);
+		  }
+		  
 	$name = \ManiaLib\Utils\Formatting::stripColors(\ManiaLib\Utils\Formatting::stripStyles($teamname));
 	$tname = preg_replace('/[^A-Za-z0-9 _\-\+\&]/','',$name);
 	$q = "SELECT id FROM `clublinks` WHERE `Clublink_URL` = " . $this->db->quote($clubLinkUrl) . " and Clublink_Name_Clean = " . $this->db->quote($tname) . "";
