@@ -474,13 +474,14 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		$this->updateServerChallenges();
 
 		$this->connection->setModeScriptSettings(array('S_UseScriptCallbacks' => true));
+		$this->connection->setModeScriptSettings(array('S_UseLegacyCallback' => true));
 
-		//$this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => true)); //logDebug Way...
+		$this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => true)); //logDebug Way...
 		$this->connection->setModeScriptSettings(array('S_UsePlayerClublinks' => true)); //logDebug Way...
-		//$this->connection->setModeScriptSettings(array('S_DraftPickNb' => 3));
-		//$this->connection->setModeScriptSettings(array('S_DraftBanNb' => 6));
-		//$this->connection->setModeScriptSettings(array('S_UseDraft' => true));		
-		//$this->connection->setModeScriptSettings(array('S_Mode' => 0));
+		$this->connection->setModeScriptSettings(array('S_DraftPickNb' => 3));
+		$this->connection->setModeScriptSettings(array('S_DraftBanNb' => 6));
+		$this->connection->setModeScriptSettings(array('S_UseDraft' => true));		
+		$this->connection->setModeScriptSettings(array('S_Mode' => 0));
 		$this->connection->sendModeScriptCommands(array("Command_ForceClublinkReload" => true));
 
 	Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Core v' . $this->getVersion());
@@ -1057,7 +1058,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		$MatchName = '' . $blue->name . ' vs ' . $red->name . '';
 							// set servername with clublinks....
 														
-		$qmatch = "INSERT INTO `matches` (
+		$qmatchRestarted = "INSERT INTO `matches` (
 			`MatchName`,
 			`teamBlue`,
 			`teamBlue_emblem`,
@@ -1090,8 +1091,8 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 			'',
 			'1'
 			)";
-		$this->logger->logDebug($qmatch);
-		$this->db->execute($qmatch);
+		$this->logger->logDebug($qmatchRestarted);
+		$this->db->execute($qmatchRestarted);
 		$this->MatchNumber = $this->db->insertID();
 		}
 		else{
@@ -1101,7 +1102,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		$MatchName = '' . $blue->name . ' vs ' . $red->name . '';
 							// set servername with clublinks....
 														
-		$qmatch = "INSERT INTO `matches` (
+		$qmatchNotRestarted = "INSERT INTO `matches` (
 			`MatchName`,
 			`teamBlue`,
 			`teamBlue_emblem`,
@@ -1134,8 +1135,8 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 			'',
 			''
 			)";
-		$this->logger->logDebug($qmatch);
-		$this->db->execute($qmatch);
+		$this->logger->logDebug($qmatchNotRestarted);
+		$this->db->execute($qmatchNotRestarted);
 		$this->MatchNumber = $this->db->insertID();
 		}
 	}
