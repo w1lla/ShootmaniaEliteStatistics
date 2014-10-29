@@ -169,10 +169,10 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	  $q = "CREATE TABLE IF NOT EXISTS `matches` (
 	`id` INT NOT NULL AUTO_INCREMENT,
 	`MatchName` varchar(50) NOT NULL DEFAULT '',
-	`teamBlue` mediumint(9) NOT NULL DEFAULT '0',
+	`teamBlue` mediumint(9) NOT NULL,
 	`teamBlue_emblem` varchar(250) NOT NULL DEFAULT '',
 	`teamBlue_RGB` varchar(50) NOT NULL DEFAULT '',
-	`teamRed`  mediumint(9) NOT NULL DEFAULT '0',
+	`teamRed` mediumint(9) NOT NULL,
 	`teamRed_emblem` varchar(250) NOT NULL DEFAULT '',
 	`teamRed_RGB` varchar(50) NOT NULL DEFAULT '',
 	`Matchscore_blue` INT(10) NOT NULL DEFAULT '0',
@@ -180,7 +180,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	`MatchStart` datetime DEFAULT '0000-00-00 00:00:00',
 	`MatchEnd` datetime DEFAULT '0000-00-00 00:00:00',
 	`matchServerLogin` VARCHAR(250) NOT NULL,
-	`competition_id` INT(10) NOT NULL DEFAULT '1',
+	`competition_id` int(10) NOT NULL,
 	`show` tinyint (1),
 	`Replay` VARCHAR(100) DEFAULT NULL,
 	`Restarted` tinyint (1),
@@ -193,8 +193,43 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	ENGINE=InnoDB AUTO_INCREMENT=1 ;";
 	  $this->db->execute($q);
 	}
+	
+	
+	if(!$this->db->tableExists('maps')) {
+	  $q = "CREATE TABLE IF NOT EXISTS `maps` (
+	`id` MEDIUMINT(9) NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+									`uid` VARCHAR( 27 ) NOT NULL ,
+									`name` VARCHAR( 100 ) NOT NULL ,
+				  `author` VARCHAR( 30 ) NOT NULL
+	) COLLATE='utf8_general_ci'
+	ENGINE=InnoDB AUTO_INCREMENT=1 ;";
+	  $this->db->execute($q);
+	}
 
-	if(!$this->db->tableExists('players')) {
+		if(!$this->db->tableExists('match_maps')) {
+	  $q = "CREATE TABLE IF NOT EXISTS `match_maps` (
+	`id` INT NOT NULL AUTO_INCREMENT,
+	`match_id` INT NOT NULL,
+	`map_id` MEDIUMINT(9) NOT NULL,
+	`turnNumber` mediumint(9) NOT NULL DEFAULT '0',
+	`Roundscore_blue` INT(10) NOT NULL DEFAULT '0',
+	`Roundscore_red` INT(10) NOT NULL DEFAULT '0',
+	`MapStart` datetime DEFAULT '0000-00-00 00:00:00',
+	`MapEnd` datetime DEFAULT '0000-00-00 00:00:00',
+	`AtkId` mediumint(9),
+	`AllReady` boolean default '0',
+	`NextMap` boolean default '0',
+	`matchServerLogin` VARCHAR(250) NOT NULL,
+	PRIMARY KEY (`id`),
+	Index (`matchServerLogin`),
+	CONSTRAINT `FK_Match_maps_match_id` FOREIGN KEY (`match_id`) REFERENCES `Matches` (`id`) ON DELETE CASCADE,
+	CONSTRAINT `FK_Match_maps_map_id` FOREIGN KEY (`map_id`) REFERENCES `maps` (`id`) ON DELETE CASCADE
+	) COLLATE='utf8_general_ci'
+	ENGINE=InnoDB AUTO_INCREMENT=1 ;";
+	  $this->db->execute($q);
+	}
+	
+		if(!$this->db->tableExists('players')) {
 	  $q = "CREATE TABLE IF NOT EXISTS `players` (
 	`id` mediumint(9) NOT NULL AUTO_INCREMENT,
 	`login` varchar(50) NOT NULL,
@@ -219,47 +254,13 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	  $this->db->execute($q);
 	}
 
-	if(!$this->db->tableExists('maps')) {
-	  $q = "CREATE TABLE IF NOT EXISTS `maps` (
-	`id` MEDIUMINT( 9 ) NOT NULL AUTO_INCREMENT PRIMARY KEY ,
-									`uid` VARCHAR( 27 ) NOT NULL ,
-									`name` VARCHAR( 100 ) NOT NULL ,
-				  `author` VARCHAR( 30 ) NOT NULL
-	) COLLATE='utf8_general_ci'
-	ENGINE=InnoDB AUTO_INCREMENT=1 ;";
-	  $this->db->execute($q);
-	}
-
-		if(!$this->db->tableExists('match_maps')) {
-	  $q = "CREATE TABLE IF NOT EXISTS `match_maps` (
-	`id` INT NOT NULL AUTO_INCREMENT,
-	`match_id` INT NOT NULL DEFAULT '0',
-	`map_id` mediumint(9) NOT NULL DEFAULT '0',
-	`turnNumber` mediumint(9) NOT NULL DEFAULT '0',
-	`Roundscore_blue` INT(10) NOT NULL DEFAULT '0',
-	`Roundscore_red` INT(10) NOT NULL DEFAULT '0',
-	`MapStart` datetime DEFAULT '0000-00-00 00:00:00',
-	`MapEnd` datetime DEFAULT '0000-00-00 00:00:00',
-	`AtkId` mediumint(9) DEFAULT '0',
-	`AllReady` boolean default '0',
-	`NextMap` boolean default '0',
-	`matchServerLogin` VARCHAR(250) NOT NULL,
-	PRIMARY KEY (`id`),
-	Index (`matchServerLogin`),
-	CONSTRAINT `FK_Match_maps_match_id` FOREIGN KEY (`match_id`) REFERENCES `Matches` (`id`) ON DELETE CASCADE,
-	CONSTRAINT `FK_Match_maps_map_id` FOREIGN KEY (`map_id`) REFERENCES `maps` (`id`) ON DELETE CASCADE
-	) COLLATE='utf8_general_ci'
-	ENGINE=InnoDB AUTO_INCREMENT=1 ;";
-	  $this->db->execute($q);
-	}
-
 	if(!$this->db->tableExists('player_maps')) {
 	  $q = "CREATE TABLE IF NOT EXISTS `player_maps` (
 	`id` INT NOT NULL AUTO_INCREMENT,
-	`match_id` INT NOT NULL DEFAULT '0',
-	`player_id` mediumint(9) NOT NULL DEFAULT '0',
-	`match_map_id` INT NOT NULL DEFAULT '0',
-	`team_id` mediumint(9) NOT NULL DEFAULT '0',
+	`match_id` INT NOT NULL,
+	`player_id` mediumint(9) NOT NULL,
+	`match_map_id` INT NOT NULL,
+	`team_id` mediumint(9) NOT NULL,
 	`kills` mediumint(9) NOT NULL DEFAULT '0',
 	`shots` mediumint(9) NOT NULL DEFAULT '0',
 	`nearmisses` mediumint(9) NOT NULL DEFAULT '0',
@@ -286,7 +287,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	   if(!$this->db->tableExists('match_details')) {
 	  $q = "CREATE TABLE IF NOT EXISTS `match_details` (
 	`id` mediumint(9) NOT NULL AUTO_INCREMENT,
-	`match_id` INT (11) NOT NULL,
+	`match_id` INT NOT NULL,
 	`team_id` mediumint(9) NOT NULL,
 	`map_id` mediumint(9) NOT NULL,
 	`attack` MEDIUMINT( 9 ) NOT NULL DEFAULT '0',
@@ -311,10 +312,10 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		if(!$this->db->tableExists('captures')) {
 	  $q = "CREATE TABLE IF NOT EXISTS `captures` (
 	`id` mediumint(9) NOT NULL AUTO_INCREMENT,
-	`match_id` INT NOT NULL DEFAULT '0',
+	`match_id` INT NOT NULL,
 	`round_id` int(3) NOT NULL,
-	`player_id` mediumint(9) NOT NULL DEFAULT '0',
-	`map_id` mediumint(9) NOT NULL DEFAULT '0',
+	`player_id` mediumint(9) NOT NULL,
+	`map_id` mediumint(9) NOT NULL,
 	`matchServerLogin` VARCHAR(250) NOT NULL,
 	PRIMARY KEY (`id`),
 	Index (`matchServerLogin`),
@@ -329,9 +330,9 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		if(!$this->db->tableExists('shots')) {
 	  $q = "CREATE TABLE IF NOT EXISTS `shots` (
 	`id` mediumint(9) NOT NULL AUTO_INCREMENT,
-	`match_map_id` INT NOT NULL DEFAULT '0',
+	`match_map_id` INT NOT NULL,
 	`round_id` int(3) NOT NULL,
-	`player_id` mediumint(9) NOT NULL DEFAULT '0',
+	`player_id` mediumint(9) NOT NULL,
 	`weapon_id` int(11) NOT NULL,
 	`shots` int(11) NOT NULL DEFAULT '0',
 	`hits` int(11) NOT NULL DEFAULT '0',
@@ -350,11 +351,11 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	if(!$this->db->tableExists('kills')) {
 	  $q = "CREATE TABLE IF NOT EXISTS `kills` (
 	`id` mediumint(9) NOT NULL AUTO_INCREMENT,
-	`match_id` INT NOT NULL DEFAULT '0',
+	`match_id` INT NOT NULL,
 	`round_id` int(3) NOT NULL,
-	`player_victim_id` mediumint(9) NOT NULL DEFAULT '0',
-	`player_shooter_id` mediumint(9) NOT NULL DEFAULT '0',
-	`map_id` mediumint(9) NOT NULL DEFAULT '0',
+	`player_victim_id` mediumint(9) NOT NULL,
+	`player_shooter_id` mediumint(9) NOT NULL,
+	`map_id` mediumint(9) NOT NULL,
 	`matchServerLogin` VARCHAR(250) NOT NULL,
 	PRIMARY KEY (`id`),
 	Index (`matchServerLogin`),
@@ -370,13 +371,13 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		if(!$this->db->tableExists('nearmisses')) {
 	  $q = "CREATE TABLE IF NOT EXISTS `nearmisses` (
 	`id` INT NOT NULL AUTO_INCREMENT,
-	`match_map_id` INT NOT NULL DEFAULT '0',
+	`match_map_id` INT NOT NULL,
 	`round_id` int(3) NOT NULL,
-	`map_id` mediumint(9) NOT NULL DEFAULT '0',
+	`map_id` mediumint(9) NOT NULL,
 	`nearMissDist` REAL default '0',
-	`player_id` mediumint(9) NOT NULL DEFAULT '0',
+	`player_id` mediumint(9) NOT NULL,
 	`weaponid` int(11) NOT NULL,
-	`weaponname` varchar(45) DEFAULT NULL,
+	`weaponname` varchar(45),
 	`matchServerLogin` VARCHAR(250) NOT NULL,
 	PRIMARY KEY (`id`),
 	KEY(matchServerLogin),
@@ -391,14 +392,14 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	  if(!$this->db->tableExists('hits')) {
 	$q = "CREATE TABLE IF NOT EXISTS `hits` (
 	`id` INT NOT NULL AUTO_INCREMENT,
-	`match_map_id` INT NOT NULL DEFAULT '0',
+	`match_map_id` INT NOT NULL,
 	`round_id` int(3) NOT NULL,
-	`map_id` mediumint(9) NOT NULL DEFAULT '0',
+	`map_id` mediumint(9) NOT NULL,
 	`HitDist` REAL default '0',
-	`shooter_player_id` mediumint(9) NOT NULL DEFAULT '0',
-	`victim_player_id` mediumint(9) NOT NULL DEFAULT '0',
+	`shooter_player_id` mediumint(9) NOT NULL,
+	`victim_player_id` mediumint(9) NOT NULL,
 	`weaponid` int(11) NOT NULL,
-	`weaponname` varchar(45) DEFAULT NULL,
+	`weaponname` varchar(45),
 	`matchServerLogin` VARCHAR(250) NOT NULL,
 	PRIMARY KEY (`id`),
 	KEY(matchServerLogin),
@@ -647,8 +648,8 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		
 				// set server back to old value.
 		   $data = $this->connection->getServerTags();
-	   if ($data[0]['Name'] == "server_name"){
-		$server_name_value = json_decode($data[0]['Value']);
+	   if ($data[0]->name == "server_name"){
+		$server_name_value = json_decode($data[0]->value);
 		
 		try
 							{
@@ -1891,8 +1892,8 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 
 	// set server back to old value.
 		   $data = $this->connection->getServerTags();
-	   if ($data[0]['Name'] == "server_name"){
-		$server_name_value = json_decode($data[0]['Value']);
+	   if ($data[0]->name == "server_name"){
+		$server_name_value = json_decode($data[0]->value);
 		
 		try
 							{
