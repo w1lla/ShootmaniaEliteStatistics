@@ -2,7 +2,7 @@
 
 /**
 Name: Willem 'W1lla' van den Munckhof
-Date: 29-10-2014
+Date: 30-10-2014
 Version: 3 (ESWC2K14)
 Project Name: ESWC Elite Statistics
 
@@ -70,7 +70,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	private $playerIDs = array();
 
 	function onInit() {
-		$this->setVersion('1.0.6.f');
+		$this->setVersion('1.0.6.g');
 
 		$this->logger = new Log('./logs/', Log::DEBUG, $this->storage->serverLogin);
 		$this->mapdirectory = $this->connection->getMapsDirectory();
@@ -733,6 +733,12 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 				$this->db->execute($queryNextMap);
 				$this->logger->logDebug($queryNextMap);
 			}
+			if($cmdName == "RestartMap"){
+			$match = $this->getServerCurrentMatch($this->storage->serverLogin);
+			if ($match) {
+			$this->updateMatchState($match);
+			}
+			}
 		}
 	}
 
@@ -787,11 +793,9 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 						'SELECT id FROM matches ' .
 						'where MatchEnd = "0000-00-00 00:00:00" and `matchServerLogin` = ' . $this->db->quote($serverLogin) .
 						'')->fetchSingleValue();
-	$this->logger->logDebug($CurrentMatchÏd);         
-		return $this->db->execute(
-						'SELECT id FROM matches ' .
-						'where MatchEnd = "0000-00-00 00:00:00" and `matchServerLogin` = ' . $this->db->quote($serverLogin) .
-						'')->fetchSingleValue();
+	$this->logger->logDebug('SELECT id FROM matches where MatchEnd = "0000-00-00 00:00:00" and `matchServerLogin` = ' . $this->db->quote($serverLogin) .
+						'');         
+		return $CurrentMatchÏd;
 	}
 
 	function updateMatchState($matchId) {
@@ -1053,6 +1057,10 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 
 	function onXmlRpcEliteMatchStart(JsonCallbacks\BeginMatch $content) {
 	if ($content->Restart == true){
+			$match = $this->getServerCurrentMatch($this->storage->serverLogin);
+		if ($match) {
+			$this->updateMatchState($match);
+		}
 		$blue = $this->connection->getTeamInfo(1);
 		$red = $this->connection->getTeamInfo(2);
 		
