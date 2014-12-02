@@ -2,8 +2,8 @@
 
 /**
 Name: Willem 'W1lla' van den Munckhof
-Date: 30-10-2014
-Version: 3 (ESWC2K14)
+Date: 2-12-2014
+Version: 4 (GA2015)
 Project Name: ESWC Elite Statistics
 
 What to do:
@@ -70,7 +70,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	private $playerIDs = array();
 
 	function onInit() {
-		$this->setVersion('1.0.6.g');
+		$this->setVersion('1.0.6.h');
 
 		$this->logger = new Log('./logs/', Log::DEBUG, $this->storage->serverLogin);
 		$this->mapdirectory = $this->connection->getMapsDirectory();
@@ -248,7 +248,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	`nickname` varchar(100) DEFAULT NULL,
 	`player_nickname_Clean` varchar(255) NOT NULL,
 	`competition_id` INT(10) NOT NULL DEFAULT '1',
-	INDEX id (player_id, competition_id)
+	PRIMARY KEY (`player_id`, `competition_id`)
 	) COLLATE='utf8_general_ci'
 	ENGINE=InnoDB  AUTO_INCREMENT=1 ;";
 	  $this->db->execute($q);
@@ -790,11 +790,10 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 
 	function getServerCurrentMatch($serverLogin) {
 	$CurrentMatchÏd = $this->db->execute(
-						'SELECT id FROM matches ' .
-						'where MatchEnd = "0000-00-00 00:00:00" and `matchServerLogin` = ' . $this->db->quote($serverLogin) .
-						'')->fetchSingleValue();
+						'SELECT id FROM matches where MatchEnd = "0000-00-00 00:00:00" and `matchServerLogin` = ' . $this->db->quote($serverLogin) .
+						' and `competition_id` = '. $this->config->competition_id .' Order by id DESC limit 1')->fetchSingleValue();
 	$this->logger->logDebug('SELECT id FROM matches where MatchEnd = "0000-00-00 00:00:00" and `matchServerLogin` = ' . $this->db->quote($serverLogin) .
-						'');         
+						' and `competition_id` = '. $this->config->competition_id .' Order by id DESC limit 1');         
 		return $CurrentMatchÏd;
 	}
 
@@ -909,7 +908,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		$serverChallenges = $this->storage->maps;
 
 		//get database challenges
-		$q = "SELECT * FROM `maps`;";
+		$q = "SELECT uId FROM `maps`;";
 		$query = $this->db->query($q);
 		$this->logger->logDebug($q);
 
@@ -959,7 +958,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	  if ($zone[0] == "") {
 		  $zone[2] = "World";
 	  }
-	  $q = "SELECT * FROM `players` WHERE `login` = " . $this->db->quote($player->login) . ";";
+	  $q = "SELECT login FROM `players` WHERE `login` = " . $this->db->quote($player->login) . " LIMIT 1;";
 	  $this->logger->logDebug($q);
 	  $execute = $this->db->execute($q);
 
@@ -992,10 +991,10 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		  $this->logger->logDebug($qnick);    
 	  } else {
 		  
-		  $q = "SELECT * FROM `players` WHERE `login` = " . $this->db->quote($player->login) . ";";
+		  $q = "SELECT login FROM `players` WHERE `login` = " . $this->db->quote($player->login) . " LIMIT 1;";
 		  $this->logger->logDebug($q);
 		  $getplayerid = $this->db->execute($q)->fetchObject();
-		  $q = "SELECT * FROM `player_nicknames` WHERE `player_id` = " . $this->db->quote($getplayerid->id) . " and `competition_id` = " . $this->db->quote($this->competition_id) . ";";
+		  $q = "SELECT player_nicknames FROM `player_nicknames` WHERE `player_id` = " . $this->db->quote($getplayerid->id) . " and `competition_id` = " . $this->db->quote($this->competition_id) . " LIMIT 1;";
 		  $this->logger->logDebug($q);
 		  $executeids = $this->db->execute($q);
 
@@ -1152,7 +1151,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 
 	function onXmlRpcEliteMapStart(JsonCallbacks\BeginMap $content) {
 
-		$mapmatch = "SELECT * FROM `match_maps` WHERE `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `map_id` = " . $this->db->quote($this->getMapid()) . "";
+		$mapmatch = "SELECT * FROM `match_maps` WHERE `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " and `map_id` = " . $this->db->quote($this->getMapid()) . " LIMIT 1;";
 		$this->logger->logDebug($mapmatch);
 		$mapmatchexecute = $this->db->execute($mapmatch);
 		if ($mapmatchexecute->recordCount() == 0) {
@@ -1206,11 +1205,11 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 
 
 
-		  $qcblnk = "SELECT * FROM `clublinks` WHERE `Clublink_Name` = " . $this->db->quote($blue->name) . ";";
+		  $qcblnk = "SELECT Clublink_Name_Clean FROM `clublinks` WHERE `Clublink_Name` = " . $this->db->quote($blue->name) . " LIMIT 1;";
 		$this->logger->logDebug($qcblnk);
 		$bluename = $this->db->execute($qcblnk)->fetchObject();
 
-		$qcblnk = "SELECT * FROM `clublinks` WHERE `Clublink_Name` = " . $this->db->quote($red->name) . ";";
+		$qcblnk = "SELECT Clublink_Name_Clean FROM `clublinks` WHERE `Clublink_Name` = " . $this->db->quote($red->name) . " LIMIT 1;";
 		$this->logger->logDebug($qcblnk);
 		$redname = $this->db->execute($qcblnk)->fetchObject();
 
@@ -1245,7 +1244,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 
 
 		foreach ($this->storage->players as $login => $player) {
-			$shots_table = "SELECT * FROM `shots` WHERE `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `round_id` = " . $this->db->quote($content->turnNumber) . " and `player_id` = " . $this->db->quote($this->getPlayerId($login)) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . ";";
+			$shots_table = "SELECT * FROM `shots` WHERE `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `round_id` = " . $this->db->quote($content->turnNumber) . " and `player_id` = " . $this->db->quote($this->getPlayerId($login)) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " LIMIT 1;";
 			$this->logger->logDebug($shots_table);
 			$execute = $this->db->execute($shots_table);
 			if ($execute->recordCount() == 0) {
@@ -1274,7 +1273,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 				
 			}
 
-			$playermapinfo = "SELECT * FROM `player_maps` WHERE `player_id` = " . $this->db->quote($this->getPlayerId($login)) . " AND `match_id` = " . $this->db->quote($this->MatchNumber) . " AND `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . ";";
+			$playermapinfo = "SELECT * FROM `player_maps` WHERE `player_id` = " . $this->db->quote($this->getPlayerId($login)) . " AND `match_id` = " . $this->db->quote($this->MatchNumber) . " AND `match_map_id` = " . $this->db->quote($this->MapNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " LIMIT 1;";
 			$this->logger->logDebug($playermapinfo);
 
 			$pmiexecute = $this->db->execute($playermapinfo);
@@ -1302,7 +1301,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		
 		$attackingClan = $teams[$content->attackingClan];
 		
-		$q = "SELECT * FROM `match_details` WHERE `map_id` = " . $this->db->quote($this->getMapid()) . " and `team_id` = " . $this->db->quote($this->getTeamid($attackingClan->clubLinkUrl, $attackingClan->name)) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . ";";
+		$q = "SELECT * FROM `match_details` WHERE `map_id` = " . $this->db->quote($this->getMapid()) . " and `team_id` = " . $this->db->quote($this->getTeamid($attackingClan->clubLinkUrl, $attackingClan->name)) . " and `match_id` = " . $this->db->quote($this->MatchNumber) . " and `matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " LIMIT 1;";
 		$this->logger->logDebug($q);
 		$execute = $this->db->execute($q);
 		if ($execute->recordCount() == 0) {
@@ -1343,7 +1342,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 											`map_id` = " . $this->db->quote($this->getMapid()) . "  AND 
 											`match_id` = " . $this->db->quote($this->MatchNumber) . " AND
 											`team_id` = " . $this->db->quote($this->getTeamid($defendingClan->clubLinkUrl, $defendingClan->name)) . " AND 
-											`matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . ";";
+											`matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " LIMIT 1;";
 		$this->logger->logDebug($q);
 		$execute = $this->db->execute($q);
 
@@ -1397,7 +1396,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		$q = "SELECT * FROM `player_maps` WHERE `player_id` = " . $this->db->quote($AtkPlayer) . " AND 
 												`match_id` = " . $this->db->quote($this->MatchNumber) . " AND 
 												`match_map_id` = " . $this->db->quote($this->MapNumber) . " AND 
-												`matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . "";
+												`matchServerLogin` = " . $this->db->quote($this->storage->serverLogin) . " LIMIT 1;";
 		$this->logger->logDebug($q);
 		$this->db->execute($q);
 
@@ -1456,7 +1455,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 			$zone[2] = "World";
 		}
 
-		$qcblnk = "SELECT * FROM `clublinks` WHERE `Clublink_URL` = " . $this->db->quote($url) . ";";
+		$qcblnk = "SELECT * FROM `clublinks` WHERE `Clublink_URL` = " . $this->db->quote($url) . " LIMIT 1;";
 		$this->logger->logDebug($qcblnk);
 		$execute = $this->db->execute($qcblnk);
 		$this->logger->logDebug("Select Clublinks");
@@ -1918,7 +1917,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	*/
 
 	function getMapid(){
-	$q = "SELECT id FROM `maps` WHERE `uid` = " . $this->db->quote($this->storage->currentMap->uId) . "";
+	$q = "SELECT id FROM `maps` WHERE `uid` = " . $this->db->quote($this->storage->currentMap->uId) . " LIMIT 1;";
 			$this->logger->logDebug($q);
 			return $this->db->execute($q)->fetchObject()->id;
 	}
@@ -1937,7 +1936,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		  
 	$name = \ManiaLib\Utils\Formatting::stripColors(\ManiaLib\Utils\Formatting::stripStyles($teamname));
 	$tname = preg_replace('/[^A-Za-z0-9 _\-\+\&]/','',$name);
-	$q = "SELECT id FROM `clublinks` WHERE `Clublink_URL` = " . $this->db->quote($clubLinkUrl) . " and Clublink_Name_Clean = " . $this->db->quote($tname) . "";
+	$q = "SELECT id FROM `clublinks` WHERE `Clublink_URL` = " . $this->db->quote($clubLinkUrl) . " and Clublink_Name_Clean = " . $this->db->quote($tname) . " LIMIT 1;";
 		$this->logger->logDebug($q);
 		return $this->db->execute($q)->fetchObject()->id;
 	}
@@ -1947,7 +1946,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		if (isset($this->playerIDs[$login])) {
 			return $this->playerIDs[$login];
 		} else {
-			$q = "SELECT id FROM `players` WHERE `login` = " . $this->db->quote($login) . "";
+			$q = "SELECT id FROM `players` WHERE `login` = " . $this->db->quote($login) . " LIMIT 1;";
 			$this->logger->logDebug($q);
 			return $this->db->execute($q)->fetchObject()->id;
 		}
