@@ -2,8 +2,8 @@
 
 /**
 Name: Willem 'W1lla' van den Munckhof
-Date: 2-12-2014
-Version: 4 (GA2015)
+Date: 30-10-2014
+Version: 3 (ESWC2K14)
 Project Name: ESWC Elite Statistics
 
 What to do:
@@ -70,13 +70,16 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	private $playerIDs = array();
 
 	function onInit() {
-		$this->setVersion('1.0.6.h');
+
+		$this->setVersion('1.0.6.i');
 
 		$this->logger = new Log('./logs/', Log::DEBUG, $this->storage->serverLogin);
 		$this->mapdirectory = $this->connection->getMapsDirectory();
+
 	}
 
 	function onLoad() {
+
 		$cmd = $this->registerChatCommand('extendWu', 'WarmUp_Extend', 0, true);
 		$cmd->help = 'Extends WarmUp In Elite by Callvote.';
 
@@ -125,10 +128,13 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	  
 
 	$q = "INSERT INTO `competitions` (`id`, `name`, `description`, `logo`, `embed`, `background`, `date_begin`, `date_end`, `show`, `type`) VALUES
-	(1, 'ESWC France 2013', 'French finals ESWC France 2013', 'http://www.eswc.com/public/images/logo_2013.png', '', '/img/fond_eswc.png', '2013-10-30 09:00:00', '2013-10-30 20:00:00', 1, 'Elite'),
-	(2, 'ESWC World 2013', 'World finals ESWC 2013', 'http://www.eswc.com/public/images/logo_2013.png', '', '/img/fond_eswc.png', '2013-10-31 09:00:00', '2013-11-02 20:00:00', 1, 'Elite'),
-	(3, 'Gamers Assembly 2014', 'ShootMania tournament at the Gamers Assembly 2014', 'http://live.drakonia.eu/img/logos/gamers_assembly_o.png', '', '/img/fond_ga2.png', '2014-04-19 13:00:00', '2014-04-21 15:00:00', 1, 'Elite'),
-	(4, 'Cap''Arena #3', 'Antec Trophy ShootMania', './img/logos/cap-arena.png', '', '/img/fond_eswc.png', '2014-05-10 12:00:00', '2014-05-11 17:00:00', 1, 'Elite');
+(1, 'ESWC France 2013', 'French finals ESWC France 2013', 'http://www.eswc.com/public/images/logo_2013.png', '', 'http://tmrankings.com/stats/img/fond_eswc.png', '2013-10-30 09:00:00', '2013-10-30 20:00:00', 1, 'Elite'),
+(2, 'ESWC World 2013', 'World finals ESWC 2013', 'http://www.eswc.com/public/images/logo_2013.png', '', 'http://tmrankings.com/stats/img/fond_eswc.png', '2013-10-31 09:00:00', '2013-11-02 20:00:00', 1, 'Elite'),
+(3, 'Gamers Assembly 2014', 'ShootMania tournament at the Gamers Assembly 2014', 'http://live.drakonia.eu/img/logos/gamers_assembly_o.png', '', 'http://tmrankings.com/stats/img/fond_ga2.png', '2014-04-19 13:00:00', '2014-04-21 15:00:00', 1, 'Elite'),
+(4, 'Cap''Arena #3', 'Antec Trophy ShootMania', 'http://tmrankings.com/stats/img/logos/cap-arena.png', '', 'http://tmrankings.com/stats/img/fond_eswc.png', '2014-05-10 12:00:00', '2014-05-11 17:00:00', 1, 'Elite'),
+(5, 'EPL #1', 'EPL Final Season 1', 'http://tmrankings.com/stats/img/logos/epl.png', '', 'http://tmrankings.com/stats/img/fond_epl.png', '2014-07-19 10:00:00', '2014-07-19 21:00:00', 1, 'Elite'),
+(6, 'ESWC French finals 2014', 'French finals ESWC France 2014', 'http://www.eswc.com/public/images/logo_2014.png', '', 'http://tmrankings.com/stats/img/fond_eswc.png', '2014-10-29 09:00:00', '2014-10-30 21:00:00', 1, 'Elite'),
+(7, 'ESWC World 2014', 'World finals ESWC 2014\r\n', 'http://www.eswc.com/public/images/logo_2014.png', '', 'http://tmrankings.com/stats/img/fond_eswc.png', '2014-10-31 09:00:00', NULL, 1, 'Elite');
 	";
 	$this->db->execute($q);
 	}
@@ -466,10 +472,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 
 	$this->db->execute($q);
 	}
-
-
-		if($this->isPluginLoaded('ManiaLivePlugins\Standard\Menubar\Menubar'))
-	  $this->onPluginLoaded('ManiaLivePlugins\Standard\Menubar\Menubar');
+	
 	}
 	  function onReady() {
 		$this->updateServerChallenges();
@@ -514,80 +517,6 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		$this->connection->setServerTag('server_name', json_encode($this->ServerName), true);
 		$this->connection->setServerName($this->ServerName);
 		$this->connection->executeMulticall();
-		  
-	}
-
-	function onPluginLoaded($pluginId)
-	{
-	if($pluginId == 'ManiaLivePlugins\Standard\Menubar\Menubar')
-	  $this->buildMenu();
-	}
-
-	function buildMenu()
-	{
-	$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-	  'initMenu',
-	  Icons128x128_1::Custom);
-
-	$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-	  'addButton',
-	  'Mode: Classic (3v3)',
-	  array($this, 'S_Mode0'),
-	  true);
-
-	$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-	  'addButton',
-	  'Mode: Free ',
-	  array($this, 'S_Mode1'),
-	  true);
-
-	$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-	  'addButton',
-	  'WarmUp Extend',
-	  array($this, 'WarmUp_Extend'),
-	  true);
-	  
-	$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-	  'addButton',
-	  'WarmUp Stop',
-	  array($this, 'WarmUp_Stop'),
-	  true);
-
-	$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-	  'addButton',
-	  'Pause',
-	  array($this, 'pause'),
-	  true);
-
-	$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-	  'addButton',
-	  'New Match',
-	  array($this, 'newmatch'),
-	  true);
-	  
-	$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-	  'addButton',
-	  'BO3',
-	  array($this, 'bo3'),
-	  true);
-	  
-	$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-	  'addButton',
-	  'BO5',
-	  array($this, 'bo5'),
-	  true);
-	  
-	$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-	  'addButton',
-	  'Reset Callvotes active',
-	  array($this, 'InitiateVotes'),
-	  true);
-
-	$this->callPublicMethod('ManiaLivePlugins\Standard\Menubar\Menubar',
-	  'addButton',
-	  'Set Callvotes inactive',
-	  array($this, 'DeactivateVotes'),
-	  true);
 	}
 
 	/* Chat messages */
@@ -916,7 +845,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 
 		//get database uid's of tracks.
 		while ($data = $query->fetchStdObject()) {
-			$databaseUid[$data->uid] = $data->uid;
+			$databaseUid[$data->uId] = $data->uId;
 		}
 
 		unset($data);
@@ -991,10 +920,10 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 		  $this->logger->logDebug($qnick);    
 	  } else {
 		  
-		  $q = "SELECT login FROM `players` WHERE `login` = " . $this->db->quote($player->login) . " LIMIT 1;";
+		  $q = "SELECT id FROM `players` WHERE `login` = " . $this->db->quote($player->login) . " LIMIT 1;";
 		  $this->logger->logDebug($q);
 		  $getplayerid = $this->db->execute($q)->fetchObject();
-		  $q = "SELECT player_nicknames FROM `player_nicknames` WHERE `player_id` = " . $this->db->quote($getplayerid->id) . " and `competition_id` = " . $this->db->quote($this->competition_id) . " LIMIT 1;";
+		  $q = "SELECT nickname FROM `player_nicknames` WHERE `player_id` = " . $this->db->quote($getplayerid->id) . " and `competition_id` = " . $this->db->quote($this->competition_id) . " LIMIT 1;";
 		  $this->logger->logDebug($q);
 		  $executeids = $this->db->execute($q);
 
