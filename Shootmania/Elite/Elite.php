@@ -2,8 +2,8 @@
 
 /**
 Name: Willem 'W1lla' van den Munckhof
-Date: 30-10-2014
-Version: 3 (ESWC2K14)
+Date: 5-12-2014
+Version: 4 (GA2K15)
 Project Name: ESWC Elite Statistics
 
 What to do:
