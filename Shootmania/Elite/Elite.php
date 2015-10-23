@@ -2,8 +2,8 @@
 
 /**
 Name: Willem 'W1lla' van den Munckhof
-Date: 5-12-2014
-Version: 4 (GA2K15)
+Date: 23-10-2015
+Version: 5 (ESWC2015)
 Project Name: ESWC Elite Statistics
 
 What to do:
@@ -40,7 +40,6 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	use ManiaLive\Utilities\Validation;
 	use ManiaLivePlugins\Shootmania\Elite\JsonCallbacks;
 	use ManiaLivePlugins\Shootmania\Elite\Classes\Log;
-	use ManiaLib\Gui\Elements\Icons128x128_1;
 	use Maniaplanet\DedicatedServer\Structures;
 	use ManiaLivePlugins\Shootmania\Elite\Config;
 
@@ -192,8 +191,8 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	`Restarted` tinyint (1),
 	PRIMARY KEY (`id`),
 	Index (`matchServerLogin`),
-	CONSTRAINT `FK_Matches_teamBlue` FOREIGN KEY (`teamBlue`) REFERENCES `Clublinks` (`id`) ON DELETE CASCADE,
-	CONSTRAINT `FK_Matches_teamRed` FOREIGN KEY (`teamRed`) REFERENCES `Clublinks` (`id`) ON DELETE CASCADE,
+	CONSTRAINT `FK_Matches_teamBlue` FOREIGN KEY (`teamBlue`) REFERENCES `clublinks` (`id`) ON DELETE CASCADE,
+	CONSTRAINT `FK_Matches_teamRed` FOREIGN KEY (`teamRed`) REFERENCES `clublinks` (`id`) ON DELETE CASCADE,
 	CONSTRAINT `FK_Matches_competition_id` FOREIGN KEY (`competition_id`) REFERENCES `competitions` (`id`) ON DELETE CASCADE
 	) COLLATE='utf8_general_ci'
 	ENGINE=InnoDB AUTO_INCREMENT=1 ;";
@@ -228,7 +227,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	`matchServerLogin` VARCHAR(250) NOT NULL,
 	PRIMARY KEY (`id`),
 	Index (`matchServerLogin`),
-	CONSTRAINT `FK_Match_maps_match_id` FOREIGN KEY (`match_id`) REFERENCES `Matches` (`id`) ON DELETE CASCADE,
+	CONSTRAINT `FK_Match_maps_match_id` FOREIGN KEY (`match_id`) REFERENCES `matches` (`id`) ON DELETE CASCADE,
 	CONSTRAINT `FK_Match_maps_map_id` FOREIGN KEY (`map_id`) REFERENCES `maps` (`id`) ON DELETE CASCADE
 	) COLLATE='utf8_general_ci'
 	ENGINE=InnoDB AUTO_INCREMENT=1 ;";
@@ -281,10 +280,10 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	`matchServerLogin` VARCHAR(250) NOT NULL,
 	PRIMARY KEY (`id`),
 	Index (`matchServerLogin`),
-	CONSTRAINT `FK_player_maps_match_id` FOREIGN KEY (`match_id`) REFERENCES `Matches` (`id`) ON DELETE CASCADE,
-	CONSTRAINT `FK_player_maps_player_id` FOREIGN KEY (`player_id`) REFERENCES `Players` (`id`) ON DELETE CASCADE,
+	CONSTRAINT `FK_player_maps_match_id` FOREIGN KEY (`match_id`) REFERENCES `matches` (`id`) ON DELETE CASCADE,
+	CONSTRAINT `FK_player_maps_player_id` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE,
 	CONSTRAINT `FK_player_maps_MM_id` FOREIGN KEY (`match_map_id`) REFERENCES `match_maps` (`id`) ON DELETE CASCADE,
-	CONSTRAINT `FK_player_maps_team_id` FOREIGN KEY (`team_id`) REFERENCES `Clublinks` (`id`) ON DELETE CASCADE
+	CONSTRAINT `FK_player_maps_team_id` FOREIGN KEY (`team_id`) REFERENCES `clublinks` (`id`) ON DELETE CASCADE
 	) COLLATE='utf8_general_ci'
 	ENGINE=InnoDB AUTO_INCREMENT=1 ;";
 	  $this->db->execute($q);
@@ -306,8 +305,8 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	`mapbonus` tinyint (1),
 	PRIMARY KEY (`id`),
 	Index (`matchServerLogin`),
-	CONSTRAINT `FK_Match_details_match_id` FOREIGN KEY (`match_id`) REFERENCES `Matches` (`id`) ON DELETE CASCADE,
-	CONSTRAINT `FK_Match_details_team_id` FOREIGN KEY (`team_id`) REFERENCES `Clublinks` (`id`) ON DELETE CASCADE,
+	CONSTRAINT `FK_Match_details_match_id` FOREIGN KEY (`match_id`) REFERENCES `matches` (`id`) ON DELETE CASCADE,
+	CONSTRAINT `FK_Match_details_team_id` FOREIGN KEY (`team_id`) REFERENCES `clublinks` (`id`) ON DELETE CASCADE,
 	CONSTRAINT `FK_Match_details_map_id` FOREIGN KEY (`map_id`) REFERENCES `maps` (`id`) ON DELETE CASCADE
 	) COLLATE='utf8_general_ci'
 	ENGINE=InnoDB AUTO_INCREMENT=1 ;";
@@ -482,10 +481,10 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 
 		$this->connection->setModeScriptSettings(array('S_RestartMatchOnTeamChange' => true)); //logDebug Way...
 		$this->connection->setModeScriptSettings(array('S_UsePlayerClublinks' => true)); //logDebug Way...
-		//$this->connection->setModeScriptSettings(array('S_DraftPickNb' => 3));
-		//$this->connection->setModeScriptSettings(array('S_DraftBanNb' => 6));
+		$this->connection->setModeScriptSettings(array('S_DraftPickNb' => 3));
+		$this->connection->setModeScriptSettings(array('S_DraftBanNb' => 6));
 		$this->connection->setModeScriptSettings(array('S_UseDraft' => false));		
-		$this->connection->setModeScriptSettings(array('S_Mode' => 1));
+		$this->connection->setModeScriptSettings(array('S_Mode' => 0));
 		$this->connection->sendModeScriptCommands(array("Command_ForceClublinkReload" => true));
 
 	Console::println('[' . date('H:i:s') . '] [Shootmania] Elite Core v' . $this->getVersion());
@@ -955,7 +954,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	}
 
 	function onXmlRpcEliteBeginWarmUp(JsonCallbacks\BeginWarmup $content) {
-		if ($content->allReady === false) {
+		if ($content->allReady == false) {
 			$q = "UPDATE `match_maps`
 		  SET `AllReady` = '0'
 		  WHERE `match_id` =" . $this->db->quote($this->MatchNumber) . " and 
@@ -984,7 +983,8 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	}
 
 	function onXmlRpcEliteMatchStart(JsonCallbacks\BeginMatch $content) {
-	if ($content->Restart == true){
+	var_dump($content);
+	if ($content->restart === true){
 			$match = $this->getServerCurrentMatch($this->storage->serverLogin);
 		if ($match) {
 			$this->updateMatchState($match);
@@ -1363,9 +1363,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 	$header  = curl_getinfo( $ch );
 	curl_close( $ch );
 
-	$header['errno']   = $err;
-	$header['errmsg']  = $errmsg;
-	$header['content'] = $content;
+	$header = $content;
 	$xml = simplexml_load_string($content);
 
 		// incase the xml is malformed, bail out
@@ -1757,7 +1755,7 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 													`id` = " . $this->db->quote($this->MatchNumber) . "";
 		$this->logger->logDebug($queryMapWinSettingsEnd);
 		$this->db->execute($queryMapWinSettingsEnd);
-		if($this->config->ReplayLocalSave == true){
+		if($this->config->ReplayLocalSave === true){
 		  $dataDir = $this->connection->gameDataDirectory();
 		  $dataDir = str_replace('\\', '/', $dataDir);
 		  $file = $this->connection->getServername();
@@ -1895,6 +1893,11 @@ namespace ManiaLivePlugins\Shootmania\Elite;
 			default:
 				return '';
 		}
+	}
+	
+		function onUnload()
+	{
+		parent::onUnload();
 	}
 
 	}
